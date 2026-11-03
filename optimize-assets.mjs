@@ -1,0 +1,2 @@
+import{readdir}from'node:fs/promises';import{execFileSync}from'node:child_process';
+for(const file of await readdir('src/assets')){if(!file.endsWith('.jpg')||/-(480|768|960|1600)\.jpg$/.test(file))continue;for(const width of file.startsWith('doctor')?[480,768]:[480,960,1600]){const target=`src/assets/${file.replace('.jpg',`-${width}.jpg`)}`;execFileSync('sips',['--resampleWidth',String(width),'-s','formatOptions','78',`src/assets/${file}`,'--out',target],{stdio:'ignore'})}}console.log('Created responsive photo sizes.');

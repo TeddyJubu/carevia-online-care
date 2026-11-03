@@ -1,0 +1,23 @@
+# Carevia
+
+A responsive Carevia marketing site inspired by the Alder reference. The glass animation uses the reference's horizontal-refraction geometry, with pointer tracking, gentle idle movement and touch-friendly clearing.
+
+## Edit and run
+
+- Copy: `src/content.mjs` and `src/index.html`
+- Layout, spacing and responsive rules: `src/styles/site.css`
+- UI interactions: `src/scripts/site.js`
+- Glass animation: `src/scripts/glass.js`
+- Photographs: `src/assets/`
+
+Build with `node build.mjs`. Preview with `python3 -m http.server 8085 --directory dist`.
+
+No package install is needed to build or run the site. The output in `dist/` is ready for static hosting. `.openai/hosting.json` preserves the existing Sites project.
+
+## Content and behaviour
+
+Service descriptions and example prices follow the supplied Carevia website. The expanded editorial copy describes the experience and preparation for a visit; it does not fabricate reviews, clinician identities, credentials, or treatment outcomes. Doctor portraits are illustrative and labelled accordingly.
+
+Pricing, care-detail dialogs, reading dialogs, account tabs, the mobile menu, theme switching, and FAQs are browser interactions. This presentation site does not process medical data, payments or bookings. Its external Carevia links open the existing Carevia site.
+
+Motion respects the operating system's reduced-motion setting. Images have responsive sizes. The page content is available in the initial HTML.
