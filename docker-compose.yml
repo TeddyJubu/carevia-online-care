@@ -1,0 +1,22 @@
+# Alternative to `npm run db` when Docker is installed.
+# Do not run this and embedded Postgres together: both listen on port 5432.
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: carevia-postgres
+    environment:
+      POSTGRES_USER: carevia
+      POSTGRES_PASSWORD: carevia
+      POSTGRES_DB: carevia
+    ports:
+      - "5432:5432"
+    volumes:
+      - carevia-postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U carevia -d carevia"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  carevia-postgres:
