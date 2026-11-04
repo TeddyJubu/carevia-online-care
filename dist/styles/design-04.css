@@ -16,3 +16,10 @@ footer{background:var(--ink);color:#fff;padding-top:160px;overflow:hidden}.foote
 /* Frame most of the wordmark and its fade in the first viewport. */
 .hero{height:calc(100svh + clamp(20px,2.8vw,42px));min-height:600px;max-height:none}
 @media(max-width:600px){.hero{height:calc(100svh + 12px);min-height:540px}}
+
+/* Striped circular Carevia emblem, with a plus in the negative space. */
+.carevia-mark{display:block;flex:none;width:40px;height:40px;object-fit:contain}
+.mark-white{filter:brightness(0) invert(1)}
+.footer-brand{display:inline-flex;align-items:center;gap:12px}
+.mini-mark{border:0}.mini-mark .carevia-mark{width:44px;height:44px}
+@media(max-width:600px){.nav-logo .carevia-mark{width:34px;height:34px}.footer-brand .carevia-mark{width:36px;height:36px}.mini-mark .carevia-mark{width:40px;height:40px}}
