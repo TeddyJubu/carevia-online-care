@@ -50,4 +50,10 @@ const serif=html.replace('<html lang="en">','<html lang="en" data-design="03">')
  .replaceAll('href="/design-03.html"','href="/design-03.html" aria-current="page"')
  .replaceAll('<small>Olive · Geist Serif</small></span></a>','<small>Olive · Geist Serif</small></span><span class="design-current" aria-hidden="true">●</span></a>');
 await writeFile('dist/design-03.html',serif);
-console.log('Built Carevia Design 01, Design 02, and Design 03.');
+// The Smilara-inspired fourth design uses its own presentation and interactions.
+let editorial=await readFile('src/design-04.html','utf8');
+const v4Images={general:['freedom','30% 45%'],mental:['sky','50% 70%'],renewals:['field','50% 55%'],specialist:['sea','50% 50%']};
+editorial=editorial.replace('<!-- V4_CARDS -->',[services[0],services[1],services[6],services[3]].map((s,i)=>{const[image,focus]=v4Images[s.id];return `<article class="treatment-card"><img src="assets/${image}-960.jpg" alt="" loading="lazy" width="704" height="538" style="object-position:${focus}"><div class="treatment-body"><span class="mono">0${i+1}</span><h3>${esc(s.name)}</h3><p>${esc(s.short)}</p><button class="care-open" data-service="${s.id}" aria-label="Explore ${esc(s.name)}"><span>From €${s.price} · ${esc(s.duration)}</span><span aria-hidden="true">↗</span></button></div></article>`}).join(''));
+editorial=editorial.replace('<!-- V4_FAQ -->',faqs.slice(0,6).map(([q,a],i)=>`<div class="faq-item${i===0?' open':''}"><h3><button class="faq-toggle" aria-expanded="${i===0}" aria-controls="v4-answer-${i}"><span>${esc(q)}</span><span class="faq-icon" aria-hidden="true">⌄</span></button></h3><div class="faq-answer" id="v4-answer-${i}" ${i===0?'':'inert'}><div><p>${esc(a)}</p></div></div></div>`).join(''));
+await writeFile('dist/design-04.html',editorial);
+console.log('Built all four Carevia designs.');
