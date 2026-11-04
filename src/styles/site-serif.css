@@ -1,3 +1,6 @@
 /* Design 03: Design 01 with Geist Serif headings. */
 @font-face{font-family:"Geist Serif";src:url('../assets/geist-serif-regular.woff2') format('woff2');font-weight:400;font-style:normal;font-display:swap}
 h1,h2,h3,.care-card-bottom>strong,.row-copy strong,.directory-heading>p,.journey-visual-copy>p,.guide-card>strong,#price-service{font-family:"Geist Serif",Georgia,serif;font-weight:400}
+
+/* Give the serif hero lettering a little more breathing room. */
+.hero h1{letter-spacing:-.045em}
