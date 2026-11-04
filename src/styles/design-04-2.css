@@ -119,3 +119,7 @@
 .wide-banner{--mx:50%;--my:50%;--warm:0}
 .wide-banner>img.banner-warm{position:absolute;inset:0;opacity:var(--warm);-webkit-mask-image:radial-gradient(circle 210px at var(--mx) var(--my),#000 0 55%,transparent 100%);mask-image:radial-gradient(circle 210px at var(--mx) var(--my),#000 0 55%,transparent 100%);transition:opacity .45s ease;pointer-events:none}
 @media(prefers-reduced-motion:reduce){.wide-banner>img.banner-warm{display:none}}
+
+/* Guide lines sit behind page content but above the footer. */
+main#main{position:relative;z-index:1}
+.page-grid{z-index:0}
