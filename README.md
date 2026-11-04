@@ -1,10 +1,10 @@
 # Carevia
 
-A responsive Carevia marketing site inspired by the Alder reference. The glass animation uses the reference's horizontal-refraction geometry, with pointer tracking, gentle idle movement and touch-friendly clearing.
+A responsive Carevia marketing site in two designs: Design 03 (olive with Geist Serif headings) and Design 04.2 (deep-blue editorial, the homepage). It keeps the Alder-inspired glass animation on Design 03. The glass animation uses the reference's horizontal-refraction geometry, with pointer tracking, gentle idle movement and touch-friendly clearing.
 
 ## Edit and run
 
-- Copy: `src/content.mjs` and `src/index.html`
+- Copy: `src/content.mjs`, `src/design-03.html` and `src/design-04-2.html`
 - Layout, spacing and responsive rules: `src/styles/site.css`
 - UI interactions: `src/scripts/site.js`
 - Glass animation: `src/scripts/glass.js`

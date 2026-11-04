@@ -1,8 +1,0 @@
-/* Design 04.1: the deep blue editorial design with Geist Sans typography. */
-@font-face{font-family:Geist;src:url('../assets/geist-400.woff2') format('woff2');font-weight:400;font-display:swap}
-@font-face{font-family:Geist;src:url('../assets/geist-600.woff2') format('woff2');font-weight:600;font-display:swap}
-@font-face{font-family:Geist;src:url('../assets/geist-700.woff2') format('woff2');font-weight:700;font-display:swap}
-:root,.mono,.principles button>span,.menu-panel nav>a span{font-family:Geist,Arial,sans-serif}
-@media(max-width:600px){.footer-designs{gap:5px}.footer-designs>a{width:26px;font-size:10px}.footer-designs>a:last-child{width:34px}}
-/* CAREVIA's Geist Sans metrics at this tracking fill 90% of the viewport. */
-.hero-wordmark{font-size:21.903vw;max-width:none}
