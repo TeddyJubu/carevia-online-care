@@ -7,13 +7,13 @@
 /* Design 04.2 typography refinements from the page review. */
 .hero h1{font-size:clamp(25px,5.1vw,52px);font-weight:300}
 .hero .button,.treatments>.center .button,.people .button,.footer-grid .button{font-weight:400}
-.hero-wordmark{letter-spacing:.005em;font-kerning:normal;opacity:.5}
+.hero-wordmark{letter-spacing:.005em;font-kerning:normal;opacity:.2}
 /* Keep the supplied consultation photo upright and frame the person clearly. */
 .hero-photo{transform:scale(1.03);object-position:40% 50%}
 .about-heading h2,.section-title h2,.people .center h2,.faq h2,.footer-grid h2{font-weight:400}
 .journey-heading h2{font-weight:500}
 .treatment-body>h3{font-weight:500}
-@keyframes wordmark{from{opacity:0;translate:0 70px}to{opacity:.5;translate:0 0}}
+@keyframes wordmark{from{opacity:0;translate:0 70px}to{opacity:.2;translate:0 0}}
 @media(max-width:600px){.hero h1{font-size:25px}}
 @media(max-width:600px){.hero-photo{object-position:32% 50%}}
 @media(max-width:360px){.hero h1{font-size:24px}}
@@ -124,10 +124,15 @@ main#main{position:relative;z-index:1}
 :is(.hero,.wide-banner,.treatment-stack,.start-grid) .glass-image>img{width:100%;height:100%;object-fit:cover;object-position:var(--focus,50% 50%);user-select:none;pointer-events:none;transform:none}
 :is(.hero,.wide-banner,.treatment-stack,.start-grid) .glass-strips{position:absolute;inset:0;pointer-events:none}
 :is(.hero,.wide-banner,.treatment-stack,.start-grid) .glass-strip{position:absolute;inset-block:0;background-repeat:no-repeat}
-/* Full-color hero: no grayscale; the navy .hero-shade overlay from design-04.css stays. */
+/* Full-color hero: no grayscale (the navy overlay is set below). */
 .hero-photo,.hero .glass-strip{filter:none}
 /* Ripples stay behind the headline and fade to clear at both sides, so the doctor and patient read clearly. */
 .hero .glass-strips{--glass-fade:linear-gradient(90deg,transparent 18%,#000 38%,#000 62%,transparent 82%);-webkit-mask-image:var(--glass-fade);mask-image:var(--glass-fade)}
+/* Deeper navy wash over the full-color hero. */
+.hero .hero-shade{background:linear-gradient(90deg,#0d3260d6,#123f72d6),linear-gradient(180deg,#0a274d80,transparent 65%)}
+@media(max-width:600px){.hero .hero-shade{background:linear-gradient(180deg,#0d3260eb,#134478b8 60%)}}
+/* Phones and tablets frame only the patient (glass.js uses data-mobile-focus below 1025px); keep him unrippled. */
+@media(max-width:1024px){.hero .glass-strips{display:none}}
 .wide-banner .glass-image{position:absolute;inset:0;overflow:hidden;isolation:isolate;background:#102e52}
 :is(.hero,.wide-banner,.treatment-stack,.start-grid) .glass-strip i{position:absolute;inset:0;background:linear-gradient(90deg,#ffffff32 0%,#ffffff08 16%,transparent 52%,#00000057 100%);pointer-events:none}
 @media(prefers-reduced-motion:reduce){:is(.hero,.wide-banner,.treatment-stack,.start-grid) .glass-strips{display:none}}
@@ -154,3 +159,9 @@ main#main{position:relative;z-index:1}
 @media(max-width:860px){.start-grid{grid-template-columns:1fr}}
 @media(max-width:600px){.start-media{height:220px}.start-body{padding:22px}.start-body>.mono{font-size:10px}.start-body>h3{margin-top:30px;font-size:26px}.start-body>p{font-size:15px;margin-bottom:28px}.start-body>.button{width:100%;font-size:13px;min-height:44px}}
 @media(prefers-reduced-motion:reduce){.start-mark>img,.start-body>.button>span{transition:none}}
+
+/* Tablet and mobile hero: the search poster (a <picture> source up to 1024px), centred, with a light shade so the navy poster stays visible. */
+.hero .glass-image>picture{display:contents}
+.hero .glass-image>picture>img{width:100%;height:100%;object-fit:cover;object-position:var(--focus,50% 50%);user-select:none;pointer-events:none}
+/* The poster's illustration fills the upper half, so the intro sits below it instead of across it. Scoped to 04.2 so 04.5's film hero is untouched. */
+@media(max-width:1024px){[data-design="04.2"] .hero .hero-shade{background:linear-gradient(180deg,#0d32602e,#0d326014 45%,#0d326040)}[data-design="04.2"] .hero-intro{top:57svh;transform:translateX(-50%)}}

@@ -14,6 +14,10 @@ Build with `node build.mjs`. Preview with `python3 -m http.server 8085 --directo
 
 No package install is needed to build or run the site. The output in `dist/` is ready for static hosting. `.openai/hosting.json` preserves the existing Sites project.
 
+## v5 (local, React)
+
+`v5/` is a separate React + Vite + Tailwind + TypeScript + shadcn/ui page with a cinematic film hero. It reads copy and prices from `src/content.mjs` and `src/services-04-2.mjs`, so those stay the single source. Run it with `cd v5 && npm install && npm run dev`. The films and their prompts are in `v5/public/film/` and `v5/film-src/`. `node build.mjs` doesn't touch v5.
+
 ## Content and behaviour
 
 Service descriptions and example prices follow the supplied Carevia website. The expanded editorial copy describes the experience and preparation for a visit; it does not fabricate reviews, clinician identities, credentials, or treatment outcomes. Doctor portraits are illustrative and labelled accordingly.
