@@ -56,4 +56,14 @@ const v4Images={general:['freedom','30% 45%'],mental:['sky','50% 70%'],renewals:
 editorial=editorial.replace('<!-- V4_CARDS -->',[services[0],services[1],services[6],services[3]].map((s,i)=>{const[image,focus]=v4Images[s.id];return `<article class="treatment-card"><img src="assets/${image}-960.jpg" alt="" loading="lazy" width="704" height="538" style="object-position:${focus}"><div class="treatment-body"><span class="mono">0${i+1}</span><h3>${esc(s.name)}</h3><p>${esc(s.short)}</p><button class="care-open" data-service="${s.id}" aria-label="Explore ${esc(s.name)}"><span>From €${s.price} · ${esc(s.duration)}</span><span aria-hidden="true">↗</span></button></div></article>`}).join(''));
 editorial=editorial.replace('<!-- V4_FAQ -->',faqs.slice(0,6).map(([q,a],i)=>`<div class="faq-item${i===0?' open':''}"><h3><button class="faq-toggle" aria-expanded="${i===0}" aria-controls="v4-answer-${i}"><span>${esc(q)}</span><span class="faq-icon" aria-hidden="true">⌄</span></button></h3><div class="faq-answer" id="v4-answer-${i}" ${i===0?'':'inert'}><div><p>${esc(a)}</p></div></div></div>`).join(''));
 await writeFile('dist/design-04.html',editorial);
-console.log('Built all four Carevia designs.');
+const geistEditorial=editorial.replace('data-design="04"','data-design="04.1"')
+ .replace('<title>Carevia — Design 04</title>','<title>Carevia — Design 04.1 · Geist Sans</title>')
+ .replace('rel="canonical" href="https://carevia-glass.triple-labs-8416.chatgpt.site/design-04.html"','rel="canonical" href="https://carevia-glass.triple-labs-8416.chatgpt.site/design-04-1.html"')
+ .replaceAll('assets/aileron-400.woff2','assets/geist-400.woff2').replaceAll('assets/aileron-700.woff2','assets/geist-700.woff2')
+ .replace('<link rel="stylesheet" href="styles/design-04.css">','<link rel="stylesheet" href="styles/design-04.css"><link rel="stylesheet" href="styles/design-04-1.css">')
+ .replaceAll('href="/design-04.html" aria-current="page"','href="/design-04.html"')
+ .replaceAll('href="/design-04-1.html"','href="/design-04-1.html" aria-current="page"')
+ .replace('Smilara · editorial <span aria-hidden="true">●</span>','Smilara · editorial')
+ .replace('Smilara · Geist Sans</small>','Smilara · Geist Sans <span aria-hidden="true">●</span></small>');
+await writeFile('dist/design-04-1.html',geistEditorial);
+console.log('Built all Carevia designs, including Design 04.1.');
