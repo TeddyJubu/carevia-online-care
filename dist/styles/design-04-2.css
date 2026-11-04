@@ -121,10 +121,13 @@ main#main{position:relative;z-index:1}
 
 /* Fluted-glass hero refraction, shared with Design 03. */
 .hero .glass-image{position:absolute;inset:0;overflow:hidden;isolation:isolate;background:#102e52;transform:scale(1.03)}
-:is(.hero,.wide-banner) .glass-image>img{width:100%;height:100%;object-fit:cover;object-position:var(--focus,50% 50%);user-select:none;pointer-events:none;transform:none}
-:is(.hero,.wide-banner) .glass-strips{position:absolute;inset:0;pointer-events:none}
-:is(.hero,.wide-banner) .glass-strip{position:absolute;inset-block:0;background-repeat:no-repeat}
+:is(.hero,.wide-banner,.treatment-stack) .glass-image>img{width:100%;height:100%;object-fit:cover;object-position:var(--focus,50% 50%);user-select:none;pointer-events:none;transform:none}
+:is(.hero,.wide-banner,.treatment-stack) .glass-strips{position:absolute;inset:0;pointer-events:none}
+:is(.hero,.wide-banner,.treatment-stack) .glass-strip{position:absolute;inset-block:0;background-repeat:no-repeat}
 .hero .glass-strip{filter:grayscale(1)}
 .wide-banner .glass-image{position:absolute;inset:0;overflow:hidden;isolation:isolate;background:#102e52}
-:is(.hero,.wide-banner) .glass-strip i{position:absolute;inset:0;background:linear-gradient(90deg,#ffffff32 0%,#ffffff08 16%,transparent 52%,#00000057 100%);pointer-events:none}
-@media(prefers-reduced-motion:reduce){:is(.hero,.wide-banner) .glass-strips{display:none}}
+:is(.hero,.wide-banner,.treatment-stack) .glass-strip i{position:absolute;inset:0;background:linear-gradient(90deg,#ffffff32 0%,#ffffff08 16%,transparent 52%,#00000057 100%);pointer-events:none}
+@media(prefers-reduced-motion:reduce){:is(.hero,.wide-banner,.treatment-stack) .glass-strips{display:none}}
+
+/* Service photos share Design 03’s clear center and soft fluted edges. */
+.treatment-card>.glass-image{position:relative;overflow:hidden;isolation:isolate;background:#102e52}
