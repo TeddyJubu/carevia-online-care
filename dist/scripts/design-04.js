@@ -2,8 +2,10 @@ import{services as originalServices}from'./content.mjs';
 import{services as design42Services}from'./services-04-2.mjs';
 import{initExpandingSearch}from'./expanding-search.js';
 import{initFaqSection}from'./faq-section.js';
+import{initFrostNav}from'./frost-nav.js';
 const services=document.documentElement.dataset.design==='04.2'?design42Services:originalServices;
 const reduced=matchMedia('(prefers-reduced-motion:reduce)').matches;
+if(document.documentElement.dataset.design==='04.2')initFrostNav(document.querySelector('.topbar'));
 const esc=s=>String(s).replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('"','&quot;');
 if(!reduced){document.body.classList.add('motion-ready');const observer=new IntersectionObserver(entries=>entries.forEach(({target,isIntersecting})=>{if(isIntersecting){target.classList.add('in-view');observer.unobserve(target)}}),{threshold:.12});document.querySelectorAll('.reveal').forEach(el=>observer.observe(el))}
 const toggle=document.querySelector('.menu-toggle'),panel=document.querySelector('.menu-panel'),backdrop=document.querySelector('.menu-backdrop'),design=document.querySelector('.design-menu');

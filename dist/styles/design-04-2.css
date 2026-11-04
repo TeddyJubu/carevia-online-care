@@ -92,3 +92,18 @@
 @media(max-width:600px){.care-faq{padding-block:100px}.care-faq-inner{width:calc(100% - 40px)}.care-faq .care-faq-title{font-size:36px}.care-faq-description{font-size:15px}.care-faq-list{margin-top:36px}.care-faq-question{min-height:72px;padding-block:21px;font-size:16px;gap:20px}.care-faq-answer{padding-right:4px;padding-bottom:24px;font-size:15px}.care-faq-contact{padding:20px}}
 @media(max-width:400px){.care-faq .care-faq-title{font-size:32px}.care-faq-contact{align-items:flex-start;flex-direction:column;gap:14px}}
 @media(prefers-reduced-motion:reduce){.care-faq-icon,.care-faq-contact{transition:none}}
+/* Frosted navy controls with the supplied ChromaGrid's damped spotlight. */
+.topbar{--chroma-x:-9999px;--chroma-y:-9999px;--chroma-power:0;--chroma-r:150px}
+.topbar .nav-pill,.topbar .nav-logo{position:relative;isolation:isolate;border:1px solid #d5eaff30;background:linear-gradient(180deg,#6399cd2e,#08203914),#0c2a48b8;color:#f2f8ff;box-shadow:0 10px 24px -12px #051a33a6,inset 0 1px #ffffff26,inset 0 -1px #051d3429;backdrop-filter:blur(24px) saturate(160%);-webkit-backdrop-filter:blur(24px) saturate(160%);transition:background .25s,border-color .25s,box-shadow .25s}
+.topbar .nav-pill::before,.topbar .nav-logo::before,.topbar .nav-pill::after,.topbar .nav-logo::after{content:'';position:absolute;inset:0;border-radius:inherit;z-index:-1;pointer-events:none;opacity:var(--chroma-power)}
+.topbar .nav-pill::before,.topbar .nav-logo::before{background:radial-gradient(circle var(--chroma-r) at calc(var(--chroma-x) - var(--chroma-ox,0px)) calc(var(--chroma-y) - var(--chroma-oy,0px)),#b8e4ff3d,transparent 75%)}
+.topbar .nav-pill::after,.topbar .nav-logo::after{box-shadow:inset 0 0 0 1px #c3eaffb3,inset 0 0 20px -8px #91ceff80;mask-image:radial-gradient(circle var(--chroma-r) at calc(var(--chroma-x) - var(--chroma-ox,0px)) calc(var(--chroma-y) - var(--chroma-oy,0px)),#000 15%,#000b 45%,transparent 100%);-webkit-mask-image:radial-gradient(circle var(--chroma-r) at calc(var(--chroma-x) - var(--chroma-ox,0px)) calc(var(--chroma-y) - var(--chroma-oy,0px)),#000 15%,#000b 45%,transparent 100%)}
+.topbar .nav-logo .carevia-mark{filter:brightness(0) invert(1)}
+.topbar .nav-pill:hover,.topbar .nav-logo:hover{border-color:#d5eaff66}
+.topbar .nav-pill:focus-visible,.topbar .nav-logo:focus-visible{outline:2px solid #a6c9ec;outline-offset:4px}
+.topbar .nav-pill:active,.topbar .nav-logo:active{box-shadow:0 4px 14px -8px #051a33a6,inset 0 1px #ffffff1a}
+.footer-brand-iridescent{gap:12px;font-weight:500;letter-spacing:-.025em}
+.footer-iridescent-mark{position:relative;display:block;flex:none;width:64px;height:64px;overflow:hidden}
+.footer-iridescent-mark>img{position:absolute;left:50%;top:50%;width:132px;height:132px;max-width:none;object-fit:contain;transform:translate(-50%,-50%)}
+@media(max-width:600px){.footer-iridescent-mark{width:56px;height:56px}.footer-iridescent-mark>img{width:116px;height:116px}}
+@media(prefers-reduced-motion:reduce){.topbar .nav-pill,.topbar .nav-logo{transition:none}}
