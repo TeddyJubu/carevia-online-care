@@ -37,3 +37,31 @@
 @media(max-width:359px){#dialog-content{padding-inline:23px}}
 
 .hero-image{transform:scaleX(-1)}
+/* Give the main sections more separation while keeping each section's contents together. */
+.section{padding-block:144px}
+.intro{padding-top:160px;padding-bottom:96px}
+.care-section{padding-top:96px;padding-bottom:96px}
+.journey{padding-top:64px;padding-bottom:96px}
+.after-section{padding-top:80px;padding-bottom:144px}
+.journal-section,.faq-section{padding-top:64px;padding-bottom:144px}
+.closing{padding-top:48px}
+.emergency-note{padding-top:56px;padding-bottom:64px}
+@media(max-width:1199px){
+ .section{padding-block:120px}
+ .intro{padding-top:128px;padding-bottom:80px}
+ .care-section{padding-top:80px;padding-bottom:80px}
+ .journey{padding-top:56px;padding-bottom:80px}
+ .after-section{padding-top:64px;padding-bottom:120px}
+ .journal-section,.faq-section{padding-top:56px;padding-bottom:120px}
+ .closing{padding-top:40px}
+}
+@media(max-width:809px){
+ .section{padding-block:104px}
+ .intro{padding-top:112px;padding-bottom:64px}
+ .care-section{padding-top:64px;padding-bottom:64px}
+ .journey{padding-top:48px;padding-bottom:64px}
+ .after-section{padding-top:48px;padding-bottom:104px}
+ .journal-section,.faq-section{padding-top:48px;padding-bottom:104px}
+ .closing{padding-top:40px}
+ .emergency-note{padding-top:40px;padding-bottom:48px}
+}
