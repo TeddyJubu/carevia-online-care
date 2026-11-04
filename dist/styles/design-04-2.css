@@ -8,10 +8,13 @@
 .hero h1{font-size:clamp(25px,3.9vw,40px);font-weight:300}
 .hero .button,.treatments>.center .button,.people .button,.footer-grid .button{font-weight:400}
 .hero-wordmark{letter-spacing:-.015em;opacity:.5}
+/* Keep the supplied consultation photo upright and frame the person clearly. */
+.hero-photo{transform:scale(1.03);object-position:0% 50%}
 .about-heading h2,.section-title h2,.people .center h2,.faq h2,.footer-grid h2{font-weight:400}
 .journey-heading h2{font-weight:500}
 .treatment-body>h3{font-weight:500}
 @keyframes wordmark{from{opacity:0;translate:0 70px}to{opacity:.5;translate:0 0}}
 @media(max-width:600px){.hero h1{font-size:25px}}
+@media(max-width:600px){.hero-photo{object-position:67% 50%}}
 @media(max-width:360px){.hero h1{font-size:24px}}
 @media(max-width:600px) and (max-height:700px){.treatment-card,.visit-card{position:relative;top:auto}}
