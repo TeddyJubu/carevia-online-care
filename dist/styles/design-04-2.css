@@ -5,7 +5,7 @@
 /* Give the broad Clash Grotesk capitals room to retain their shapes. */
 .hero-wordmark,.footer-wordmark{letter-spacing:-.025em}
 /* Design 04.2 typography refinements from the page review. */
-.hero h1{font-size:clamp(25px,3.9vw,40px);font-weight:300}
+.hero h1{font-size:clamp(25px,5.1vw,52px);font-weight:300}
 .hero .button,.treatments>.center .button,.people .button,.footer-grid .button{font-weight:400}
 .hero-wordmark{letter-spacing:.005em;font-kerning:normal;opacity:.5}
 /* Keep the supplied consultation photo upright and frame the person clearly. */
