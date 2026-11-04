@@ -14,7 +14,7 @@ const statement=document.querySelector('[data-word-reveal]');const original=stat
 if(reduced){words.forEach(word=>word.style.setProperty('--reveal','100%'))}else{
  let active=false,pending=0;
  const clamp=v=>Math.max(0,Math.min(1,v));
- function paintWords(){pending=0;const rect=statement.getBoundingClientRect();const progress=clamp((innerHeight*.9-rect.top)/(rect.height+innerHeight*.35));words.forEach((word,i)=>{const p=clamp(progress*(words.length+1)-i);const smooth=p*p*(3-2*p);word.style.setProperty('--reveal',`${smooth*100}%`)});}
+ function paintWords(){pending=0;const rect=statement.getBoundingClientRect();const progress=clamp((innerHeight*(2/3)-rect.top-1)/(rect.height+innerHeight*.35));words.forEach((word,i)=>{const p=clamp(progress*(words.length+1)-i);const smooth=p*p*(3-2*p);word.style.setProperty('--reveal',`${smooth*100}%`)});}
  function schedule(){if(!pending)pending=requestAnimationFrame(paintWords)}
  new IntersectionObserver(entries=>{active=entries[0].isIntersecting;schedule()},{rootMargin:'15% 0px 15% 0px'}).observe(statement);
  window.addEventListener('scroll',()=>{if(active)schedule()},{passive:true});
