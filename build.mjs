@@ -28,7 +28,7 @@ const clashEditorial=editorial
  .replace(editorialCards,design42Cards)
  .replace('<a href="#top" class="footer-brand"><img class="carevia-mark mark-white" src="assets/carevia-mark.png" alt="" width="40" height="40">','<a href="#top" class="footer-brand footer-brand-iridescent"><span class="footer-iridescent-mark"><img src="assets/carevia-iridescent.png" alt="" width="1600" height="1600"></span>')
  .replace(/<section class="faq section" id="help">[\s\S]*?<\/section>/,design42Faq)
- .replace(/<img class="hero-photo"[^>]*>/,'<img class="hero-photo" src="assets/hero-call-1600.jpg" srcset="assets/hero-call-960.jpg 960w, assets/hero-call-1600.jpg 1600w" sizes="100vw" alt="A woman talks over video on a laptop from home" fetchpriority="high" width="1920" height="1277">')
+ .replace(/<img class="hero-photo"[^>]*>/,'<img class="hero-photo" src="assets/hero-telecare-1280.webp" srcset="assets/hero-telecare-960.webp 960w, assets/hero-telecare-1280.webp 1280w" sizes="100vw" alt="A clinician on a video call at her desk and an unwell patient at home searching for an online doctor in Portugal" fetchpriority="high" width="1280" height="832">')
  .replace(/<h1>Thoughtful care combining[\s\S]*?<\/h1>/,'<h1>Find the right care.<br>Feel better supported.</h1>')
  .replace('<a class="button light" href="#care">Find your care</a>',heroSearch)
 await writeFile('dist/design-04-2.html',clashEditorial);

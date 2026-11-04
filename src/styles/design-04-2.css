@@ -121,13 +121,36 @@ main#main{position:relative;z-index:1}
 
 /* Fluted-glass hero refraction, shared with Design 03. */
 .hero .glass-image{position:absolute;inset:0;overflow:hidden;isolation:isolate;background:#102e52;transform:scale(1.03)}
-:is(.hero,.wide-banner,.treatment-stack) .glass-image>img{width:100%;height:100%;object-fit:cover;object-position:var(--focus,50% 50%);user-select:none;pointer-events:none;transform:none}
-:is(.hero,.wide-banner,.treatment-stack) .glass-strips{position:absolute;inset:0;pointer-events:none}
-:is(.hero,.wide-banner,.treatment-stack) .glass-strip{position:absolute;inset-block:0;background-repeat:no-repeat}
-.hero .glass-strip{filter:grayscale(1)}
+:is(.hero,.wide-banner,.treatment-stack,.start-grid) .glass-image>img{width:100%;height:100%;object-fit:cover;object-position:var(--focus,50% 50%);user-select:none;pointer-events:none;transform:none}
+:is(.hero,.wide-banner,.treatment-stack,.start-grid) .glass-strips{position:absolute;inset:0;pointer-events:none}
+:is(.hero,.wide-banner,.treatment-stack,.start-grid) .glass-strip{position:absolute;inset-block:0;background-repeat:no-repeat}
+/* Full-color hero: no grayscale; the navy .hero-shade overlay from design-04.css stays. */
+.hero-photo,.hero .glass-strip{filter:none}
+/* Ripples stay behind the headline and fade to clear at both sides, so the doctor and patient read clearly. */
+.hero .glass-strips{--glass-fade:linear-gradient(90deg,transparent 18%,#000 38%,#000 62%,transparent 82%);-webkit-mask-image:var(--glass-fade);mask-image:var(--glass-fade)}
 .wide-banner .glass-image{position:absolute;inset:0;overflow:hidden;isolation:isolate;background:#102e52}
-:is(.hero,.wide-banner,.treatment-stack) .glass-strip i{position:absolute;inset:0;background:linear-gradient(90deg,#ffffff32 0%,#ffffff08 16%,transparent 52%,#00000057 100%);pointer-events:none}
-@media(prefers-reduced-motion:reduce){:is(.hero,.wide-banner,.treatment-stack) .glass-strips{display:none}}
+:is(.hero,.wide-banner,.treatment-stack,.start-grid) .glass-strip i{position:absolute;inset:0;background:linear-gradient(90deg,#ffffff32 0%,#ffffff08 16%,transparent 52%,#00000057 100%);pointer-events:none}
+@media(prefers-reduced-motion:reduce){:is(.hero,.wide-banner,.treatment-stack,.start-grid) .glass-strips{display:none}}
 
 /* Service photos share Design 03’s clear center and soft fluted edges. */
 .treatment-card>.glass-image{position:relative;overflow:hidden;isolation:isolate;background:#102e52}
+
+/* Start your care: two entry points built from the treatment-card system. */
+.start-steps{padding-top:0}
+.start-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.start-card{display:flex;flex-direction:column;background:#fff;border-radius:10px;overflow:hidden;isolation:isolate}
+.start-media{position:relative;height:300px;overflow:hidden;background:#102e52}
+.start-mark{display:grid;place-items:center;background:#e7eef6}
+.start-mark.is-live{background:#000}.start-mark.is-live>img{opacity:0}
+.start-mark>img{width:clamp(120px,34%,200px);height:auto;transition:transform 1.2s var(--ease)}
+.start-card:hover .start-mark>img{transform:scale(1.06)}
+.start-body{flex:1;display:flex;flex-direction:column;align-items:flex-start;padding:28px 32px 32px}
+.start-body>.mono{font-size:12px}
+.start-body>h3{margin-top:56px;font-weight:500;text-wrap:balance}
+.start-body>p{margin:15px 0 36px;max-width:34ch;font-size:16px;line-height:1.4}
+.start-body>.button{margin-top:auto;gap:14px;font-weight:400}
+.start-body>.button>span{transition:transform .4s var(--ease)}
+.start-body>.button:hover>span{transform:translateX(3px)}
+@media(max-width:860px){.start-grid{grid-template-columns:1fr}}
+@media(max-width:600px){.start-media{height:220px}.start-body{padding:22px}.start-body>.mono{font-size:10px}.start-body>h3{margin-top:30px;font-size:26px}.start-body>p{font-size:15px;margin-bottom:28px}.start-body>.button{width:100%;font-size:13px;min-height:44px}}
+@media(prefers-reduced-motion:reduce){.start-mark>img,.start-body>.button>span{transition:none}}
