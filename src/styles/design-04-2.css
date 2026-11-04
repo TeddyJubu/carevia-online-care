@@ -28,7 +28,7 @@
 .treatment-body>p{min-height:4.2em}
 @media(max-width:600px){.treatment-card{height:520px;grid-template-rows:220px 300px}.treatment-body{padding:22px}}
 /* Arc Expanding Search, adapted to the centered hero and Carevia's deep-blue glass. */
-.hero-intro{z-index:5}
+.hero-intro{position:absolute;z-index:5;left:50%;top:50svh;margin:0;padding-top:0;transform:translate(-50%,-50%)}
 .care-search{position:relative;width:100%;max-width:480px;height:60px;margin:42px auto 0;pointer-events:none;animation-delay:.25s;--search-collapsed:220px;--search-expanded-width:480px}
 .care-search [hidden]{display:none!important}
 .search-shell,.search-panel{position:absolute;left:50%;width:min(100%,var(--search-collapsed));transform:translateX(-50%);border:1px solid #d3e9ff47;background:#0b2b4abf;color:#f7fbff;box-shadow:0 14px 40px #051b3333,inset 0 1px #ffffff0d;backdrop-filter:blur(24px) saturate(140%);-webkit-backdrop-filter:blur(24px) saturate(140%);pointer-events:auto;transition:width .55s cubic-bezier(.2,.9,.25,1.12),border-radius .45s var(--ease),background .25s,border-color .25s,box-shadow .25s}
