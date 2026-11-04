@@ -18,3 +18,12 @@
 @media(max-width:600px){.hero-photo{object-position:32% 50%}}
 @media(max-width:360px){.hero h1{font-size:24px}}
 @media(max-width:600px) and (max-height:700px){.treatment-card,.visit-card{position:relative;top:auto}}
+/* Every service reserves the same photo area, ready for the supplied photos. */
+.treatment-card{height:380px;min-height:0;grid-template-rows:380px}
+.treatment-card>.treatment-media{width:100%;height:100%;min-height:0;object-fit:cover}
+.treatment-placeholder{display:flex;align-items:center;justify-content:center;flex-direction:column;gap:14px;background:#e7eef6;color:#6d8299}
+.treatment-placeholder>span{font-size:11px;line-height:1.5;letter-spacing:.06em;text-transform:uppercase}
+.treatment-body{padding:28px;min-width:0}
+.treatment-body>h3{padding-top:20px}
+.treatment-body>p{min-height:4.2em}
+@media(max-width:600px){.treatment-card{height:520px;grid-template-rows:220px 300px}.treatment-body{padding:22px}}

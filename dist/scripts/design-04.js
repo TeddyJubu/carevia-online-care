@@ -1,4 +1,6 @@
-import{services}from'./content.mjs';
+import{services as originalServices}from'./content.mjs';
+import{services as design42Services}from'./services-04-2.mjs';
+const services=document.documentElement.dataset.design==='04.2'?design42Services:originalServices;
 const reduced=matchMedia('(prefers-reduced-motion:reduce)').matches;
 const esc=s=>String(s).replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('"','&quot;');
 if(!reduced){document.body.classList.add('motion-ready');const observer=new IntersectionObserver(entries=>entries.forEach(({target,isIntersecting})=>{if(isIntersecting){target.classList.add('in-view');observer.unobserve(target)}}),{threshold:.12});document.querySelectorAll('.reveal').forEach(el=>observer.observe(el))}

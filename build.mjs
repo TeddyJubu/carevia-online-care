@@ -1,5 +1,6 @@
 import {cp,rm,mkdir,readFile,writeFile} from 'node:fs/promises';
 import {services,faqs,guides} from './src/content.mjs';
+import {services as design42Services} from './src/services-04-2.mjs';
 const esc=s=>String(s).replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('"','&quot;');
 let html=await readFile('src/index.html','utf8');
 const featured=[services[0],services[1],services[6],services[3]];
@@ -11,6 +12,7 @@ html=html.replace(/src="assets\/([^"]+)\.jpg"/g,(match,name)=>{const doctor=name
 html=html.replace(/<button class="care-card"[\s\S]*?<\/button>/g,card=>card.replace(/sizes="[^"]+"/,'sizes="750px"'));
 html=html.replace(/<img[^>]+fetchpriority="high"[^>]*>/g,tag=>tag.replace(/sizes="[^"]+"/,'sizes="(max-width: 809px) 150vh, 100vw"'));
 await rm('dist',{recursive:true,force:true});await mkdir('dist',{recursive:true});await cp('src/assets','dist/assets',{recursive:true});await cp('src/styles','dist/styles',{recursive:true});await cp('src/scripts','dist/scripts',{recursive:true});await cp('src/content.mjs','dist/scripts/content.mjs');await writeFile('dist/index.html',html);// A second entry point shares content and behavior, with its own visual palette.
+await cp('src/services-04-2.mjs','dist/scripts/services-04-2.mjs');
 let blue=html.replace('<html lang="en">','<html lang="en" data-design="02">')
  .replace('<title>Carevia — Care that fits into your life.</title>','<title>Carevia — Design 02 · Blue</title>')
  .replace('href="styles/site.css"','href="styles/site-blue.css"')
@@ -53,7 +55,8 @@ await writeFile('dist/design-03.html',serif);
 // The Smilara-inspired fourth design uses its own presentation and interactions.
 let editorial=await readFile('src/design-04.html','utf8');
 const v4Images={general:['freedom','30% 45%'],mental:['sky','50% 70%'],renewals:['field','50% 55%'],specialist:['sea','50% 50%']};
-editorial=editorial.replace('<!-- V4_CARDS -->',[services[0],services[1],services[6],services[3]].map((s,i)=>{const[image,focus]=v4Images[s.id];return `<article class="treatment-card"><img src="assets/${image}-960.jpg" alt="" loading="lazy" width="704" height="538" style="object-position:${focus}"><div class="treatment-body"><span class="mono">0${i+1}</span><h3>${esc(s.name)}</h3><p>${esc(s.short)}</p><button class="care-open" data-service="${s.id}" aria-label="Explore ${esc(s.name)}"><span>From €${s.price} · ${esc(s.duration)}</span><span aria-hidden="true">↗</span></button></div></article>`}).join(''));
+const editorialCards=[services[0],services[1],services[6],services[3]].map((s,i)=>{const[image,focus]=v4Images[s.id];return `<article class="treatment-card"><img src="assets/${image}-960.jpg" alt="" loading="lazy" width="704" height="538" style="object-position:${focus}"><div class="treatment-body"><span class="mono">0${i+1}</span><h3>${esc(s.name)}</h3><p>${esc(s.short)}</p><button class="care-open" data-service="${s.id}" aria-label="Explore ${esc(s.name)}"><span>From €${s.price} · ${esc(s.duration)}</span><span aria-hidden="true">↗</span></button></div></article>`}).join('');
+editorial=editorial.replace('<!-- V4_CARDS -->',editorialCards);
 editorial=editorial.replace('<!-- V4_FAQ -->',faqs.slice(0,6).map(([q,a],i)=>`<div class="faq-item${i===0?' open':''}"><h3><button class="faq-toggle" aria-expanded="${i===0}" aria-controls="v4-answer-${i}"><span>${esc(q)}</span><span class="faq-icon" aria-hidden="true">⌄</span></button></h3><div class="faq-answer" id="v4-answer-${i}" ${i===0?'':'inert'}><div><p>${esc(a)}</p></div></div></div>`).join(''));
 await writeFile('dist/design-04.html',editorial);
 const geistEditorial=editorial.replace('data-design="04"','data-design="04.1"')
@@ -66,7 +69,9 @@ const geistEditorial=editorial.replace('data-design="04"','data-design="04.1"')
  .replace('Smilara · editorial <span aria-hidden="true">●</span>','Smilara · editorial')
  .replace('Smilara · Geist Sans</small>','Smilara · Geist Sans <span aria-hidden="true">●</span></small>');
 await writeFile('dist/design-04-1.html',geistEditorial);
+const design42Cards=design42Services.map((s,i)=>`<article class="treatment-card"><div class="treatment-media treatment-placeholder" aria-hidden="true"><svg width="40" height="40" viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="1.25"><rect x="5" y="7" width="30" height="26" rx="4"/><circle cx="14" cy="15" r="3"/><path d="m6 28 9-8 6 5 6-7 8 9"/></svg><span>Photo coming soon</span></div><div class="treatment-body"><span class="mono">0${i+1}</span><h3>${esc(s.name)}</h3><p>${esc(s.short)}</p><button class="care-open" data-service="${s.id}" aria-label="Explore ${esc(s.name)}"><span>From €${s.price} · ${esc(s.duration)}</span><span aria-hidden="true">↗</span></button></div></article>`).join('');
 const clashEditorial=editorial.replace('data-design="04"','data-design="04.2"')
+ .replace(editorialCards,design42Cards)
  .replace('<title>Carevia — Design 04</title>','<title>Carevia — Design 04.2 · Clash Grotesk</title>')
  .replace('rel="canonical" href="https://carevia-glass.triple-labs-8416.chatgpt.site/design-04.html"','rel="canonical" href="https://carevia-glass.triple-labs-8416.chatgpt.site/design-04-2.html"')
  .replace(/<img class="hero-photo"[^>]*>/,'<img class="hero-photo" src="assets/hero-call-1600.jpg" srcset="assets/hero-call-960.jpg 960w, assets/hero-call-1600.jpg 1600w" sizes="100vw" alt="A woman talks over video on a laptop from home" fetchpriority="high" width="1920" height="1277">')
