@@ -11,4 +11,5 @@ const copy={
  renewals:{name:'Test requests & renewals',short:'Doctor consultations for test requests and treatment renewals'}
 };
 
-export const services=originalServices.map(service=>({...service,...copy[service.id]}));
+const blueImages={"general": "general-urgent-care", "mental": "mental-health", "nutrition": "weight-management", "specialist": "specialist-care", "certificates": "certificates-assessments", "treatments": "treatments", "renewals": "test-requests-renewals"};
+export const services=originalServices.map(service=>({...service,...copy[service.id],image:`premium-blue/${blueImages[service.id]}`}));
