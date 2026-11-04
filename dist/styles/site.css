@@ -65,3 +65,17 @@
  .closing{padding-top:40px}
  .emergency-note{padding-top:40px;padding-bottom:48px}
 }
+/* Version picker: one current design, with room to add more later. */
+.design-menu{position:relative;flex:none}
+.design-menu summary{display:flex;align-items:center;gap:7px;cursor:pointer;list-style:none;padding:12px 0;font-size:13px;letter-spacing:-.2px}
+.design-menu summary::-webkit-details-marker{display:none}
+.design-menu summary:focus-visible{outline:2px solid var(--green);outline-offset:5px;border-radius:3px}
+.design-chevron{display:inline-block;width:6px;height:6px;border-right:1px solid currentColor;border-bottom:1px solid currentColor;transform:rotate(45deg) translateY(-2px);transition:transform .3s var(--ease)}
+.design-menu[open] .design-chevron{transform:rotate(225deg) translate(-1px,-1px)}
+.design-dropdown{position:absolute;right:-28px;top:calc(100% + 14px);width:230px;padding:17px;background:var(--surface);border:1px solid var(--line);border-radius:18px;box-shadow:0 14px 40px #111b111a;z-index:3;animation:dialog-in .25s var(--ease)}
+.design-label{display:block;font-size:10px;letter-spacing:.08em;color:var(--secondary);margin:2px 4px 11px}
+.design-dropdown>a{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:12px!important;border-radius:10px;background:var(--wash);text-decoration:none!important}
+.design-dropdown>a:after{display:none!important}
+.design-dropdown strong,.design-dropdown small{display:block}.design-dropdown strong{font-size:14px;font-weight:500}.design-dropdown small{font-size:11px;color:var(--secondary);margin-top:4px}.design-current{color:var(--green);font-size:10px}
+@media(max-width:1199px){.desktop-nav{gap:15px}.design-menu summary{font-size:12px}}
+@media(max-width:809px){.design-menu-mobile{border-bottom:1px solid var(--line);opacity:0;transform:translateY(10px);transition:opacity .4s var(--ease),transform .4s var(--ease)}.mobile-nav.open .design-menu-mobile{opacity:1;transform:none;transition-delay:150ms}.design-menu-mobile summary{display:flex;justify-content:space-between;min-height:52px;font-size:19px;letter-spacing:-.5px;padding:0;align-items:center}.design-menu-mobile .design-chevron{margin-right:7px}.design-menu-mobile .design-dropdown{position:static;width:100%;box-shadow:none;border:0;background:transparent;padding:2px 0 16px;animation:none}.design-menu-mobile .design-label{margin-left:0}.design-menu-mobile .design-dropdown>a{min-height:56px}.design-menu-mobile .design-dropdown strong{font-size:14px}.design-menu-mobile .design-dropdown small{font-size:11px}}
