@@ -13,3 +13,6 @@ footer{background:var(--ink);color:#fff;padding-top:160px;overflow:hidden}.foote
 @media(prefers-reduced-motion:reduce){:root{scroll-behavior:auto}*,*:before,*:after{animation:none!important;transition:none!important}.motion-ready .reveal{opacity:1}.hero-photo{will-change:auto}}
 /* Let responsive photographs follow the reference proportions. */
 .about-copy img,.visit-card>img{height:auto}
+/* Frame most of the wordmark and its fade in the first viewport. */
+.hero{height:calc(100svh + clamp(20px,2.8vw,42px));min-height:600px;max-height:none}
+@media(max-width:600px){.hero{height:calc(100svh + 12px);min-height:540px}}
