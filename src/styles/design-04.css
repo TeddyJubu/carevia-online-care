@@ -23,3 +23,7 @@ footer{background:var(--ink);color:#fff;padding-top:160px;overflow:hidden}.foote
 .footer-brand{display:inline-flex;align-items:center;gap:12px}
 .mini-mark{border:0}.mini-mark .carevia-mark{width:44px;height:44px}
 @media(max-width:600px){.nav-logo .carevia-mark{width:34px;height:34px}.footer-brand .carevia-mark{width:36px;height:36px}.mini-mark .carevia-mark{width:40px;height:40px}}
+
+/* Keep the growing design list within narrow footer columns. */
+.footer-designs{flex-wrap:wrap}
+.design-dropdown{max-height:calc(100svh - 95px);overflow-y:auto}

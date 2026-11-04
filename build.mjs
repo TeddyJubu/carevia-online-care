@@ -66,4 +66,14 @@ const geistEditorial=editorial.replace('data-design="04"','data-design="04.1"')
  .replace('Smilara · editorial <span aria-hidden="true">●</span>','Smilara · editorial')
  .replace('Smilara · Geist Sans</small>','Smilara · Geist Sans <span aria-hidden="true">●</span></small>');
 await writeFile('dist/design-04-1.html',geistEditorial);
-console.log('Built all Carevia designs, including Design 04.1.');
+const clashEditorial=editorial.replace('data-design="04"','data-design="04.2"')
+ .replace('<title>Carevia — Design 04</title>','<title>Carevia — Design 04.2 · Clash Grotesk</title>')
+ .replace('rel="canonical" href="https://carevia-glass.triple-labs-8416.chatgpt.site/design-04.html"','rel="canonical" href="https://carevia-glass.triple-labs-8416.chatgpt.site/design-04-2.html"')
+ .replace(/<link rel="preload" href="assets\/aileron-(?:400|700).woff2" as="font" type="font\/woff2" crossorigin>/g,'')
+ .replace('<link rel="stylesheet" href="styles/design-04.css">','<link rel="preload" href="assets/clash-grotesk-variable.woff2" as="font" type="font/woff2" crossorigin><link rel="stylesheet" href="styles/design-04.css"><link rel="stylesheet" href="styles/design-04-2.css">')
+ .replaceAll('href="/design-04.html" aria-current="page"','href="/design-04.html"')
+ .replaceAll('href="/design-04-2.html"','href="/design-04-2.html" aria-current="page"')
+ .replace('Smilara · editorial <span aria-hidden="true">●</span>','Smilara · editorial')
+ .replace('Smilara · Clash Grotesk</small>','Smilara · Clash Grotesk <span aria-hidden="true">●</span></small>');
+await writeFile('dist/design-04-2.html',clashEditorial);
+console.log('Built all Carevia designs, including Design 04.2.');

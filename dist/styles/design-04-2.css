@@ -1,0 +1,7 @@
+/* Design 04.2: Design 04 with the supplied Clash Grotesk family. */
+/* Clash Grotesk by Indian Type Foundry, distributed under the included Fontshare FFL. */
+@font-face{font-family:"Clash Grotesk";src:url('../assets/clash-grotesk-variable.woff2') format('woff2');font-weight:200 700;font-style:normal;font-display:swap}
+:root,.mono,.principles button>span,.menu-panel nav>a span{font-family:"Clash Grotesk",Arial,sans-serif}
+/* Give the broad Clash Grotesk capitals room to retain their shapes. */
+.hero-wordmark,.footer-wordmark{letter-spacing:-.025em}
+@media(max-width:600px) and (max-height:700px){.treatment-card,.visit-card{position:relative;top:auto}}
