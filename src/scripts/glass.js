@@ -7,7 +7,7 @@ export class GlassPhoto{
   this.el=el;this.img=el.querySelector('img');this.mode=el.dataset.glass||'lens';this.reduced=reduced;this.strips=[];this.visible=false;this.raf=0;this.x=-1;this.target=-1;this.open=0;this.openTarget=0;this.clear=0;this.clearTarget=0;this.pointer=false;this.start=performance.now();this.coarse=matchMedia('(hover: none)').matches;
   const [fx,fy]=(el.dataset.focus||'50% 50%').split(' ').map(parseFloat);this.focusX=fx;this.focusY=fy;el.style.setProperty('--focus',`${fx}% ${fy}%`);
   this.layer=document.createElement('span');this.layer.className='glass-strips';this.layer.setAttribute('aria-hidden','true');el.append(this.layer);
-  this.host=el.closest('.care-card,.hero,.closing-card,.journey-visual')||el;
+  this.host=el.closest('.care-card,.hero,.closing-card,.journey-visual,.wide-banner')||el;
   if(!reduced){this.host.addEventListener('pointermove',e=>{if(e.pointerType==='touch')return;this.pointer=true;const rect=this.el.getBoundingClientRect();const localX=(e.clientX-rect.left)*this.w/rect.width;this.target=this.el.dataset.mirrored==='true'?this.w-localX:localX;this.openTarget=1;if(this.mode==='hover')this.clearTarget=1;this.schedule()},{passive:true});this.host.addEventListener('pointerleave',()=>{this.pointer=false;if(this.mode==='hover')this.clearTarget=0;this.schedule()});}
   this.resize=new ResizeObserver(()=>this.layout());this.resize.observe(el);
   if(this.img.complete&&this.img.naturalWidth)this.layout();;this.img.addEventListener('load',()=>this.layout());
