@@ -40,4 +40,14 @@ const blueCss=css.replace(/#[0-9a-f]{3,8}\b/gi,coastal)+`
 `;
 await writeFile('dist/styles/site-blue.css',blueCss);
 await writeFile('dist/design-02.html',blue.replace('name="theme-color" content="#f3f2ed"','name="theme-color" content="#f0f6fb"'));
-console.log('Built Carevia Design 01 and Design 02.');
+// Design 03 retains Design 01's styling, images, and behavior; only headings change.
+const serif=html.replace('<html lang="en">','<html lang="en" data-design="03">')
+ .replace('<title>Carevia — Care that fits into your life.</title>','<title>Carevia — Design 03 · Geist Serif</title>')
+ .replace('rel="canonical" href="https://carevia-glass.triple-labs-8416.chatgpt.site/"','rel="canonical" href="https://carevia-glass.triple-labs-8416.chatgpt.site/design-03.html"')
+ .replace('<link rel="stylesheet" href="styles/site.css">','<link rel="preload" href="assets/geist-serif-regular.woff2" as="font" type="font/woff2" crossorigin><link rel="stylesheet" href="styles/site.css"><link rel="stylesheet" href="styles/site-serif.css">')
+ .replaceAll('href="/" aria-current="page"','href="/"')
+ .replaceAll('<span class="design-current" aria-hidden="true">●</span>','')
+ .replaceAll('href="/design-03.html"','href="/design-03.html" aria-current="page"')
+ .replaceAll('<small>Olive · Geist Serif</small></span></a>','<small>Olive · Geist Serif</small></span><span class="design-current" aria-hidden="true">●</span></a>');
+await writeFile('dist/design-03.html',serif);
+console.log('Built Carevia Design 01, Design 02, and Design 03.');
