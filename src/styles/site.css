@@ -35,3 +35,5 @@
 #dialog-content{padding:52px 48px;max-height:calc(100svh - 48px);overflow-y:auto;overscroll-behavior:contain}
 @media(max-width:809px){#dialog-content{padding:48px 28px 32px;max-height:calc(100svh - 28px)}.dialog-price{flex-direction:column;align-items:flex-start;gap:6px}.dialog-price strong{font-size:39px;white-space:nowrap}.dialog-price span{padding:0}}
 @media(max-width:359px){#dialog-content{padding-inline:23px}}
+
+.hero-image{transform:scaleX(-1)}
