@@ -4,4 +4,14 @@
 :root,.mono,.principles button>span,.menu-panel nav>a span{font-family:"Clash Grotesk",Arial,sans-serif}
 /* Give the broad Clash Grotesk capitals room to retain their shapes. */
 .hero-wordmark,.footer-wordmark{letter-spacing:-.025em}
+/* Design 04.2 typography refinements from the page review. */
+.hero h1{font-size:clamp(25px,3.9vw,40px);font-weight:300}
+.hero .button,.treatments>.center .button,.people .button,.footer-grid .button{font-weight:400}
+.hero-wordmark{letter-spacing:-.015em;opacity:.5}
+.about-heading h2,.section-title h2,.people .center h2,.faq h2,.footer-grid h2{font-weight:400}
+.journey-heading h2{font-weight:500}
+.treatment-body>h3{font-weight:500}
+@keyframes wordmark{from{opacity:0;translate:0 70px}to{opacity:.5;translate:0 0}}
+@media(max-width:600px){.hero h1{font-size:25px}}
+@media(max-width:360px){.hero h1{font-size:24px}}
 @media(max-width:600px) and (max-height:700px){.treatment-card,.visit-card{position:relative;top:auto}}
