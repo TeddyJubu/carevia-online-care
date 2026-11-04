@@ -114,3 +114,8 @@
 .hero:after{height:var(--hero-fade)}
 .hero-wordmark{bottom:calc(var(--hero-fade) - var(--hero-overhang) + 6px)}
 @media(max-width:600px){.hero{--hero-fade:85px;--hero-overhang:12px}.hero-wordmark{bottom:calc(var(--hero-fade) - var(--hero-overhang) + 4px)}}
+
+/* Warm spotlight reveal on the banner photo. */
+.wide-banner{--mx:50%;--my:50%;--warm:0}
+.wide-banner>img.banner-warm{position:absolute;inset:0;opacity:var(--warm);-webkit-mask-image:radial-gradient(circle 210px at var(--mx) var(--my),#000 0 55%,transparent 100%);mask-image:radial-gradient(circle 210px at var(--mx) var(--my),#000 0 55%,transparent 100%);transition:opacity .45s ease;pointer-events:none}
+@media(prefers-reduced-motion:reduce){.wide-banner>img.banner-warm{display:none}}
