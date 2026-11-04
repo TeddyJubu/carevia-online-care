@@ -64,3 +64,31 @@
 @keyframes search-panel-in{from{opacity:0;translate:0 6px}to{opacity:1;translate:0 0}}
 @media(max-width:600px){.care-search{height:56px;margin-top:36px;--search-collapsed:210px}.search-option{min-height:62px}.search-option-title{font-size:14px}}
 @media(prefers-reduced-motion:reduce){.care-search,.search-panel{animation:none}.search-shell,.search-panel,.search-input,.search-highlight{transition:none}}
+/* Arc FAQ Section: its light accordion layout, styled for Carevia. */
+.care-faq{padding-block:160px;background:#fcfdff}
+.care-faq-inner{width:calc(100% - 48px);max-width:720px;margin-inline:auto}
+.care-faq-intro{text-align:center}
+.care-faq-intro>.mono{color:#647b91;font-size:11px;letter-spacing:.035em}
+.care-faq .care-faq-title{margin:20px 0 0;font-size:48px;line-height:1.06;letter-spacing:-.01em;font-weight:400;text-wrap:balance}
+.care-faq-description{margin:18px auto 0;max-width:440px;font-size:16px;line-height:1.6;color:var(--muted)}
+.care-faq-list{margin:48px 0 0;padding:0;list-style:none;border-top:1px solid #dce6f0}
+.care-faq-item{overflow:hidden;border-bottom:1px solid #dce6f0}
+.care-faq-heading{margin:0;font:inherit}
+.care-faq-question{display:flex;align-items:center;justify-content:space-between;gap:24px;width:100%;min-height:76px;padding:22px 4px;border:0;background:none;color:var(--ink);font:inherit;font-size:18px;font-weight:500;line-height:1.45;text-align:left;scroll-margin-top:110px}
+.care-faq-question>span{min-width:0}
+.care-faq-question:focus-visible{outline:2px solid #739ac2;outline-offset:-2px;border-radius:6px}
+.care-faq-icon{flex:none;color:#748a9f;transition:transform .35s cubic-bezier(.22,1,.36,1),color .2s}
+.care-faq-item[data-open] .care-faq-icon{transform:rotate(45deg);color:var(--ink)}
+.care-faq-question:hover .care-faq-icon{color:var(--ink)}
+.care-faq-panel{overflow:hidden}
+.care-faq-panel[hidden]{display:none}
+.care-faq-answer{margin:0;padding:0 44px 26px 4px;color:var(--muted);font-size:16px;line-height:1.65;text-wrap:pretty}
+.care-faq-contact{display:flex;justify-content:space-between;align-items:center;gap:24px;margin-top:32px;padding:22px 24px;border:1px solid #e2eaf3;border-radius:16px;background:#f3f7fb;text-align:left;transition:background .2s}
+.care-faq-contact:hover{background:#eaf2f9}
+.care-faq-contact-copy{display:grid;gap:6px;min-width:0;font-size:14px;line-height:1.4}
+.care-faq-contact-copy>strong{font-weight:500}
+.care-faq-contact-copy>span{color:var(--muted)}
+.care-faq-contact-link{flex:none;font-size:13px;font-weight:500;text-decoration:underline;text-decoration-color:#a7bdd0;text-underline-offset:4px}
+@media(max-width:600px){.care-faq{padding-block:100px}.care-faq-inner{width:calc(100% - 40px)}.care-faq .care-faq-title{font-size:36px}.care-faq-description{font-size:15px}.care-faq-list{margin-top:36px}.care-faq-question{min-height:72px;padding-block:21px;font-size:16px;gap:20px}.care-faq-answer{padding-right:4px;padding-bottom:24px;font-size:15px}.care-faq-contact{padding:20px}}
+@media(max-width:400px){.care-faq .care-faq-title{font-size:32px}.care-faq-contact{align-items:flex-start;flex-direction:column;gap:14px}}
+@media(prefers-reduced-motion:reduce){.care-faq-icon,.care-faq-contact{transition:none}}
