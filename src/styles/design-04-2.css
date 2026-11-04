@@ -29,7 +29,7 @@
 @media(max-width:600px){.treatment-card{height:520px;grid-template-rows:220px 300px}.treatment-body{padding:22px}}
 /* Arc Expanding Search, adapted to the centered hero and Carevia's deep-blue glass. */
 .hero-intro{position:absolute;z-index:5;left:50%;top:50svh;margin:0;padding-top:0;transform:translate(-50%,-50%)}
-.care-search{position:relative;width:100%;max-width:480px;height:60px;margin:42px auto 0;pointer-events:none;animation-delay:.25s;--search-collapsed:320px;--search-expanded-width:480px}
+.care-search{position:relative;width:100%;max-width:540px;height:60px;margin:42px auto 0;pointer-events:none;animation-delay:.25s;--search-collapsed:500px;--search-expanded-width:540px}
 .care-search [hidden]{display:none!important}
 .search-shell,.search-panel{position:absolute;left:50%;width:min(100%,var(--search-collapsed));transform:translateX(-50%);border:1px solid #d3e9ff47;background:#0b2b4abf;color:#f7fbff;box-shadow:0 14px 40px #051b3333,inset 0 1px #ffffff0d;backdrop-filter:blur(24px) saturate(140%);-webkit-backdrop-filter:blur(24px) saturate(140%);pointer-events:auto;transition:width .55s cubic-bezier(.2,.9,.25,1.12),border-radius .45s var(--ease),background .25s,border-color .25s,box-shadow .25s}
 .search-shell{top:0;height:100%;border-radius:30px;overflow:hidden}
@@ -63,7 +63,7 @@
 .search-empty>span{display:block;margin-top:6px;font-size:12px;line-height:1.5;color:#b1cce2}
 .search-announcement{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
 @keyframes search-panel-in{from{opacity:0;translate:0 6px}to{opacity:1;translate:0 0}}
-@media(max-width:600px){.care-search{height:56px;margin-top:36px;--search-collapsed:280px}.search-option{min-height:62px}.search-option-title{font-size:14px}}
+@media(max-width:600px){.care-search{height:56px;margin-top:36px;--search-collapsed:100%}.search-option{min-height:62px}.search-option-title{font-size:14px}}
 @media(prefers-reduced-motion:reduce){.care-search,.search-panel{animation:none}.search-shell,.search-panel,.search-input,.search-highlight{transition:none}}
 /* Arc FAQ Section: its light accordion layout, styled for Carevia. */
 .care-faq{padding-block:160px;background:#fcfdff}
@@ -108,3 +108,9 @@
 .footer-iridescent-mark>img{position:absolute;left:50%;top:50%;width:132px;height:132px;max-width:none;object-fit:contain;transform:translate(-50%,-50%)}
 @media(max-width:600px){.footer-iridescent-mark{width:56px;height:56px}.footer-iridescent-mark>img{width:116px;height:116px}}
 @media(prefers-reduced-motion:reduce){.topbar .nav-pill,.topbar .nav-logo{transition:none}}
+
+/* Keep the blue treatment across the first screen; fade into the page below it. */
+.hero{--hero-fade:130px;--hero-overhang:clamp(20px,2.8vw,42px);height:calc(100svh + var(--hero-fade))}
+.hero:after{height:var(--hero-fade)}
+.hero-wordmark{bottom:calc(var(--hero-fade) - var(--hero-overhang) + 6px)}
+@media(max-width:600px){.hero{--hero-fade:85px;--hero-overhang:12px}.hero-wordmark{bottom:calc(var(--hero-fade) - var(--hero-overhang) + 4px)}}
