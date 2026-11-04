@@ -10,4 +10,34 @@ html=html.replace('<!-- GUIDES -->',guides.map(g=>`<button class="guide-card" da
 html=html.replace(/src="assets\/([^"]+)\.jpg"/g,(match,name)=>{const doctor=name.startsWith('doctor');const widths=doctor?[480,768]:[480,960,1600];return `${match} srcset="${widths.map(w=>`assets/${name}-${w}.jpg ${w}w`).join(', ')}" sizes="${doctor?'(max-width: 599px) 132px, 33vw':'(max-width: 599px) 100vw, 50vw'}"`;});
 html=html.replace(/<button class="care-card"[\s\S]*?<\/button>/g,card=>card.replace(/sizes="[^"]+"/,'sizes="750px"'));
 html=html.replace(/<img[^>]+fetchpriority="high"[^>]*>/g,tag=>tag.replace(/sizes="[^"]+"/,'sizes="(max-width: 809px) 150vh, 100vw"'));
-await rm('dist',{recursive:true,force:true});await mkdir('dist',{recursive:true});await cp('src/assets','dist/assets',{recursive:true});await cp('src/styles','dist/styles',{recursive:true});await cp('src/scripts','dist/scripts',{recursive:true});await cp('src/content.mjs','dist/scripts/content.mjs');await writeFile('dist/index.html',html);console.log('Built Carevia: static page, local assets, accessible interactions.');
+await rm('dist',{recursive:true,force:true});await mkdir('dist',{recursive:true});await cp('src/assets','dist/assets',{recursive:true});await cp('src/styles','dist/styles',{recursive:true});await cp('src/scripts','dist/scripts',{recursive:true});await cp('src/content.mjs','dist/scripts/content.mjs');await writeFile('dist/index.html',html);// A second entry point shares content and behavior, with its own visual palette.
+let blue=html.replace('<html lang="en">','<html lang="en" data-design="02">')
+ .replace('<title>Carevia — Care that fits into your life.</title>','<title>Carevia — Design 02 · Blue</title>')
+ .replace('href="styles/site.css"','href="styles/site-blue.css"')
+ .replace('rel="canonical" href="https://carevia-glass.triple-labs-8416.chatgpt.site/"','rel="canonical" href="https://carevia-glass.triple-labs-8416.chatgpt.site/design-02.html"')
+ .replace(/<head>[\s\S]*?<\/head>/,head=>head.replaceAll('assets/freedom-','assets/sea-'))
+ .replace(/<div class="glass-image hero-image"[\s\S]*?<\/div>/,`<div class="glass-image hero-image" data-glass="lens" data-src="assets/sea.jpg" data-focus="50% 58%" data-mobile-focus="51% 50%" data-lens-center=".5" data-mobile-lens=".5" data-strength="1.4" data-drift=".06" data-lens-size=".55"><img src="assets/sea.jpg" srcset="assets/sea-480.jpg 480w, assets/sea-960.jpg 960w, assets/sea-1600.jpg 1600w" sizes="(max-width: 809px) 150vh, 100vw" alt="Friends swimming and jumping into the blue Mediterranean Sea" width="2391" height="2023" fetchpriority="high"></div>`)
+ .replaceAll('href="/" aria-current="page"','href="/"')
+ .replaceAll('href="/design-02.html"','href="/design-02.html" aria-current="page"')
+ .replaceAll('<span class="design-current" aria-hidden="true">●</span>','')
+ .replaceAll('<small>Blue · coastal</small></span></a>','<small>Blue · coastal</small></span><span class="design-current" aria-hidden="true">●</span></a>');
+const css=await readFile('src/styles/site.css','utf8');
+// Recolor the full visual system, including translucent image shades and panels.
+function coastal(hex){
+ let raw=hex.slice(1);if(raw.length===3||raw.length===4)raw=[...raw].map(c=>c+c).join('');
+ const alpha=raw.slice(6);let rgb=[0,2,4].map(i=>parseInt(raw.slice(i,i+2),16)/255);
+ const hi=Math.max(...rgb),lo=Math.min(...rgb),l=(hi+lo)/2,d=hi-lo;
+ if(!d)return hex;
+ let saturation=d/(1-Math.abs(2*l-1));
+ saturation=Math.max(saturation,l>.8?.32:.24);
+ const h=211/60,c=(1-Math.abs(2*l-1))*saturation,x=c*(1-Math.abs(h%2-1)),m=l-c/2;
+ return '#'+[0,x,c].map(v=>Math.round((v+m)*255).toString(16).padStart(2,'0')).join('')+alpha;
+}
+const blueCss=css.replace(/#[0-9a-f]{3,8}\b/gi,coastal)+`
+:root{--paper:#f0f6fb;--surface:#fafdff;--wash:#e1edf7;--ink:#102b48;--secondary:#476580;--muted:#637f9a;--line:#193d6126;--green:#205e9b;--mint:#b9e3ff;--forest:#112f50;--white:#f3f8ff;--nav:#f0f6fbed}
+:root[data-theme=dark]{--paper:#0c1b2c;--surface:#122840;--wash:#1a3653;--ink:#edf6ff;--secondary:#b3c9df;--muted:#809fbd;--line:#c7e3ff26;--green:#a3d5ff;--nav:#122840ed}
+.hero-image{transform:none}.hero-shade{background:linear-gradient(0deg,#061a34eb 0%,#09264760 35%,#0d30500a 72%)}
+`;
+await writeFile('dist/styles/site-blue.css',blueCss);
+await writeFile('dist/design-02.html',blue.replace('name="theme-color" content="#f3f2ed"','name="theme-color" content="#f0f6fb"'));
+console.log('Built Carevia Design 01 and Design 02.');

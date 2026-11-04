@@ -79,3 +79,7 @@
 .design-dropdown strong,.design-dropdown small{display:block}.design-dropdown strong{font-size:14px;font-weight:500}.design-dropdown small{font-size:11px;color:var(--secondary);margin-top:4px}.design-current{color:var(--green);font-size:10px}
 @media(max-width:1199px){.desktop-nav{gap:15px}.design-menu summary{font-size:12px}}
 @media(max-width:809px){.design-menu-mobile{border-bottom:1px solid var(--line);opacity:0;transform:translateY(10px);transition:opacity .4s var(--ease),transform .4s var(--ease)}.mobile-nav.open .design-menu-mobile{opacity:1;transform:none;transition-delay:150ms}.design-menu-mobile summary{display:flex;justify-content:space-between;min-height:52px;font-size:19px;letter-spacing:-.5px;padding:0;align-items:center}.design-menu-mobile .design-chevron{margin-right:7px}.design-menu-mobile .design-dropdown{position:static;width:100%;box-shadow:none;border:0;background:transparent;padding:2px 0 16px;animation:none}.design-menu-mobile .design-label{margin-left:0}.design-menu-mobile .design-dropdown>a{min-height:56px}.design-menu-mobile .design-dropdown strong{font-size:14px}.design-menu-mobile .design-dropdown small{font-size:11px}}
+
+/* Shared design navigation. */
+.design-dropdown>a+a{margin-top:6px}.design-dropdown>a:not([aria-current]){background:transparent}.design-dropdown>a:hover{background:var(--wash)}
+@media(max-width:809px){.mobile-nav{max-height:calc(100svh - 88px);overflow-y:auto;overscroll-behavior:contain}}
