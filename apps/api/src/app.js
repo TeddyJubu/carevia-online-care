@@ -4,7 +4,8 @@ import fastifyCors from '@fastify/cors'
 import { languageTokens } from './catalog.js'
 import { createMeetingToken, createPrivateRoom, dailyHint, tokenWindow } from './daily.js'
 import { prisma } from './prisma.js'
-import { authRoutes, sessionUser as userFromRequest } from './auth.js'
+import { OUTBOX_ENABLED } from './config.js'
+import { authRoutes, requireRole, sessionUser as userFromRequest } from './auth.js'
 
 const ALLOWED_ORIGINS = ['http://localhost:5173', 'http://localhost:5174']
 
@@ -34,11 +35,39 @@ function toDoctor(doctor) {
   }
 }
 
+const SENSITIVE = [
+  'password', 'newPassword', 'currentPassword', 'token', 'code', 'backupCode', 'apiKey', 'secret',
+  'email', 'newEmail', 'phone', 'name', 'firstName', 'lastName', 'dateOfBirth',
+]
+
+// No names, emails, phones, birth dates, cookies or tokens in logs: requests are logged by path only
+// (query strings and Better Auth path tokens removed), without headers or the client IP.
+export function safePath(url) {
+  return String(url || '').split('?')[0].replace(/^\/api\/auth\/reset-password\/.+$/, '/api/auth/reset-password/[redacted]')
+}
+
+function loggerOptions() {
+  if (process.env.LOG_LEVEL === 'silent') return false
+  return {
+    level: process.env.LOG_LEVEL || 'info',
+    serializers: {
+      req: (request) => ({ method: request.method, path: safePath(request.url) }),
+      res: (reply) => ({ statusCode: reply.statusCode }),
+    },
+    redact: {
+      censor: '[redacted]',
+      paths: [
+        'req.headers', 'res.headers', 'headers', 'cookie', 'cookies',
+        ...SENSITIVE, ...SENSITIVE.map((key) => `*.${key}`), ...SENSITIVE.map((key) => `body.${key}`),
+      ],
+    },
+  }
+}
+
 export async function buildApp() {
   const app = Fastify({
-    logger: {
-      redact: ['req.headers.authorization', 'req.headers.cookie', 'req.body.password', 'req.body.apiKey'],
-    },
+    trustProxy: process.env.TRUST_PROXY === 'true',
+    logger: loggerOptions(),
   })
 
   await app.register(fastifyCors, {
@@ -52,11 +81,19 @@ export async function buildApp() {
     if (error.validation) {
       return reply.code(400).send({ error: 'VALIDATION', message: 'Check the submitted fields.' })
     }
-    request.log.error({ err: error }, 'request failed')
+    // Prisma messages can quote query values (emails, names), so only their code is logged.
+    const prismaError = String(error?.name || '').startsWith('PrismaClient')
+    request.log.error({ errName: error?.name, errCode: error?.code, ...(prismaError ? {} : { errMessage: error?.message }) }, 'request failed')
     return reply.code(500).send({ error: 'INTERNAL', message: 'Something went wrong.' })
   })
 
   app.get('/api/health', async () => ({ ok: true }))
+
+  app.get('/api/dev/outbox', async (_request, reply) => {
+    if (!OUTBOX_ENABLED) return reply.code(404).send({ error: 'NOT_FOUND', message: 'Not found.' })
+    const messages = await prisma.outboxMessage.findMany({ orderBy: { sentAt: 'desc' }, take: 100 })
+    return { messages: messages.map(({ id, to, subject, text, links, sentAt }) => ({ id, to, subject, text, links, sentAt })) }
+  })
 
   await app.register(authRoutes)
 
@@ -327,18 +364,7 @@ export async function buildApp() {
     }
   })
 
-  async function requireAdmin(request, reply) {
-    const user = await userFromRequest(request)
-    if (!user) {
-      reply.code(401).send({ error: 'UNAUTHENTICATED', message: 'Log in to continue.' })
-      return null
-    }
-    if (user.role !== 'admin') {
-      reply.code(403).send({ error: 'FORBIDDEN', message: 'Admin access only.' })
-      return null
-    }
-    return user
-  }
+  const requireAdmin = (request, reply) => requireRole(request, reply, ['admin'])
 
   app.get('/api/admin/daily', async (request, reply) => {
     const admin = await requireAdmin(request, reply)

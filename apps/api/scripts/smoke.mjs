@@ -7,7 +7,16 @@ function record(name, pass, detail = '') {
   console.log(`${pass ? 'PASS' : 'FAIL'}  ${name}${detail ? ` — ${detail}` : ''}`)
 }
 
-async function request(path, { method = 'GET', body, cookie } = {}) {
+// Auth endpoints are rate limited (3 sign-ins per 10 s per IP), so the smoke run waits and retries on 429.
+async function request(path, options = {}) {
+  for (let attempt = 0; ; attempt += 1) {
+    const result = await requestOnce(path, options)
+    if (result.status !== 429 || options.noRetry || attempt > 5) return result
+    await new Promise((resolve) => setTimeout(resolve, (Number(result.retryAfter) || 5) * 1000 + 200))
+  }
+}
+
+async function requestOnce(path, { method = 'GET', body, cookie } = {}) {
   const headers = { origin: process.env.SMOKE_ORIGIN || 'http://localhost:5180' }
   if (body !== undefined) headers['content-type'] = 'application/json'
   if (cookie) headers.cookie = cookie
@@ -21,7 +30,13 @@ async function request(path, { method = 'GET', body, cookie } = {}) {
   try { json = text ? JSON.parse(text) : null } catch { json = { raw: text } }
   const setCookie = response.headers.get('set-cookie') || ''
   const session = setCookie.match(/carevia\.session_token=([^;]+)/)?.[1] || ''
-  return { status: response.status, json, text, cookie: session ? `carevia.session_token=${session}` : '' }
+  return {
+    status: response.status,
+    json,
+    text,
+    retryAfter: response.headers.get('x-retry-after'),
+    cookie: session ? `carevia.session_token=${session}` : '',
+  }
 }
 
 let patientCookie = ''

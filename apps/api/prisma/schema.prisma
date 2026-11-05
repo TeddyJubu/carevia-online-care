@@ -25,21 +25,23 @@ enum Channel {
 // Better Auth tables (user, session, account, verification). Field names follow Better Auth 1.7.
 // dateOfBirth is a calendar date kept as "YYYY-MM-DD" text, so no time zone can shift it.
 model User {
-  id            String        @id
-  name          String
-  email         String        @unique
-  emailVerified Boolean       @default(false)
-  image         String?
-  createdAt     DateTime      @default(now())
-  updatedAt     DateTime      @updatedAt
-  firstName     String
-  lastName      String
-  phone         String
-  dateOfBirth   String
-  role          Role          @default(patient)
-  sessions      Session[]
-  accounts      Account[]
-  appointments  Appointment[]
+  id               String        @id
+  name             String
+  email            String        @unique
+  emailVerified    Boolean       @default(false)
+  image            String?
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+  firstName        String
+  lastName         String
+  phone            String
+  dateOfBirth      String
+  role             Role          @default(patient)
+  twoFactorEnabled Boolean?      @default(false)
+  twoFactors       TwoFactor[]
+  sessions         Session[]
+  accounts         Account[]
+  appointments     Appointment[]
 }
 
 model Session {
@@ -84,6 +86,31 @@ model Verification {
   updatedAt  DateTime @updatedAt
 
   @@index([identifier])
+}
+
+// Better Auth two-factor plugin.
+model TwoFactor {
+  id                      String    @id
+  secret                  String
+  backupCodes             String
+  userId                  String
+  user                    User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  verified                Boolean?  @default(true)
+  failedVerificationCount Int?      @default(0)
+  lockedUntil             DateTime?
+
+  @@index([secret])
+  @@index([userId])
+}
+
+// Emails that would have been sent. Written only in demo mode or development (GET /api/dev/outbox).
+model OutboxMessage {
+  id      String   @id @default(cuid())
+  to      String
+  subject String
+  text    String
+  links   String[]
+  sentAt  DateTime @default(now())
 }
 
 model ServiceGroup {
@@ -133,13 +160,13 @@ model Doctor {
 }
 
 model Slot {
-  id        Int      @id @default(autoincrement())
-  doctorId  Int
-  doctor    Doctor   @relation(fields: [doctorId], references: [id], onDelete: Cascade)
-  label     String
-  day       String
-  time      String
-  startsAt  DateTime
+  id       Int      @id @default(autoincrement())
+  doctorId Int
+  doctor   Doctor   @relation(fields: [doctorId], references: [id], onDelete: Cascade)
+  label    String
+  day      String
+  time     String
+  startsAt DateTime
 
   @@unique([doctorId, label])
   @@index([doctorId, startsAt])
