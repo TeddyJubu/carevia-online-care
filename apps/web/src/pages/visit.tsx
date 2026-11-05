@@ -30,7 +30,14 @@ export function phaseOf(a: Appointment, now = Date.now()): Phase {
 
 /** Loading and error states shared by every visit screen. */
 export function VisitGate({ load, children }: { load: ReturnType<typeof useAppointment>; children: (a: Appointment) => React.ReactNode }) {
-  if (load.error) return <div className="page-narrow"><ErrorState error={load.error} onRetry={load.reload} title={load.error.status === 404 ? 'We couldn’t find this visit' : undefined} /></div>
+  // A 404 won't change on retry (old link, or another person's visit): point to the account instead.
+  if (load.error?.status === 404) return (
+    <div className="page-narrow">
+      <PageTitle lede="The link may be old, or the visit belongs to another account.">We couldn’t find this visit</PageTitle>
+      <Link to="/account" className="btn btn-primary mt-8">Go to your visits</Link>
+    </div>
+  )
+  if (load.error) return <div className="page-narrow"><ErrorState error={load.error} onRetry={load.reload} /></div>
   if (!load.data) return <div className="page-narrow"><Loading label="Loading your visit" /></div>
   return <>{children(load.data)}</>
 }

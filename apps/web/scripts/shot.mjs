@@ -2,7 +2,7 @@
 // Env: BASE (default http://localhost:5180), LOGIN=email:password signs in first via the API.
 import { chromium } from 'playwright'
 const [out, ...paths] = process.argv.slice(2)
-const base = process.env.BASE ?? 'http://localhost:5180'
+const base = (process.env.BASE_URL ?? process.env.BASE ?? 'http://localhost:5180').replace(/\/(app\/?)?$/, '')
 const b = await chromium.launch()
 for (const width of [390, 1280]) {
   const ctx = await b.newContext({ viewport: { width, height: width === 390 ? 844 : 860 }, reducedMotion: 'reduce' })

@@ -1,5 +1,5 @@
-import{services as originalServices}from'./content.mjs';
-import{services as design42Services}from'./services-04-2.mjs';
+import{services as originalServices}from'./content.js';
+import{services as design42Services}from'./services-04-2.js';
 import{initExpandingSearch}from'./expanding-search.js';
 import{initFaqSection}from'./faq-section.js';
 import{initFrostNav}from'./frost-nav.js';

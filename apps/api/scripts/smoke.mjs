@@ -369,6 +369,30 @@ async function rescheduleChecks(demoPatient) {
   expectError('rescheduling a finished visit is 409 CANNOT_RESCHEDULE', await demoPatient.post(`/api/appointments/${past?.id}/reschedule`, { slotId: spare.id }), 409, 'CANNOT_RESCHEDULE')
 }
 
+async function clashChecks() {
+  // One person can't be in two calls: a second visit at the same time is refused at payment and at reschedule.
+  const patient = new Browser()
+  await patient.signUp({ email: `clash-${stamp}@example.com`, firstName: 'Clash', lastName: 'Smoke' })
+  const version = (await patient.get('/api/consent/current')).json.version
+  const book = async (slot) => {
+    const id = (await patient.post('/api/bookings', { slotId: slot.id, serviceId: 1, channel: 'video', for: 'self', inMainlandPortugal: true })).json?.appointment?.id
+    await patient.post(`/api/bookings/${id}/consent`, { version })
+    return { id, paid: await patient.post(`/api/bookings/${id}/pay`, { method: 'demo' }) }
+  }
+  // Two doctors offering service 1 who are both free at the same time.
+  const slots = (await patient.get('/api/slots/first-available?serviceId=1&limit=50')).json?.slots ?? []
+  const a = slots.find((x) => slots.some((y) => y.startsAt === x.startsAt && y.doctor.id !== x.doctor.id))
+  const b = a && slots.find((y) => y.startsAt === a.startsAt && y.doctor.id !== a.doctor.id)
+  if (!a || !b) return record('clash checks need two doctors free at the same time', false, `${slots.length} slots`)
+  const first = await book(a)
+  const second = await book(b)
+  record('a second visit for the same person at the same time is 409 TIME_CLASH', first.paid.status === 200 && is(second.paid, 409, 'TIME_CLASH'), `${show(first.paid)} then ${show(second.paid)}`)
+  await patient.del(`/api/bookings/${second.id}`)
+  const later = slots.find((x) => x.startsAt !== a.startsAt && x.doctor.id === b.doctor.id) ?? (await freeSlot(patient, { doctorId: b.doctor.id, skip: 3 }))
+  const third = await book(later)
+  expectError('rescheduling onto the same person’s other visit time is 409 TIME_CLASH', await patient.post(`/api/appointments/${third.id}/reschedule`, { slotId: b.id }), 409, 'TIME_CLASH')
+}
+
 async function familyAndProfileChecks(patient, { adultId }) {
   expectError('family endpoints need a session (401)', await new Browser().get('/api/family'), 401, 'AUTH_REQUIRED')
   expectError('a "child" born in 1990 is 400 VALIDATION', await patient.post('/api/family', { firstName: 'Old', lastName: 'Child', dateOfBirth: '1990-01-01', relationship: 'child' }), 400, 'VALIDATION')
@@ -565,6 +589,7 @@ try {
     const extra = await bookingChecks(patient)
     await familyAndProfileChecks(patient, extra)
     await rescheduleChecks(patient)
+    await clashChecks()
     const visits = await visitChecks(patient, doctor, admin)
     await staffChecks(patient, doctor, admin, visits)
     await originChecks(patient, false)

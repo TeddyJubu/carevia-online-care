@@ -23,6 +23,8 @@ p{margin:0}
 .tag{font:600 9.5px ui-monospace,Menlo,monospace;padding:3px 8px;border-radius:99px;border:1.5px solid var(--ink);white-space:nowrap;text-transform:uppercase;letter-spacing:.05em}
 .tag.new{border-style:dashed}
 .tag.chg{background:var(--ink);color:#fff}
+.tag.rev{background:var(--fill);border-style:solid}
+.flag{font:600 9px ui-monospace,Menlo,monospace;text-transform:uppercase;letter-spacing:.05em;color:var(--mid)}
 
 /* ---------- screen page ---------- */
 .sp{flex:1;display:grid;grid-template-columns:1fr 66mm;gap:7mm;min-height:0}
@@ -147,14 +149,14 @@ td.k{font:10px ui-monospace,Menlo,monospace;text-transform:uppercase;color:var(-
 
 <!-- ================= 1 COVER ================= -->
 <section class="page" style="justify-content:space-between;padding:20mm 22mm 16mm">
- <div class="kick">Carevia online care · Draft for review · November 2026</div>
+ <div class="kick">Carevia online care · Revised after the build · 5 November 2026</div>
  <div>
   <h1>Patient journey<br>and wireframes</h1>
-  <p class="lead" style="font-size:16px;margin-top:10px">From "I need a doctor" to "I know what comes next". One patient's route through Carevia, shown on desktop web and mobile, with a list of what we improved.</p>
+  <p class="lead" style="font-size:16px;margin-top:10px">From "I need a doctor" to "I know what comes next". One patient's route through Carevia, shown on desktop web and mobile, with a list of what we improved. This revision matches the working demo: six booking steps, a consent step, a "confirm it's you" step before the call, moving a visit, the doctor's screens, and an iMED status after the visit instead of documents.</p>
  </div>
  <div class="g3" style="gap:8mm;max-width:220mm">
-  <div><div class="kick">Inside</div><p style="font-size:12px;line-height:1.6;margin-top:4px">1. How to read this<br>2. The journey at a glance<br>3. What we changed, and why</p></div>
-  <div><div class="kick">&nbsp;</div><p style="font-size:12px;line-height:1.6;margin-top:4px">4. Web wireframes, 13 screens<br>5. Mobile wireframes, 13 screens<br>6. When things don't go to plan</p></div>
+  <div><div class="kick">Inside</div><p style="font-size:12px;line-height:1.6;margin-top:4px">1. How to read this<br>2. The journey at a glance<br>3. What we changed, and why<br>3b. What changed after the build</p></div>
+  <div><div class="kick">&nbsp;</div><p style="font-size:12px;line-height:1.6;margin-top:4px">4. Web wireframes, 17 screens<br>4b. The doctor's screens<br>5. Mobile wireframes, 13 screens<br>6. When things don't go to plan</p></div>
   <div><div class="kick">&nbsp;</div><p style="font-size:12px;line-height:1.6;margin-top:4px">7. Questions for you</p></div>
  </div>
  <div class="foot" style="left:22mm;right:22mm"><span>Carevia · Patient journey and wireframes</span></div>
@@ -166,7 +168,7 @@ td.k{font:10px ui-monospace,Menlo,monospace;text-transform:uppercase;color:var(-
  <div class="g2" style="gap:10mm;align-items:start">
   <div class="col" style="gap:12px;font-size:12px;line-height:1.55">
    <p><b>These are wireframes, not final designs.</b> They show what goes on each screen and in what order: the content, the buttons and the steps. Colours, photos, fonts and final wording come later. Grey boxes with a cross are placeholders for images.</p>
-   <p><b>Prices and names are examples.</b> Prices come from the current website and will be confirmed for each country. "Clinician name" is a placeholder.</p>
+   <p><b>Prices and names are examples.</b> Prices come from the current website and are confirmed before launch. Carevia serves patients in mainland Portugal. "Clinician name" is a placeholder.</p>
    <p><b>Numbered black dots</b> on a screen match the notes beside it. Each note says what that part does, and whether it is new or changed.</p>
   </div>
   <div class="col" style="gap:12px">
@@ -174,6 +176,7 @@ td.k{font:10px ui-monospace,Menlo,monospace;text-transform:uppercase;color:var(-
    <div class="legend"><span><i class="sw d"></i>Dashed frame: a new screen we are proposing</span></div>
    <div class="legend"><span class="tag chg">Changed</span>Something that works differently from today</div>
    <div class="legend"><span class="tag new">New</span>Something that doesn't exist today</div>
+   <div class="legend"><span class="tag rev">Revised</span>Changed after the build, November 2026 (see section 3b)</div>
    <div class="legend"><span class="mk">1</span>A numbered note, explained beside the screen</div>
   </div>
  </div>
@@ -182,10 +185,10 @@ td.k{font:10px ui-monospace,Menlo,monospace;text-transform:uppercase;color:var(-
  <p class="lead">Five stages. Today's website covers the first stage. Stages two to five are promised by the website's own words ("Your first visit, step by step") and are designed here.</p>
  <div class="stagebar">
   <div class="stg"><span class="big">1</span><b>Discover</b><span class="p">Land on the website. Search a symptom or browse the seven services.</span><span class="spacer"></span><span class="kick">Screens 01–03</span><span style="font-size:10px"><i class="dot lo"></i>Worried, unsure</span></div>
-  <div class="stg"><span class="big">2</span><b>Decide</b><span class="p">Check who it's for and where you are. Pick a clinician and a time.</span><span class="spacer"></span><span class="kick">Screens 04–05</span><span style="font-size:10px"><i class="dot"></i>Reassured</span></div>
-  <div class="stg"><span class="big">3</span><b>Book</b><span class="p">Create an account or sign in. Review the visit and pay.</span><span class="spacer"></span><span class="kick">Screens 06–07</span><span style="font-size:10px"><i class="dot lo"></i>Most effort</span></div>
-  <div class="stg"><span class="big">4</span><b>Visit</b><span class="p">Prepare, test the camera, wait a moment, then talk by secure video.</span><span class="spacer"></span><span class="kick">Screens 08–10</span><span style="font-size:10px"><i class="dot lo"></i>Nervous, then relieved</span></div>
-  <div class="stg"><span class="big">5</span><b>After</b><span class="p">Read the summary, download documents, book a follow-up.</span><span class="spacer"></span><span class="kick">Screens 11–12</span><span style="font-size:10px"><i class="dot"></i>In control</span></div>
+  <div class="stg"><span class="big">2</span><b>Decide</b><span class="p">Choose the care. Check who it's for and that you're in mainland Portugal. Pick a doctor and a time.</span><span class="spacer"></span><span class="kick">Screens 04–05</span><span style="font-size:10px"><i class="dot"></i>Reassured</span></div>
+  <div class="stg"><span class="big">3</span><b>Book</b><span class="p">Create an account or sign in. Read and accept the consent. Review the visit and pay.</span><span class="spacer"></span><span class="kick">Screens 06–07</span><span style="font-size:10px"><i class="dot lo"></i>Most effort</span></div>
+  <div class="stg"><span class="big">4</span><b>Visit</b><span class="p">Prepare, confirm it's you, test the camera, wait a moment, then talk by secure video.</span><span class="spacer"></span><span class="kick">Screens 08–10</span><span style="font-size:10px"><i class="dot lo"></i>Nervous, then relieved</span></div>
+  <div class="stg"><span class="big">5</span><b>After</b><span class="p">See the visit's status. Your record is in iMED. Book a follow-up.</span><span class="spacer"></span><span class="kick">Screens 11–12</span><span style="font-size:10px"><i class="dot"></i>In control</span></div>
  </div>
  <div class="foot"><span>Carevia · Patient journey and wireframes</span></div>
 </section>
@@ -195,12 +198,12 @@ td.k{font:10px ui-monospace,Menlo,monospace;text-transform:uppercase;color:var(-
  <div class="ph"><div><div class="kick">Section 2</div><h2>The journey map</h2><p class="lead">What the patient wants, does and feels at each stage, and where things could go wrong.</p></div></div>
  <table>
   <tr><th></th><th>1 · Discover</th><th>2 · Decide</th><th>3 · Book</th><th>4 · Visit</th><th>5 · After</th></tr>
-  <tr><td class="k">They want</td><td>"Can someone help with this, without a waiting room?"</td><td>"Is this the right service, and what will it cost?"</td><td>"A time with someone I trust, for me or my child."</td><td>"To be heard, and leave knowing what to do."</td><td>"My summary and documents. A follow-up if I need one."</td></tr>
-  <tr><td class="k">They do</td><td>Land on the homepage. Search a symptom ("fever", "sick leave") or browse care.</td><td>Open a service. Read the price, the length and what it covers. Confirm who it's for and their country.</td><td>Pick a clinician, language and time. Create an account. Pay.</td><td>Follow a short checklist. Test camera and mic. Join the video call.</td><td>Read the summary. Download a prescription or certificate. Book again.</td></tr>
+  <tr><td class="k">They want</td><td>"Can someone help with this, without a waiting room?"</td><td>"Is this the right service, and what will it cost?"</td><td>"A time with someone I trust, for me or my child."</td><td>"To be heard, and leave knowing what to do."</td><td>"To know what happens next, and where my record is. A follow-up if I need one."</td></tr>
+  <tr><td class="k">They do</td><td>Land on the homepage. Search a symptom ("fever", "back pain") or browse care.</td><td>Open a service. Read the price, the length and what it covers. Confirm who it's for and that they'll be in mainland Portugal.</td><td>Pick a doctor, language and time. Create an account. Accept the consent. Pay.</td><td>Follow a short checklist. Confirm email and mobile. Test camera and mic. Join the video call.</td><td>See the visit's status. Find the clinical summary, and anything the doctor decided to issue, in iMED. Book again.</td></tr>
   <tr><td class="k">They feel</td><td><i class="dot lo"></i>Worried, a little sceptical</td><td><i class="dot"></i>Reassured by clear prices</td><td><i class="dot lo"></i>The hardest part: forms and payment</td><td><i class="dot lo"></i>Nervous before, relieved after</td><td><i class="dot"></i>In control</td></tr>
-  <tr><td class="k">Where</td><td>Homepage, search, care list</td><td>Service details, booking steps 1–2</td><td>Booking steps 3–4</td><td>Email reminder, waiting room, video call</td><td>Patient account</td></tr>
+  <tr><td class="k">Where</td><td>Homepage, search, care list</td><td>Service details, booking steps 1–3</td><td>Booking steps 4–6</td><td>Visit page, "confirm it's you", waiting room, video call</td><td>Patient account</td></tr>
   <tr><td class="k">Could go wrong</td><td>Someone with an emergency uses the site instead of calling 112</td><td>Patient picks a service, then has to pick it again</td><td>Patient finds out they're not eligible only after starting to pay</td><td>The video connection fails</td><td>The clinician says the issue needs an in-person visit</td></tr>
-  <tr><td class="k">How we handle it</td><td>Emergency message on the service details and in booking</td><td>The chosen service carries through to booking</td><td>Age and country are checked in the first step</td><td>Free rebooking, offered right on screen</td><td>A referral replaces the prescription in the summary</td></tr>
+  <tr><td class="k">How we handle it</td><td>Emergency message on the service details and in booking</td><td>The chosen service carries through to booking</td><td>Age and place (mainland Portugal) are checked before any details</td><td>Reconnect while the visit is open, otherwise move the same appointment to a new time</td><td>The status says in-person care is advised. The doctor's reasons are in iMED</td></tr>
  </table>
  <div class="foot"><span>Carevia · Patient journey and wireframes</span></div>
 </section>
@@ -213,7 +216,7 @@ td.k{font:10px ui-monospace,Menlo,monospace;text-transform:uppercase;color:var(-
   <tr><td class="n">1</td><td>The service details window says "Explore on Carevia". It opens the general services page, so the patient has to choose again.</td><td>The button says "Book General care" (or whichever service) and opens booking with that service already chosen.</td><td>One less decision. The patient doesn't lose their place.</td></tr>
   <tr><td class="n">2</td><td>"Find your care", "Browse our care" and the footer button all scroll down to the same list. No button starts a booking.</td><td>Browsing still scrolls to the list. Booking starts from any service's details. Returning patients get "Book new care" in their account.</td><td>Clear difference between "look around" and "book now".</td></tr>
   <tr><td class="n">3</td><td>The website has "Create your account" but no way to sign in.</td><td>"Sign in" sits in the top bar. Returning patients go straight to their account home (screen 12).</td><td>Returning patients don't have to start from the homepage.</td></tr>
-  <tr><td class="n">4</td><td>The 18+ rule and the country limit are only in the FAQ answers.</td><td>Booking step 1 asks "Who is this visit for?" and "Where will you be?" before anything else.</td><td>Nobody finds out they can't book after giving their details or card.</td></tr>
+  <tr><td class="n">4</td><td>The 18+ rule and the place limit are only in the FAQ answers.</td><td>Booking asks "Who is this visit for?" and "Will you be in mainland Portugal during the visit?" before any details.</td><td>Nobody finds out they can't book after giving their details or card.</td></tr>
   <tr><td class="n">5</td><td>"Call 112" is in the FAQ and the service details note.</td><td>It is also on booking step 1 and in the waiting room.</td><td>The message appears where someone in a hurry will see it.</td></tr>
   <tr><td class="n">6</td><td>No booking flow existed, so the original plan had no rule for when to create the account.</td><td>The patient chooses a clinician and time first. The account comes after, and the time is held for 10 minutes.</td><td>People see real availability before being asked for personal details. More people finish booking.</td></tr>
  </table>
@@ -225,11 +228,11 @@ td.k{font:10px ui-monospace,Menlo,monospace;text-transform:uppercase;color:var(-
  <div class="ph"><div><div class="kick">Section 3, continued</div><h2>What we changed, and why</h2></div></div>
  <table>
   <tr><th style="width:24px">#</th><th style="width:27%">Before (today's website)</th><th style="width:31%">After (this design)</th><th>Why it's better</th></tr>
-  <tr><td class="n">7</td><td>"Pay per visit, no subscription" and "free rebook if the video fails" are in the FAQ and the "Your first visit" section.</td><td>Both are repeated on the payment screen, right beside the Pay button.</td><td>Reassurance appears at the moment of doubt.</td></tr>
+  <tr><td class="n">7</td><td>"Pay per visit, no subscription" and what happens if the video fails are in the FAQ and the "Your first visit" section.</td><td>Both are repeated on the payment screen, right beside the Pay button: "If the video fails, reconnect, then reschedule if needed. Same appointment."</td><td>Reassurance appears at the moment of doubt.</td></tr>
   <tr><td class="n">8</td><td>Preparation tips are written as a short article.</td><td>The tips become a checklist on the confirmation screen, with a "Test camera and mic" button.</td><td>Easier to act on. Technical problems are caught before the call, not during it.</td></tr>
-  <tr><td class="n">9</td><td>Nothing between booking and the call.</td><td>A waiting room shows camera, mic and connection status, and offers a free rebook if something is wrong.</td><td>Calms the most anxious moment.</td></tr>
+  <tr><td class="n">9</td><td>Nothing between booking and the call.</td><td>A waiting room shows camera, mic, speaker and connection status, and how long the visit stays open if the connection fails.</td><td>Calms the most anxious moment.</td></tr>
   <tr><td class="n">10</td><td>Patients can't choose a time and a clinician on the website.</td><td>A "First available" option, plus filters for day and language.</td><td>The fastest route for urgent needs, and choice for people who want it.</td></tr>
-  <tr><td class="n">11</td><td>"Your care in one place" was a promise only.</td><td>A summary page (screen 11) and an account home (screen 12) with visits, documents and family members.</td><td>Everything after the call is in one place, as promised.</td></tr>
+  <tr><td class="n">11</td><td>"Your care in one place" was a promise only.</td><td>A visit status page (screen 11) and an account home (screen 12) with visits and family members. The clinical record lives in iMED, not in Carevia.</td><td>The patient always knows what happened and where to look.</td></tr>
   <tr><td class="n">12</td><td>Children and dependants are mentioned only in the FAQ.</td><td>"Me / My child / Another adult I care for" in booking step 1, and a Family section in the account.</td><td>Parents can book for a child without a workaround.</td></tr>
   <tr><td class="n">13</td><td>Seven service cards. A patient who isn't sure which fits has no way in.</td><td>An eighth card: "Not sure which one?", which starts with General care.</td><td>Undecided patients still have an easy first step.</td></tr>
  </table>
@@ -239,8 +242,29 @@ td.k{font:10px ui-monospace,Menlo,monospace;text-transform:uppercase;color:var(-
   <div class="card"><b>Booking summary on the side</b><p class="p">On web, your service, time and price stay visible on the right through every booking step. On mobile they appear on the review screen.</p></div>
   <div class="card"><b>Service details as a window</b><p class="p">Web shows details in a centred window with a photo. Mobile slides up a panel from the bottom.</p></div>
   <div class="card"><b>Your questions beside the video</b><p class="p">On web, the questions you wrote before the call sit beside the video. Mobile keeps the screen for the call only.</p></div>
-  <div class="card"><b>Account menu on the left</b><p class="p">Web has a left menu (Home, Visits, Documents, Family). Mobile uses a compact menu at the top.</p></div>
+  <div class="card"><b>Account menu on the left</b><p class="p">Web has a left menu (Home, Family, Profile, Security). Mobile uses a compact menu at the top.</p></div>
  </div>
+ <div class="foot"><span>Carevia · Patient journey and wireframes</span></div>
+</section>
+
+<!-- ================= 3b WHAT CHANGED AFTER THE BUILD ================= -->
+<section class="page">
+ <div class="ph"><div><div class="kick">Section 3b · November 2026</div><h2>What changed after the build</h2><p class="lead">Building the demo against Portuguese telemedicine rules and iMED changed these screens. Where the first draft and the rules disagreed, the rules won. Pages marked <span class="tag rev" style="font-size:8px;padding:1px 6px">Revised</span> show the new version.</p></div></div>
+ <table>
+  <tr><th style="width:24px">#</th><th style="width:27%">First draft</th><th style="width:33%">Now (working demo)</th><th>Why</th></tr>
+  <tr><td class="n">1</td><td>Four booking steps.</td><td>Six: care and type, who and where, doctor and time, your details, consent, review and pay.</td><td>Consent is required before a visit, and the care is confirmed in booking itself (screens 03b, 06b).</td></tr>
+  <tr><td class="n">2</td><td>A country list.</td><td>"Will you be in mainland Portugal during the visit?" Yes or no.</td><td>Carevia serves mainland Portugal only. Madeira and the Azores have their own regulators.</td></tr>
+  <tr><td class="n">3</td><td>Clinician cards with a name and languages.</td><td>Each card also shows the Ordem dos Médicos cédula and the doctor's fee.</td><td>Patients must see who the doctor is and that they are registered.</td></tr>
+  <tr><td class="n">4</td><td>Account: full name, email, password, date of birth.</td><td>First and last name, email, mobile, date of birth, password. A child is chosen or added in the next step.</td><td>The mobile is confirmed before each visit. No NIF, ID number or address at sign-up.</td></tr>
+  <tr><td class="n">5</td><td>"Free rebook if the video fails."</td><td>Rejoin while the visit is open; otherwise move the same appointment to a new time (screen 08c).</td><td>A dropped call never creates a second booking or a second charge.</td></tr>
+  <tr><td class="n">6</td><td>Card fields on the payment screen.</td><td>"Pay (demo)" with no card fields. A real provider comes later.</td><td>The demo takes no money. A visit is confirmed only after payment.</td></tr>
+  <tr><td class="n">7</td><td>Straight from booking to the waiting room.</td><td>"Confirm it's you": the email and mobile for the visit, and an optional companion (screen 08b).</td><td>Portuguese teleconsultation practice; the right to be accompanied (Lei 15/2014).</td></tr>
+  <tr><td class="n">8</td><td>Screen 11: a summary, next steps and downloadable documents.</td><td>Screen 11: the visit's status and an iMED explanation. Nothing to download in Carevia.</td><td>Prescriptions, sick-leave certificates (CIT), certificates and referrals exist only in iMED, the certified clinical system.</td></tr>
+  <tr><td class="n">9</td><td>Account menu: Home, Visits, Documents, Family, Settings.</td><td>Home, Family, Profile, Security.</td><td>Carevia keeps no clinical data or documents.</td></tr>
+  <tr><td class="n">10</td><td>"Your questions" typed in a form.</td><td>The same list, saved only on the patient's device.</td><td>No symptoms or clinical notes are stored by Carevia.</td></tr>
+  <tr><td class="n">11</td><td>Reminders 24 hours and 15 minutes before.</td><td>A calendar file and the confirmation email; reminders wait for real email and SMS.</td><td>No real email or SMS is sent in the demo.</td></tr>
+  <tr><td class="n">12</td><td>No doctor screens.</td><td>An agenda, the visit room (the doctor opens the call) and four outcome buttons (section 4b).</td><td>Reasons and notes go in iMED; Carevia only records what happened to the appointment.</td></tr>
+ </table>
  <div class="foot"><span>Carevia · Patient journey and wireframes</span></div>
 </section>
 
@@ -294,7 +318,7 @@ td.k{font:10px ui-monospace,Menlo,monospace;text-transform:uppercase;color:var(-
    <div class="note"><span class="mk">1</span><p><b>Best match first</b><br><span>Results show price and length. Choosing one opens the service details (screen 03).</span></p></div>
    <div class="note"><span class="mk">2</span><p><b>Way out</b><br><span>If nothing fits, jump to the full list.</span></p></div>
    <div class="note"><span class="mk">3</span><p><b>Emergency hint</b> <span class="tag new">New</span><br><span>Shown when the search sounds urgent. Wording to be agreed with your clinical team.</span></p></div>
-   <div class="why"><b>Why search matters:</b> patients know their problem, not the department. "Sick leave" finds Certificates; "refill" finds Tests &amp; renewals.</div>
+   <div class="why"><b>Why search matters:</b> patients know their problem, not the department. "Back pain" finds General care; "driving" finds Certificates &amp; assessments.</div>
   </div>
  </div>
  <div class="foot"><span>Carevia · Patient journey and wireframes</span></div>
@@ -321,14 +345,14 @@ td.k{font:10px ui-monospace,Menlo,monospace;text-transform:uppercase;color:var(-
      </div>
      <div class="spacer"></div>
      <div class="t l" style="margin-top:6px">Your first visit, step by step</div>
-     <div class="g3"><div class="box"><span class="mono">01 · Before</span><div class="t s">Find your care</div><div class="p">Choose a service and clinician.</div></div><div class="box"><span class="mono">02 · During</span><div class="t s">We listen</div><div class="p">Secure video consultation.</div></div><div class="box"><span class="mono">03 · After</span><div class="t s">We plan together</div><div class="p">Summary and documents in your account.</div></div></div>
+     <div class="g3"><div class="box"><span class="mono">01 · Before</span><div class="t s">Find your care</div><div class="p">Choose a service and clinician.</div></div><div class="box"><span class="mono">02 · During</span><div class="t s">We listen</div><div class="p">Secure video consultation.</div></div><div class="box"><span class="mono">03 · After</span><div class="t s">We plan together</div><div class="p">Visit status in your account. Your record in iMED.</div></div></div>
     </div>
    </div>
   </div>
   <div class="notes">
    <div class="note"><span class="mk">1</span><p><b>Details</b><br><span>Every card shows its price and length up front. Details opens the service window (screen 03).</span></p></div>
    <div class="note"><span class="mk">2</span><p><b>"Not sure which one?"</b> <span class="tag new">New</span><br><span>A friendly start for undecided patients. Goes to booking with General care chosen.</span></p></div>
-   <div class="why"><b>Goal:</b> compare all care side by side, with nothing hidden. Prices are examples and are confirmed per country.</div>
+   <div class="why"><b>Goal:</b> compare all care side by side, with nothing hidden. Prices are examples and are confirmed before launch.</div>
   </div>
  </div>
  <div class="foot"><span>Carevia · Patient journey and wireframes</span></div>
@@ -350,8 +374,8 @@ td.k{font:10px ui-monospace,Menlo,monospace;text-transform:uppercase;color:var(-
       <div class="t xl">General &amp; urgent care</div>
       <div class="p">Everyday concerns, infections, allergies, skin issues and children's health.</div>
       <div class="box"><div class="t m">From €45</div><div class="p">20 min · video consultation</div></div>
-      <div><div class="chk"><i></i>Advice on symptoms and next steps</div><div class="chk"><i></i>Follow-up and referrals when appropriate</div></div>
-      <div class="warn">Not for emergencies: call 112. Prices confirmed per country.<span class="mk abs" style="top:-9px;right:-9px">2</span></div>
+      <div><div class="chk"><i></i>Advice on symptoms and next steps</div><div class="chk"><i></i>Follow-up when appropriate</div></div>
+      <div class="warn">Not an emergency service. In an emergency, call 112. Anything issued depends on the doctor's assessment.<span class="mk abs" style="top:-9px;right:-9px">2</span></div>
       <div class="row"><span class="btn d">Book General care<span class="mk abs" style="top:-9px;right:-9px">1</span></span><span class="p"><u>Back to all care</u></span></div>
      </div>
     </div>
@@ -366,22 +390,57 @@ td.k{font:10px ui-monospace,Menlo,monospace;text-transform:uppercase;color:var(-
  <div class="foot"><span>Carevia · Patient journey and wireframes</span></div>
 </section>
 
+<!-- ================= WEB 03b STEP 1 CARE ================= -->
+<section class="page">
+ <div class="ph"><div><div class="kick">Section 4 · Web · Stage 2 Decide</div><h2>03b · Booking step 1: care and consultation type</h2></div><span class="tag new">New screen</span></div>
+ <div class="sp">
+  <div class="browser new"><div class="chrome"><i></i><i></i><i></i><span class="url">carevia.claudemod.tech/app/book?service=general</span></div>
+   <div class="vp">
+    <div class="appbar"><i class="logo"></i><span class="p">Need help? · <b style="color:var(--ink)">Emergency? Call 112</b></span></div>
+    <div class="book">
+     <div class="steps"><div class="cur"><i>1</i>Care</div><div><i>2</i>Who and where</div><div><i>3</i>Doctor and time</div><div><i>4</i>Your details</div><div><i>5</i>Consent</div><div><i>6</i>Review and pay</div></div>
+     <div class="col" style="gap:8px">
+      <span class="mono">Book a visit</span>
+      <div class="t xl">General &amp; urgent care</div>
+      <div class="warn">Not an emergency service. In an emergency, call 112.</div>
+      <div class="t m" style="position:relative">Which fits best?<span class="mk" style="margin-left:6px">1</span></div>
+      <div class="p">Not sure? Pick the closest. Your doctor will guide you.</div>
+      <div class="g2" style="gap:6px"><div class="box dark" style="padding:6px 9px;background:var(--fill)">Adult urgent care</div><div class="box" style="padding:6px 9px">Paediatric urgent care</div><div class="box" style="padding:6px 9px">Adult check-up</div><div class="box" style="padding:6px 9px">Skin consultation</div></div>
+      <div class="p"><u>Choose a different area of care</u></div>
+      <div class="t m" style="margin-top:4px">How would you like to talk?<span class="mk" style="margin-left:6px">2</span></div>
+      <div class="g2" style="gap:6px"><div class="box dark" style="background:var(--fill)"><b class="t s">Video consultation</b><div class="p">In your browser. No app to install.</div></div><div class="box" style="color:var(--mid)"><b class="t s">Phone call</b><div class="p">Coming later. Not available yet.</div></div></div>
+      <div class="spacer"></div>
+      <div><span class="btn d">Continue</span></div>
+     </div>
+     <div class="sum"><span class="mono">Your visit</span><b class="t m">General &amp; urgent care</b><span class="p">Adult urgent care</span><span class="p">Video, in your browser</span><span class="p">From €45</span></div>
+    </div>
+   </div>
+  </div>
+  <div class="notes">
+   <div class="note"><span class="mk">1</span><p><b>The care, chosen once</b> <span class="tag new">New</span><br><span>Opened from "Book General care" on screen 03 with the area already chosen; the patient picks the closest service.</span></p></div>
+   <div class="note"><span class="mk">2</span><p><b>Video or phone</b> <span class="tag new">New</span><br><span>The consultation type decides the rest of the flow. Video first; phone calls to a confirmed mobile come later.</span></p></div>
+   <div class="note"><span class="mk">3</span><p><b>Certificates and test requests</b> <span class="tag new">New</span><br><span>For services named after a document, this step also says the doctor decides after assessing, and booking doesn't guarantee a certificate, a test request or a renewal.</span></p></div>
+   <div class="why"><b>Arrives here from:</b> the homepage's "Book {service}" and "Not sure which one?" (General care).</div>
+  </div>
+ </div>
+ <div class="foot"><span>Carevia · Patient journey and wireframes</span></div>
+</section>
 <!-- ================= WEB 04 ELIGIBILITY ================= -->
 <section class="page">
- <div class="ph"><div><div class="kick">Section 4 · Web · Stage 2 Decide</div><h2>04 · Booking step 1: who and where</h2></div><span class="tag new">New screen</span></div>
+ <div class="ph"><div><div class="kick">Section 4 · Web · Stage 2 Decide</div><h2>04 · Booking step 2: who and where</h2></div><span class="tag rev">Revised</span></div>
  <div class="sp">
   <div class="browser new"><div class="chrome"><i></i><i></i><i></i><span class="url">carevia.com/book/general</span></div>
    <div class="vp">
     <div class="appbar"><i class="logo"></i><span class="p">Need help? · <b style="color:var(--ink)">Emergency? Call 112</b></span></div>
     <div class="book">
-     <div class="steps"><div class="cur"><i>1</i>Who and where</div><div><i>2</i>Clinician and time</div><div><i>3</i>Your account</div><div><i>4</i>Review and pay</div></div>
+     <div class="steps"><div class="done"><i>✓</i>Care</div><div class="cur"><i>2</i>Who and where</div><div><i>3</i>Doctor and time</div><div><i>4</i>Your details</div><div><i>5</i>Consent</div><div><i>6</i>Review and pay</div></div>
      <div class="col" style="gap:10px">
       <div class="warn" style="padding:8px 10px"><b>Is this an emergency?</b> Call 112 now. Carevia is not an emergency service.<span class="mk abs" style="top:-9px;right:-9px">2</span></div>
       <div class="t l" style="position:relative">Who is this visit for?<span class="mk" style="margin-left:6px">1</span></div>
       <div class="g3"><div class="box dark" style="background:var(--fill)"><b class="t s">Me</b><div class="p">Aged 18 or over</div></div><div class="box"><b class="t s">My child</b><div class="p">You book as parent or guardian</div></div><div class="box"><b class="t s">Another adult</b><div class="p">Someone you care for</div></div></div>
-      <div class="t l" style="margin-top:4px">Where will you be during the visit?</div>
-      <div style="width:60%"><div class="lbl">Country</div><div class="field">Portugal ▾</div></div>
-      <div class="p">We'll only show clinicians registered for your country. You need to be there at the time of the visit.</div>
+      <div class="t l" style="margin-top:4px">Will you be in mainland Portugal during the visit?</div>
+      <div class="g2"><div class="box dark" style="background:var(--fill)"><b class="t s">Yes, I'll be in mainland Portugal</b></div><div class="box"><b class="t s">No, I'll be somewhere else</b></div></div>
+      <div class="p">Our doctors can only see patients who are in mainland Portugal at the time of the visit. Madeira and the Azores aren't covered yet.</div>
       <div class="spacer"></div>
       <div><span class="btn d">Continue</span></div>
      </div>
@@ -390,10 +449,10 @@ td.k{font:10px ui-monospace,Menlo,monospace;text-transform:uppercase;color:var(-
    </div>
   </div>
   <div class="notes">
-   <div class="note"><span class="mk">1</span><p><b>Who and where, first</b> <span class="tag new">New</span><br><span>Today the age and country rules are hidden in the FAQ. Asking first means nobody is turned away after paying.</span></p></div>
+   <div class="note"><span class="mk">1</span><p><b>Who and where, first</b> <span class="tag rev">Revised</span><br><span>A yes-or-no question replaces the country list: Carevia serves mainland Portugal only. "No" explains why and stops here, before any details or payment.</span></p></div>
    <div class="note"><span class="mk">2</span><p><b>Emergency reminder</b> <span class="tag new">New</span><br><span>Placed where someone in a hurry will see it.</span></p></div>
-   <div class="note"><span class="mk">3</span><p><b>Visit summary</b> <span class="tag new">New</span><br><span>Stays on the right for all four steps, so the patient always sees what they're booking and the price. Web only.</span></p></div>
-   <div class="why"><b>Arrives here from:</b> "Book General care" on screen 03. The service is already chosen.</div>
+   <div class="note"><span class="mk">3</span><p><b>Visit summary</b> <span class="tag new">New</span><br><span>Stays on the right for all six steps, so the patient always sees what they're booking and the price. Web only.</span></p></div>
+   <div class="why"><b>Arrives here from:</b> step 1, where the patient confirms the care and chooses a video consultation (phone calls come later). "Book General care" on screen 03 opens step 1 with the service already chosen.</div>
   </div>
  </div>
  <div class="foot"><span>Carevia · Patient journey and wireframes</span></div>
@@ -401,28 +460,28 @@ td.k{font:10px ui-monospace,Menlo,monospace;text-transform:uppercase;color:var(-
 
 <!-- ================= WEB 05 CLINICIAN & TIME ================= -->
 <section class="page">
- <div class="ph"><div><div class="kick">Section 4 · Web · Stage 2 Decide</div><h2>05 · Booking step 2: clinician and time</h2></div><span class="tag new">New screen</span></div>
+ <div class="ph"><div><div class="kick">Section 4 · Web · Stage 2 Decide</div><h2>05 · Booking step 3: doctor and time</h2></div><span class="tag rev">Revised</span></div>
  <div class="sp">
   <div class="browser new"><div class="chrome"><i></i><i></i><i></i><span class="url">carevia.com/book/general</span></div>
    <div class="vp">
     <div class="appbar"><i class="logo"></i><span class="p">Need help? · <b style="color:var(--ink)">Emergency? Call 112</b></span></div>
     <div class="book">
-     <div class="steps"><div class="done"><i>✓</i>Who and where</div><div class="cur"><i>2</i>Clinician and time</div><div><i>3</i>Your account</div><div><i>4</i>Review and pay</div></div>
+     <div class="steps"><div class="done"><i>✓</i>Care</div><div class="done"><i>✓</i>Who and where</div><div class="cur"><i>3</i>Doctor and time</div><div><i>4</i>Your details</div><div><i>5</i>Consent</div><div><i>6</i>Review and pay</div></div>
      <div class="col" style="gap:8px">
       <div class="row" style="flex-wrap:wrap;gap:6px;position:relative"><span class="chip on">First available</span><span class="chip">Today</span><span class="chip">Tomorrow</span><span class="chip">Pick a date</span><span class="field" style="padding:4px 8px">Language: English ▾</span><span class="mk">1</span></div>
-      <div class="box row" style="align-items:flex-start"><i class="img av"></i><div style="flex:1"><b class="t s">Clinician name</b><div class="p">General practitioner · English, Portuguese · <u>View profile</u></div><div class="row" style="gap:5px;margin-top:6px"><span class="chip">09:30</span><span class="chip on">10:10</span><span class="chip">11:00</span><span class="chip">11:40</span></div></div><span class="mk">2</span></div>
+      <div class="box row" style="align-items:flex-start"><i class="img av"></i><div style="flex:1"><b class="t s">Clinician name</b><div class="p">General practitioner · English, Portuguese · Cédula 00000 · <u>View profile</u></div><div class="row" style="gap:5px;margin-top:6px"><span class="chip">09:30</span><span class="chip on">10:10</span><span class="chip">11:00</span><span class="chip">11:40</span></div></div><span class="mk">2</span></div>
       <div class="box row" style="align-items:flex-start"><i class="img av"></i><div style="flex:1"><b class="t s">Clinician name</b><div class="p">General practitioner · English · <u>View profile</u></div><div class="row" style="gap:5px;margin-top:6px"><span class="chip">13:20</span><span class="chip">14:00</span><span class="chip">16:40</span></div></div></div>
       <div class="box row" style="align-items:flex-start"><i class="img av"></i><div style="flex:1"><b class="t s">Clinician name</b><div class="p">General practitioner · English, Spanish · <u>View profile</u></div><div class="row" style="gap:5px;margin-top:6px"><span class="chip">15:10</span><span class="chip">17:30</span></div></div></div>
       <div class="spacer"></div>
       <div class="row"><span class="btn o">Back</span><span class="btn d">Continue with 10:10</span></div>
      </div>
-     <div class="sum"><span class="mono">Your visit</span><b class="t m">General &amp; urgent care</b><span class="p">For: Me · Portugal</span><span class="p" style="color:var(--ink)"><b>Today, 10:10</b><br>Clinician name</span><span class="p">From €45</span><span class="mk abs" style="top:-9px;right:-9px">3</span></div>
+     <div class="sum"><span class="mono">Your visit</span><b class="t m">General &amp; urgent care</b><span class="p">For: Me · Mainland Portugal</span><span class="p" style="color:var(--ink)"><b>Today, 10:10</b><br>Clinician name</span><span class="p">From €45</span><span class="mk abs" style="top:-9px;right:-9px">3</span></div>
     </div>
    </div>
   </div>
   <div class="notes">
    <div class="note"><span class="mk">1</span><p><b>First available, day and language</b> <span class="tag new">New</span><br><span>"First available" is the fastest route for urgent needs. Language matters for being heard.</span></p></div>
-   <div class="note"><span class="mk">2</span><p><b>Clinician with times</b><br><span>Pick a person, or just a time. "View profile" shows registration and experience.</span></p></div>
+   <div class="note"><span class="mk">2</span><p><b>Clinician with times</b><br><span>Pick a person, or just a time. Every card shows the doctor's Ordem dos Médicos cédula and their fee; "View profile" adds experience and languages. Photos are labelled "Illustrative" in the demo.</span></p></div>
    <div class="note"><span class="mk">3</span><p><b>Summary updates</b><br><span>The chosen time appears straight away.</span></p></div>
    <div class="why"><b>Matches the website's promise:</b> "Check the language, availability, and price before you book."</div>
   </div>
@@ -432,27 +491,27 @@ td.k{font:10px ui-monospace,Menlo,monospace;text-transform:uppercase;color:var(-
 
 <!-- ================= WEB 06 ACCOUNT ================= -->
 <section class="page">
- <div class="ph"><div><div class="kick">Section 4 · Web · Stage 3 Book</div><h2>06 · Booking step 3: your account</h2></div><span class="tag new">New screen</span></div>
+ <div class="ph"><div><div class="kick">Section 4 · Web · Stage 3 Book</div><h2>06 · Booking step 4: your details</h2></div><span class="tag rev">Revised</span></div>
  <div class="sp">
   <div class="browser new"><div class="chrome"><i></i><i></i><i></i><span class="url">carevia.com/book/general</span></div>
    <div class="vp">
     <div class="appbar"><i class="logo"></i><span class="p">Need help? · <b style="color:var(--ink)">Emergency? Call 112</b></span></div>
     <div class="book">
-     <div class="steps"><div class="done"><i>✓</i>Who and where</div><div class="done"><i>✓</i>Clinician and time</div><div class="cur"><i>3</i>Your account</div><div><i>4</i>Review and pay</div></div>
+     <div class="steps"><div class="done"><i>✓</i>Care</div><div class="done"><i>✓</i>Who and where</div><div class="done"><i>✓</i>Doctor and time</div><div class="cur"><i>4</i>Your details</div><div><i>5</i>Consent</div><div><i>6</i>Review and pay</div></div>
      <div class="col" style="gap:9px">
       <div class="warn" style="border-style:solid;border-color:var(--line)">We're holding 10:10 for you for 10 minutes.<span class="mk abs" style="top:-9px;right:-9px">1</span></div>
       <div class="g2" style="gap:14px">
        <div class="col" style="gap:7px">
         <div class="t l">Create your account</div>
-        <div class="p">Your summary and documents are saved here.</div>
-        <div><div class="lbl">Full name</div><div class="field">&nbsp;</div></div>
+        <div class="p">You'll use this account to join the visit and see what happens next.</div>
+        <div class="g2" style="gap:6px"><div><div class="lbl">First name</div><div class="field">&nbsp;</div></div><div><div class="lbl">Last name</div><div class="field">&nbsp;</div></div></div>
         <div><div class="lbl">Email</div><div class="field">&nbsp;</div></div>
-        <div><div class="lbl">Password</div><div class="field">&nbsp;</div></div>
-        <div><div class="lbl">Date of birth</div><div class="field">DD / MM / YYYY</div></div>
+        <div><div class="lbl">Mobile number</div><div class="field">912 345 678</div></div>
+        <div class="g2" style="gap:6px"><div><div class="lbl">Date of birth</div><div class="field">DD / MM / YYYY</div></div><div><div class="lbl">Password</div><div class="field">&nbsp;</div></div></div>
        </div>
        <div class="col" style="gap:8px">
         <div class="box"><b class="t s">Already have an account?</b><div class="p">Sign in and we'll keep your booking.</div><span class="btn o" style="margin-top:6px">Sign in</span><span class="mk abs" style="top:-9px;right:-9px">2</span></div>
-        <div class="box" style="border-style:dashed"><b class="t s">Booking for your child?</b><div class="p">You create the account. Add your child's details next. They'll appear under Family.</div><span class="mk abs" style="top:-9px;right:-9px">3</span></div>
+        <div class="box" style="border-style:dashed"><b class="t s">Booking for your child?</b><div class="p">You create the account in your own name. Next, choose your child or add them. They'll appear under Family.</div><span class="mk abs" style="top:-9px;right:-9px">3</span></div>
        </div>
       </div>
       <div class="spacer"></div>
@@ -466,21 +525,52 @@ td.k{font:10px ui-monospace,Menlo,monospace;text-transform:uppercase;color:var(-
    <div class="note"><span class="mk">1</span><p><b>Time held while you sign up</b> <span class="tag new">New</span><br><span>The account comes after choosing a time, not before. People see availability first, so more of them finish.</span></p></div>
    <div class="note"><span class="mk">2</span><p><b>Sign in instead</b><br><span>Returning patients skip the form.</span></p></div>
    <div class="note"><span class="mk">3</span><p><b>Children and dependants</b> <span class="tag new">New</span><br><span>A parent or guardian books on their behalf, as the FAQ promises.</span></p></div>
-   <div class="why"><b>Kept short on purpose:</b> four fields. Medical history can be shared in the call, not in a form.</div>
+   <div class="why"><b>Kept short on purpose:</b> name, email, mobile, date of birth and password. No NIF, ID number or address. Medical history is shared with the doctor in the call, never in a Carevia form.</div>
   </div>
  </div>
  <div class="foot"><span>Carevia · Patient journey and wireframes</span></div>
 </section>
 
+<!-- ================= WEB 06b CONSENT ================= -->
+<section class="page">
+ <div class="ph"><div><div class="kick">Section 4 · Web · Stage 3 Book</div><h2>06b · Booking step 5: consent</h2></div><span class="tag new">New screen</span></div>
+ <div class="sp">
+  <div class="browser new"><div class="chrome"><i></i><i></i><i></i><span class="url">carevia.claudemod.tech/app/book/consent</span></div>
+   <div class="vp">
+    <div class="appbar"><i class="logo"></i><span class="p">Need help? · <b style="color:var(--ink)">Emergency? Call 112</b></span></div>
+    <div class="book">
+     <div class="steps"><div class="done"><i>✓</i>Care</div><div class="done"><i>✓</i>Who and where</div><div class="done"><i>✓</i>Doctor and time</div><div class="done"><i>✓</i>Your details</div><div class="cur"><i>5</i>Consent</div><div><i>6</i>Review and pay</div></div>
+     <div class="col" style="gap:8px">
+      <span class="mono">Consent</span>
+      <div class="t xl">Before your consultation</div>
+      <div class="box col" style="gap:5px;height:118px;overflow:hidden;position:relative"><b class="t s">How your consultation works<span class="mk" style="margin-left:6px">1</span></b><div class="ln"></div><div class="ln" style="width:85%"></div><b class="t s" style="margin-top:3px">When you need to be seen in person</b><div class="ln"></div><div class="ln" style="width:70%"></div><b class="t s" style="margin-top:3px">Price · Recording · Not for emergencies · What happens after</b><span class="p" style="position:absolute;right:8px;bottom:5px">Version 2026-11-05.1 · scrolls</span></div>
+      <div class="g3" style="gap:6px;position:relative"><div class="box"><div class="p">Price</div><b class="t s">€45 for this visit</b></div><div class="box"><div class="p">Recording</div><b class="t s">Off. Never recorded.</b></div><div class="box"><div class="p">Emergencies</div><b class="t s">Call 112</b></div><span class="mk abs" style="top:-9px;right:-9px">2</span></div>
+      <div class="box row" style="gap:7px"><span class="chk" style="margin:0"><i></i></span><span class="p" style="color:var(--ink)">I've read this. I agree to a video consultation on these terms.</span><span class="mk abs" style="top:-9px;right:-9px">3</span></div>
+      <div class="spacer"></div>
+      <div class="row"><span class="btn o">Back</span><span class="btn d">Agree and continue</span></div>
+     </div>
+     <div class="sum"><span class="mono">Your visit</span><b class="t m">General &amp; urgent care</b><span class="p">For: Me · Mainland Portugal</span><span class="p" style="color:var(--ink)"><b>Today, 10:10</b><br>Clinician name</span><div class="li" style="border-top:1px solid var(--fill)"><b>Total</b><b>€45</b></div><span class="p">Held for you · 7:42</span></div>
+    </div>
+   </div>
+  </div>
+  <div class="notes">
+   <div class="note"><span class="mk">1</span><p><b>What the patient agrees to</b> <span class="tag new">New</span><br><span>How care is delivered, that in-person care is the alternative, the price, that nothing is recorded, the 112 limit, and that the doctor decides what to issue. The text is a draft for Carevia's lawyer.</span></p></div>
+   <div class="note"><span class="mk">2</span><p><b>The three facts that matter most</b><br><span>Repeated as tiles so nobody misses them in the long text.</span></p></div>
+   <div class="note"><span class="mk">3</span><p><b>One tick, stored</b><br><span>Carevia stores which version was accepted and when. For a child or another adult, the box says "on behalf of" them.</span></p></div>
+   <div class="why"><b>Required before the visit</b> by Portuguese teleconsultation rules. Recording is never offered in this build, so there is no separate recording consent.</div>
+  </div>
+ </div>
+ <div class="foot"><span>Carevia · Patient journey and wireframes</span></div>
+</section>
 <!-- ================= WEB 07 PAY ================= -->
 <section class="page">
- <div class="ph"><div><div class="kick">Section 4 · Web · Stage 3 Book</div><h2>07 · Booking step 4: review and pay</h2></div><span class="tag new">New screen</span></div>
+ <div class="ph"><div><div class="kick">Section 4 · Web · Stage 3 Book</div><h2>07 · Booking step 6: review and pay</h2></div><span class="tag rev">Revised</span></div>
  <div class="sp">
   <div class="browser new"><div class="chrome"><i></i><i></i><i></i><span class="url">carevia.com/book/general</span></div>
    <div class="vp">
     <div class="appbar"><i class="logo"></i><span class="p">Need help? · <b style="color:var(--ink)">Emergency? Call 112</b></span></div>
     <div class="book">
-     <div class="steps"><div class="done"><i>✓</i>Who and where</div><div class="done"><i>✓</i>Clinician and time</div><div class="done"><i>✓</i>Your account</div><div class="cur"><i>4</i>Review and pay</div></div>
+     <div class="steps"><div class="done"><i>✓</i>Care</div><div class="done"><i>✓</i>Who and where</div><div class="done"><i>✓</i>Doctor and time</div><div class="done"><i>✓</i>Your details</div><div class="done"><i>✓</i>Consent</div><div class="cur"><i>6</i>Review and pay</div></div>
      <div class="col" style="gap:9px">
       <div class="t l">Check your visit</div>
       <div class="box" style="padding:2px 10px">
@@ -489,11 +579,11 @@ td.k{font:10px ui-monospace,Menlo,monospace;text-transform:uppercase;color:var(-
        <div class="li" style="border:none"><span>For</span><span><b>Me</b> · <u>Edit</u><span class="mk" style="margin-left:6px">1</span></span></div>
       </div>
       <div class="g2">
-       <div class="col" style="gap:6px"><div class="t m">Payment</div><div class="field">Card number</div><div class="g2" style="gap:6px"><div class="field">MM / YY</div><div class="field">CVC</div></div><div class="chk"><i></i>I agree to the terms and privacy notice</div></div>
-       <div class="box" style="background:var(--soft)"><div class="chk"><i class="x"></i>Pay per visit. No subscription.</div><div class="chk"><i class="x"></i>Free rebook if the video fails.</div><div class="chk"><i class="x"></i>Price confirmed for Portugal.</div><span class="mk abs" style="top:-9px;right:-9px">2</span></div>
+       <div class="col" style="gap:6px"><div class="t m">Payment</div><div class="box" style="border-style:dashed"><b class="t s">Payment provider: to be chosen</b><div class="p">The demo has no card fields: "Pay (demo)" confirms the visit and takes no money.</div></div></div>
+       <div class="box" style="background:var(--soft)"><div class="chk"><i class="x"></i>Pay per visit. No subscription.</div><div class="chk"><i class="x"></i>Video fails? Reconnect, then reschedule. Same appointment.</div><div class="chk"><i class="x"></i>Price for mainland Portugal. No other charges.</div><span class="mk abs" style="top:-9px;right:-9px">2</span></div>
       </div>
       <div class="spacer"></div>
-      <div class="row"><span class="btn o">Back</span><span class="btn d">Pay €45 and confirm</span></div>
+      <div class="row"><span class="btn o">Back</span><span class="btn d">Pay €45 (demo)</span></div>
      </div>
      <div class="sum"><span class="mono">Your visit</span><b class="t m">General &amp; urgent care</b><span class="p">For: Me · Portugal</span><span class="p" style="color:var(--ink)"><b>Today, 10:10</b><br>Clinician name</span><div class="li" style="border-top:1px solid var(--fill)"><b>Total</b><b>€45</b></div><span class="mk abs" style="top:-9px;right:-9px">3</span></div>
     </div>
@@ -502,8 +592,8 @@ td.k{font:10px ui-monospace,Menlo,monospace;text-transform:uppercase;color:var(-
   <div class="notes">
    <div class="note"><span class="mk">1</span><p><b>Edit anything</b><br><span>Go back to any step without losing the rest.</span></p></div>
    <div class="note"><span class="mk">2</span><p><b>Reassurance beside the Pay button</b> <span class="tag chg">Changed</span><br><span>Today these promises are in the FAQ. Now they appear where people hesitate.</span></p></div>
-   <div class="note"><span class="mk">3</span><p><b>Final price</b><br><span>The confirmed price for the country. No hidden fees.</span></p></div>
-   <div class="why"><b>Open question:</b> which payment provider, and whether insurance or vouchers are needed. See the last page.</div>
+   <div class="note"><span class="mk">3</span><p><b>Final price</b><br><span>The doctor's fee for this visit. No hidden fees. The visit is confirmed only after payment.</span></p></div>
+   <div class="why"><b>Before this step:</b> the consent (screen 06b). <b>Open question:</b> which payment provider, and whether insurance or vouchers are needed. See the last page.</div>
   </div>
  </div>
  <div class="foot"><span>Carevia · Patient journey and wireframes</span></div>
@@ -511,7 +601,7 @@ td.k{font:10px ui-monospace,Menlo,monospace;text-transform:uppercase;color:var(-
 
 <!-- ================= WEB 08 CONFIRMATION ================= -->
 <section class="page">
- <div class="ph"><div><div class="kick">Section 4 · Web · Stage 4 Visit</div><h2>08 · You're booked, and how to prepare</h2></div><span class="tag new">New screen</span></div>
+ <div class="ph"><div><div class="kick">Section 4 · Web · Stage 4 Visit</div><h2>08 · You're booked, and how to prepare</h2></div><span class="tag rev">Revised</span></div>
  <div class="sp">
   <div class="browser new"><div class="chrome"><i></i><i></i><i></i><span class="url">carevia.com/visits/confirmed</span></div>
    <div class="vp">
@@ -522,9 +612,9 @@ td.k{font:10px ui-monospace,Menlo,monospace;text-transform:uppercase;color:var(-
       <div class="t xl">You're booked</div>
       <div class="box dark"><b class="t m">Today, 10:10 · 20 min</b><div class="p">General &amp; urgent care · video · Clinician name</div></div>
       <div class="row"><span class="btn o">Add to calendar<span class="mk abs" style="top:-9px;right:-9px">1</span></span><span class="p">Confirmation sent to your email.</span></div>
-      <div class="p">We'll remind you 24 hours and 15 minutes before.</div>
+      <div class="p">You can join from 10 minutes before. Reminders by email and SMS come with the real senders.</div>
       <div class="spacer"></div>
-      <div class="p"><u>Change or cancel this visit</u></div>
+      <div class="p"><u>Change the time</u> · <u>Cancel this visit</u><span class="mk" style="margin-left:6px">4</span></div>
      </div>
      <div class="box col" style="gap:8px;background:var(--soft)">
       <div class="t l">Before your visit<span class="mk" style="margin-left:6px">2</span></div>
@@ -532,7 +622,7 @@ td.k{font:10px ui-monospace,Menlo,monospace;text-transform:uppercase;color:var(-
       <div class="chk"><i></i>Have a list of your medications nearby</div>
       <div class="chk"><i></i>Find a quiet, private place</div>
       <div class="chk"><i></i>Charge your device</div>
-      <div class="field" style="height:58px">Your questions for the clinician (optional)</div>
+      <div class="field" style="height:58px">Your questions for the doctor (optional). Saved only on this device.</div>
       <div class="spacer"></div>
       <span class="btn d">Test camera and microphone<span class="mk abs" style="top:-9px;right:-9px">3</span></span>
       <div class="p"><u>Read: A little preparation. A better conversation.</u></div>
@@ -544,15 +634,70 @@ td.k{font:10px ui-monospace,Menlo,monospace;text-transform:uppercase;color:var(-
    <div class="note"><span class="mk">1</span><p><b>Calendar and reminders</b><br><span>Fewer missed visits.</span></p></div>
    <div class="note"><span class="mk">2</span><p><b>Preparation checklist</b> <span class="tag chg">Changed</span><br><span>Today's preparation article, turned into ticks. Questions typed here reappear beside the video (screen 10).</span></p></div>
    <div class="note"><span class="mk">3</span><p><b>Test camera and mic now</b> <span class="tag new">New</span><br><span>Problems are found before the visit, not during it.</span></p></div>
+   <div class="note"><span class="mk">4</span><p><b>Change the time</b> <span class="tag new">New</span><br><span>Moves the same appointment (screen 08c). The questions never leave the patient's device.</span></p></div>
    <div class="why"><b>Goal:</b> turn waiting time into preparation, so the 20 minutes are used well.</div>
   </div>
  </div>
  <div class="foot"><span>Carevia · Patient journey and wireframes</span></div>
 </section>
 
+<!-- ================= WEB 08b CONFIRM IT'S YOU ================= -->
+<section class="page">
+ <div class="ph"><div><div class="kick">Section 4 · Web · Stage 4 Visit</div><h2>08b · Confirm it's you</h2></div><span class="tag new">New screen</span></div>
+ <div class="sp">
+  <div class="browser new"><div class="chrome"><i></i><i></i><i></i><span class="url">carevia.claudemod.tech/app/visits/…/join</span></div>
+   <div class="vp">
+    <div class="appbar"><i class="logo"></i><span class="p"><b style="color:var(--ink)">Emergency? Call 112</b> · Your account</span></div>
+    <div style="flex:1;padding:18px 60px;display:flex;flex-direction:column;gap:9px">
+     <span class="mono">Today, 10:10 · Clinician name</span>
+     <div class="t xl">Confirm it's you</div>
+     <div class="p">Before a video consultation, we check that the contact details on your account are yours. It's a Portuguese teleconsultation rule.</div>
+     <div class="box col" style="gap:5px;position:relative"><div class="chk"><i class="x"></i>This is my email address: n•••@example.com</div><div class="chk"><i class="x"></i>This is my mobile number: +351 9•• ••• •••</div><div class="p">Something wrong? <u>Update your details</u> first.</div><span class="mk abs" style="top:-9px;right:-9px">1</span></div>
+     <div class="box col" style="gap:4px;position:relative"><div class="chk"><i></i><b>Someone will join me</b></div><div class="p">You have the right to be accompanied, as at an in-person visit. They can sit with you, or join from their own device with a private link you'll get during the call.</div><span class="mk abs" style="top:-9px;right:-9px">2</span></div>
+     <div class="spacer"></div>
+     <div class="row"><span class="btn o">Back</span><span class="btn d">Continue to the waiting room</span></div>
+    </div>
+   </div>
+  </div>
+  <div class="notes">
+   <div class="note"><span class="mk">1</span><p><b>Email and mobile, confirmed</b> <span class="tag new">New</span><br><span>Both ticks are required before the waiting room. Carevia stores only the time they were confirmed.</span></p></div>
+   <div class="note"><span class="mk">2</span><p><b>A companion</b> <span class="tag new">New</span><br><span>Optional. A companion gets their own link, which can't control the room. The doctor sees that the patient asked to be accompanied.</span></p></div>
+   <div class="why"><b>Arrives here from:</b> "Test camera and microphone" or "Join" on screen 08, once the room is about to open. Moving the visit to a new time asks again.</div>
+  </div>
+ </div>
+ <div class="foot"><span>Carevia · Patient journey and wireframes</span></div>
+</section>
+<!-- ================= WEB 08c CHANGE THE TIME ================= -->
+<section class="page">
+ <div class="ph"><div><div class="kick">Section 4 · Web · Stage 4 Visit</div><h2>08c · Change the time (same appointment)</h2></div><span class="tag new">New screen</span></div>
+ <div class="sp">
+  <div class="browser new"><div class="chrome"><i></i><i></i><i></i><span class="url">carevia.claudemod.tech/app/visits/…/reschedule</span></div>
+   <div class="vp">
+    <div class="appbar"><i class="logo"></i><span class="p"><b style="color:var(--ink)">Emergency? Call 112</b> · Your account</span></div>
+    <div style="flex:1;padding:14px 22px;display:flex;flex-direction:column;gap:8px">
+     <span class="mono">General &amp; urgent care · Adult urgent care</span>
+     <div class="t xl">Choose a new time</div>
+     <div class="p" style="position:relative">Same visit, same payment: you won't be charged again. Now: <b style="color:var(--ink)">Thursday, 09:30</b> with Clinician name.<span class="mk" style="margin-left:6px">1</span></div>
+     <div class="row" style="flex-wrap:wrap;gap:6px"><span class="chip on">First available</span><span class="chip">Today</span><span class="chip">Tomorrow</span><span class="chip">Pick a date</span><span class="field" style="padding:4px 8px">Any language ▾</span></div>
+     <div class="box row" style="align-items:flex-start;position:relative"><i class="img av"></i><div style="flex:1"><b class="t s">Clinician name</b> <span class="chip" style="padding:1px 6px">Your doctor</span><div class="p">General practitioner · Cédula 00000</div><div class="row" style="gap:5px;margin-top:6px"><span class="chip">10:30</span><span class="chip on">12:00</span><span class="chip">14:30</span></div></div><span class="mk abs" style="top:-9px;right:-9px">2</span></div>
+     <div class="box row" style="align-items:flex-start"><i class="img av"></i><div style="flex:1"><b class="t s">Another clinician</b><div class="p">General practitioner · Cédula 00000</div><div class="row" style="gap:5px;margin-top:6px"><span class="chip">12:00</span><span class="chip">16:00</span></div></div></div>
+     <div class="spacer"></div>
+     <div class="row"><span class="btn o">Back</span><span class="btn d">Move to 12:00</span><span class="mk">3</span></div>
+    </div>
+   </div>
+  </div>
+  <div class="notes">
+   <div class="note"><span class="mk">1</span><p><b>The same appointment</b> <span class="tag new">New</span><br><span>Moving keeps the consent and the payment. The old time is freed for someone else, and the confirmation email is resent with the new time.</span></p></div>
+   <div class="note"><span class="mk">2</span><p><b>Your doctor first</b><br><span>The patient's own doctor is listed first; any doctor in the same area of care can also be chosen.</span></p></div>
+   <div class="note"><span class="mk">3</span><p><b>Two ways in</b><br><span>"Change the time" on screen 08 before the visit, or "Choose a new time" on screen 11 after a call that dropped and wasn't rejoined.</span></p></div>
+   <div class="why"><b>Never a second booking.</b> One person can't have two visits at the same time; the app refuses the clash.</div>
+  </div>
+ </div>
+ <div class="foot"><span>Carevia · Patient journey and wireframes</span></div>
+</section>
 <!-- ================= WEB 09 WAITING ROOM ================= -->
 <section class="page">
- <div class="ph"><div><div class="kick">Section 4 · Web · Stage 4 Visit</div><h2>09 · Waiting room</h2></div><span class="tag new">New screen</span></div>
+ <div class="ph"><div><div class="kick">Section 4 · Web · Stage 4 Visit</div><h2>09 · Waiting room</h2></div><span class="tag rev">Revised</span></div>
  <div class="sp">
   <div class="browser new"><div class="chrome"><i></i><i></i><i></i><span class="url">carevia.com/visits/today/waiting</span></div>
    <div class="vp">
@@ -563,18 +708,18 @@ td.k{font:10px ui-monospace,Menlo,monospace;text-transform:uppercase;color:var(-
       <span class="mono">Waiting room</span>
       <div class="t l">Clinician name will join at 10:10</div>
       <div class="p">You're early. That's fine. Stay on this page.</div>
-      <div class="box" style="padding:3px 10px;position:relative"><div class="li"><span>Camera</span><b>Working</b></div><div class="li"><span>Microphone</span><b>Working</b></div><div class="li" style="border:none"><span>Connection</span><b>Good</b></div><span class="mk abs" style="top:-9px;right:-9px">1</span></div>
+      <div class="box" style="padding:3px 10px;position:relative"><div class="li"><span>Camera</span><b>Working</b></div><div class="li"><span>Microphone</span><b>Working</b></div><div class="li"><span>Speaker</span><b>Play a test sound</b></div><div class="li" style="border:none"><span>Connection</span><b>Good</b></div><span class="mk abs" style="top:-9px;right:-9px">1</span></div>
       <div class="box"><b class="t s">Your questions</b><div class="p">3 questions saved. You'll see them during the call.</div></div>
       <div class="spacer"></div>
       <span class="btn d">Join when ready</span>
-      <div class="warn">Connection trouble? You can rebook for free.<span class="mk abs" style="top:-9px;right:-9px">2</span></div>
+      <div class="warn">Connection trouble? Your appointment stays open: rejoin until 11:10. After that, choose a new time.<span class="mk abs" style="top:-9px;right:-9px">2</span></div>
      </div>
     </div>
    </div>
   </div>
   <div class="notes">
    <div class="note"><span class="mk">1</span><p><b>Device check</b> <span class="tag new">New</span><br><span>Clear "working" labels, not technical jargon.</span></p></div>
-   <div class="note"><span class="mk">2</span><p><b>Safety net on screen</b> <span class="tag chg">Changed</span><br><span>The free rebook is in the FAQ today. Here it sits where the problem actually happens.</span></p></div>
+   <div class="note"><span class="mk">2</span><p><b>Safety net on screen</b> <span class="tag rev">Revised</span><br><span>A dropped call keeps the same appointment: rejoin while the visit is open, otherwise move it to a new time. Never a second booking, never a second charge.</span></p></div>
    <div class="why"><b>The most anxious moment of the journey.</b> The screen's only jobs are to reassure, confirm the tech works, and show who is coming.</div>
   </div>
  </div>
@@ -599,7 +744,7 @@ td.k{font:10px ui-monospace,Menlo,monospace;text-transform:uppercase;color:var(-
       <div class="chk"><i></i>Do I need a test?</div>
       <div class="p" style="margin-top:6px">Only you can see this list.</div>
       <div class="spacer"></div>
-      <div class="p">After the call, your summary appears in your account.</div>
+      <div class="p">After the call, your account shows the visit's status. Your record is in iMED.</div>
      </div>
     </div>
    </div>
@@ -613,41 +758,42 @@ td.k{font:10px ui-monospace,Menlo,monospace;text-transform:uppercase;color:var(-
  <div class="foot"><span>Carevia · Patient journey and wireframes</span></div>
 </section>
 
-<!-- ================= WEB 11 SUMMARY ================= -->
+<!-- ================= WEB 11 AFTER THE VISIT ================= -->
 <section class="page">
- <div class="ph"><div><div class="kick">Section 4 · Web · Stage 5 After</div><h2>11 · Consultation summary and documents</h2></div><span class="tag new">New screen</span></div>
+ <div class="ph"><div><div class="kick">Section 4 · Web · Stage 5 After</div><h2>11 · After the visit: status and iMED</h2></div><span class="tag rev">Revised</span></div>
  <div class="sp">
-  <div class="browser new"><div class="chrome"><i></i><i></i><i></i><span class="url">carevia.com/visits/2026-11-05</span></div>
+  <div class="browser new"><div class="chrome"><i></i><i></i><i></i><span class="url">carevia.claudemod.tech/app/visits/…/done</span></div>
    <div class="vp">
-    <div class="appbar"><i class="logo"></i><span class="p">Name ▾</span></div>
-    <div class="acct">
-     <div class="side"><div>Home</div><div class="on">Visits</div><div>Documents</div><div>Family</div><div>Settings</div></div>
-     <div class="main" style="display:grid;grid-template-columns:1fr 200px;gap:16px">
-      <div class="col" style="gap:8px">
-       <span class="mono">5 Nov 2026 · General care · Clinician name</span>
-       <div class="t xl">Your consultation summary</div>
-       <div class="t m" style="margin-top:4px">What we discussed<span class="mk" style="margin-left:6px">1</span></div>
-       <div class="ln"></div><div class="ln"></div><div class="ln" style="width:75%"></div><div class="ln" style="width:55%"></div>
-       <div class="t m" style="margin-top:6px">Next steps</div>
-       <div class="chk"><i></i>Rest and drink fluids for three days</div>
-       <div class="chk"><i></i>Take the prescribed medicine twice a day</div>
-       <div class="chk"><i></i>Book a follow-up if you're not better by Friday</div>
-       <div class="warn" style="margin-top:4px">Get worse quickly? Call 112 or go to your nearest emergency department.</div>
+    <div class="appbar"><i class="logo"></i><span class="p"><b style="color:var(--ink)">Emergency? Call 112</b> · Your account</span></div>
+    <div style="flex:1;display:grid;grid-template-columns:1fr 200px;gap:16px;padding:16px 20px">
+     <div class="col" style="gap:8px">
+      <span class="mono">5 Nov 2026 · General &amp; urgent care · Clinician name</span>
+      <div class="t xl" style="position:relative">Your visit is complete<span class="mk" style="margin-left:6px">1</span></div>
+      <div class="p">Thank you for seeing Clinician name. If you're not getting better, or you have new worries, book a follow-up.</div>
+      <div class="box col" style="gap:5px;position:relative"><div class="row" style="justify-content:space-between"><b class="t s">Your clinical record</b><span class="chip">iMED: not connected</span></div><div class="p">Your doctor records this visit in iMED, Carevia's clinical system. Your clinical summary and anything your doctor decides to issue are available through iMED, not in Carevia.</div><span class="mk abs" style="top:-9px;right:-9px">2</span></div>
+      <div class="warn">Not an emergency service. In an emergency, call 112.</div>
+      <span class="flag" style="margin-top:4px">The same page for the other outcomes</span>
+      <div class="g3" style="gap:6px;position:relative">
+       <div class="box" style="padding:7px"><b class="t s">Your doctor advises an in-person visit</b><div class="p">Arrange one with your family doctor or a clinic soon.</div></div>
+       <div class="box" style="padding:7px"><b class="t s">The call ended early</b><div class="p">Rejoin while the visit is open, or <u>choose a new time</u> (08c).</div></div>
+       <div class="box" style="padding:7px"><b class="t s">The call didn't connect</b><div class="p">Contact us to arrange another time.</div></div>
+       <span class="mk abs" style="top:-9px;right:-9px">3</span>
       </div>
-      <div class="col" style="gap:8px">
-       <div class="box" style="padding:4px 10px"><b class="t s" style="display:block;padding-top:6px">Documents<span class="mk" style="margin-left:6px">2</span></b><div class="li"><span>Prescription</span><u>Download</u></div><div class="li" style="border:none"><span>Sick-leave certificate</span><u>Download</u></div></div>
-       <span class="btn d">Book a follow-up<span class="mk abs" style="top:-9px;right:-9px">3</span></span>
-       <span class="btn o">Ask a question</span>
-      </div>
+     </div>
+     <div class="col" style="gap:8px">
+      <div class="box"><b class="t s">Thursday 5 November, 10:10 · 30 min</b><div class="p">General &amp; urgent care · video</div><div class="row" style="margin-top:6px;gap:6px"><i class="img av" style="width:24px;height:24px"></i><span class="p">Clinician name · Cédula 00000</span></div></div>
+      <span class="btn d">Book a follow-up<span class="mk abs" style="top:-9px;right:-9px">4</span></span>
+      <span class="btn o">Back to your account</span>
      </div>
     </div>
    </div>
   </div>
   <div class="notes">
-   <div class="note"><span class="mk">1</span><p><b>Plain-language summary</b><br><span>Written by the clinician. The patient can reread the advice at any time.</span></p></div>
-   <div class="note"><span class="mk">2</span><p><b>Documents</b><br><span>Only what the clinician decided to issue. If the problem needs in-person care, a referral appears here instead.</span></p></div>
-   <div class="note"><span class="mk">3</span><p><b>Follow-up in one click</b><br><span>Same clinician, booking steps already filled in.</span></p></div>
-   <div class="why"><b>Matches the website's promise:</b> "Wake up knowing what comes next."</div>
+   <div class="note"><span class="mk">1</span><p><b>A status, never a document</b> <span class="tag rev">Revised</span><br><span>The doctor's outcome in plain words: completed, in-person care advised, ended early or didn't connect. No summary text, no next-steps list, no downloads.</span></p></div>
+   <div class="note"><span class="mk">2</span><p><b>Where the record is</b> <span class="tag rev">Revised</span><br><span>Prescriptions, sick-leave certificates (CIT), certificates, test requests and referrals are issued only in iMED. Carevia never generates, stores or shows them. "Not connected" becomes a live status when iMED is linked.</span></p></div>
+   <div class="note"><span class="mk">3</span><p><b>Other outcomes</b><br><span>The heading and the next step change with the outcome. A dropped call keeps the same appointment.</span></p></div>
+   <div class="note"><span class="mk">4</span><p><b>Follow-up in one click</b><br><span>Same doctor and area of care, chosen for you on step 1.</span></p></div>
+   <div class="why"><b>Why it changed:</b> clinical documents live only in iMED, the certified system. Showing even a placeholder would break the rule.</div>
   </div>
  </div>
  <div class="foot"><span>Carevia · Patient journey and wireframes</span></div>
@@ -655,34 +801,79 @@ td.k{font:10px ui-monospace,Menlo,monospace;text-transform:uppercase;color:var(-
 
 <!-- ================= WEB 12 ACCOUNT HOME ================= -->
 <section class="page">
- <div class="ph"><div><div class="kick">Section 4 · Web · Stage 5 After</div><h2>12 · Account home</h2></div><span class="tag new">New screen</span></div>
+ <div class="ph"><div><div class="kick">Section 4 · Web · Stage 5 After</div><h2>12 · Account home</h2></div><span class="tag rev">Revised</span></div>
  <div class="sp">
   <div class="browser new"><div class="chrome"><i></i><i></i><i></i><span class="url">carevia.com/account</span></div>
    <div class="vp">
     <div class="appbar"><i class="logo"></i><span class="p">Name ▾</span></div>
     <div class="acct">
-     <div class="side" style="position:relative"><div class="on">Home</div><div>Visits</div><div>Documents</div><div>Family</div><div>Settings</div><span class="mk abs" style="top:6px;right:-9px">1</span></div>
+     <div class="side" style="position:relative"><div class="on">Home</div><div>Family</div><div>Profile</div><div>Security</div><span class="mk abs" style="top:6px;right:-9px">1</span></div>
      <div class="main">
       <div class="row" style="justify-content:space-between"><div class="t xl">Hello, Name</div><span class="btn d">Book new care<span class="mk abs" style="top:-9px;right:-9px">2</span></span></div>
       <div class="g2">
-       <div class="box dark"><span class="mono">Upcoming</span><div class="t m" style="margin-top:3px">Follow-up · Thu 09:30</div><div class="p">Clinician name · General care</div><div class="row" style="margin-top:6px"><span class="btn o">Reschedule</span><span class="p">Join opens 10 minutes before</span></div></div>
+       <div class="box dark"><span class="mono">Upcoming</span><div class="t m" style="margin-top:3px">Follow-up · Thu 09:30</div><div class="p">Clinician name · General care</div><div class="row" style="margin-top:6px"><span class="btn o">Prepare</span><span class="p">Join opens 10 minutes before</span></div></div>
        <div class="box"><span class="mono">Family</span><div class="li"><span>You</span><span class="p">Adult</span></div><div class="li"><span>Child name</span><span class="p">Dependant</span></div><div class="p"><u>Add a family member</u></div><span class="mk abs" style="top:-9px;right:-9px">3</span></div>
       </div>
       <div class="box" style="padding:4px 10px"><b class="t s" style="display:block;padding-top:6px">Past visits</b>
-       <div class="li"><span>5 Nov</span><span>General care</span><span>Clinician name</span><u>Summary</u></div>
-       <div class="li"><span>12 Mar</span><span>Tests &amp; renewals</span><span>Clinician name</span><u>Summary</u></div>
-       <div class="li" style="border:none"><span>3 Jan</span><span>Certificates · Child name</span><span>Clinician name</span><u>Summary</u></div>
+       <div class="li"><span>5 Nov</span><span>General care</span><span>Clinician name</span><span class="chip">Completed</span><u>Visit status</u></div>
+       <div class="li"><span>12 Mar</span><span>General care</span><span>Clinician name</span><span class="chip">In-person care advised</span><u>Visit status</u></div>
+       <div class="li" style="border:none"><span>3 Jan</span><span>Child consultation · Child name</span><span>Clinician name</span><span class="chip">Cancelled</span><span></span></div>
       </div>
      </div>
     </div>
    </div>
   </div>
   <div class="notes">
-   <div class="note"><span class="mk">1</span><p><b>Everything in one place</b> <span class="tag new">New</span><br><span>Visits, documents and family, as the website promises ("Your care in one place").</span></p></div>
+   <div class="note"><span class="mk">1</span><p><b>Everything in one place</b> <span class="tag rev">Revised</span><br><span>Visits and family. No Documents section: the clinical record and anything the doctor issues are in iMED.</span></p></div>
    <div class="note"><span class="mk">2</span><p><b>Book new care</b><br><span>Returning patients start booking from here, not from the homepage.</span></p></div>
    <div class="note"><span class="mk">3</span><p><b>Family</b> <span class="tag new">New</span><br><span>Parents manage their children's visits from the same account.</span></p></div>
    <div class="why"><b>The journey loops back:</b> the next time this patient needs care, they start here.</div>
   </div>
+ </div>
+ <div class="foot"><span>Carevia · Patient journey and wireframes</span></div>
+</section>
+
+<!-- ================= 4b DOCTOR SCREENS ================= -->
+<section class="page">
+ <div class="ph"><div><div class="kick">Section 4b · Web · The doctor</div><h2>13 · The doctor's agenda and visit room</h2></div><span class="tag new">New screens</span></div>
+ <div class="g2" style="flex:1;gap:6mm;min-height:0">
+  <div class="browser new"><div class="chrome"><i></i><i></i><i></i><span class="url">carevia.claudemod.tech/app/doctor</span></div>
+   <div class="vp">
+    <div class="appbar"><i class="logo"></i><span class="p">Your agenda</span></div>
+    <div style="flex:1;padding:12px 14px;display:flex;flex-direction:column;gap:7px">
+     <span class="mono">General practitioner · Cédula 00000</span>
+     <div class="row" style="justify-content:space-between"><div class="t l">Clinician name</div><span class="btn o" style="position:relative">Open iMED<span class="mk abs" style="top:-9px;right:-9px">2</span></span></div>
+     <div class="row" style="gap:5px;position:relative"><span class="chip">Previous day</span><span class="chip on">Today</span><span class="chip">Next day</span><span class="field" style="padding:3px 7px">05/11/2026</span><span class="mk">1</span></div>
+     <div class="t m">Today, 5 November</div>
+     <div class="box row"><div style="width:44px"><b class="t s">10:10</b><div class="p">to 10:40</div></div><div style="flex:1"><b class="t s">Patient name</b><div class="p">Adult urgent care · video</div><span class="chip" style="padding:1px 6px">Confirmed</span></div><span class="btn d">Start visit</span></div>
+     <div class="box row"><div style="width:44px"><b class="t s">14:30</b><div class="p">to 15:00</div></div><div style="flex:1"><b class="t s">Child name</b><div class="p">Child consultation · booked by a parent</div><span class="chip" style="padding:1px 6px">Confirmed</span></div><span class="btn o">Open visit</span></div>
+     <div class="p">Carevia shows appointments only. Clinical notes, prescriptions and anything you issue go in iMED.</div>
+    </div>
+   </div>
+  </div>
+  <div class="browser new"><div class="chrome"><i></i><i></i><i></i><span class="url">carevia.claudemod.tech/app/doctor/visits/…</span></div>
+   <div class="vp">
+    <div class="appbar"><i class="logo"></i><span class="p"><u>Back to your agenda</u></span></div>
+    <div style="flex:1;display:grid;grid-template-columns:1fr 150px;gap:10px;padding:12px 14px">
+     <div class="col" style="gap:7px">
+      <span class="mono">Today, 10:10 · General &amp; urgent care</span>
+      <div class="t l">Patient name</div>
+      <div class="video" style="flex:1;position:relative"><i class="self" style="width:60px;height:44px"></i><span class="p" style="position:absolute;left:10px;bottom:8px;color:#333"><b>Start the call when you're ready.</b> You join as the room owner.</span><span class="mk abs" style="top:-9px;right:-9px">3</span></div>
+     </div>
+     <div class="col" style="gap:6px">
+      <div class="box" style="padding:7px"><div class="p">Patient · Service · Time</div><div class="p">Status: Confirmed</div><div class="p">Asked to be accompanied</div></div>
+      <span class="btn o">Open iMED</span>
+      <div class="box col" style="gap:5px;padding:7px;position:relative"><b class="t s">Outcome</b><div class="p">Choose one. Reasons and notes go in iMED.</div><span class="btn o" style="padding:5px">Completed</span><span class="btn o" style="padding:5px">Ended: poor connection</span><span class="btn o" style="padding:5px">Needs in-person care</span><span class="btn o" style="padding:5px">Patient didn't join</span><span class="mk abs" style="top:-9px;right:-9px">4</span></div>
+     </div>
+    </div>
+   </div>
+  </div>
+ </div>
+ <div class="g4" style="margin-top:5mm;font-size:11px;line-height:1.45;gap:5mm">
+  <div class="note"><span class="mk">1</span><p><b>The day's visits</b><br><span style="color:var(--mid)">Time, patient's name, service and call state. No clinical fields, because Carevia has none.</span></p></div>
+  <div class="note"><span class="mk">2</span><p><b>iMED, one click away</b><br><span style="color:var(--mid)">The clinical record, prescriptions and certificates are written in iMED.</span></p></div>
+  <div class="note"><span class="mk">3</span><p><b>The doctor owns the room</b><br><span style="color:var(--mid)">A private room per visit. The doctor's link can admit and remove; the patient's and companion's can't. Never recorded.</span></p></div>
+  <div class="note"><span class="mk">4</span><p><b>Four outcomes, no free text</b><br><span style="color:var(--mid)">Each asks to confirm. "Ended: poor connection" keeps the appointment open so the patient can rejoin or move it.</span></p></div>
  </div>
  <div class="foot"><span>Carevia · Patient journey and wireframes</span></div>
 </section>
@@ -725,7 +916,7 @@ td.k{font:10px ui-monospace,Menlo,monospace;text-transform:uppercase;color:var(-
      <div class="t l">General &amp; urgent care</div>
      <div class="p">Everyday concerns, infections, allergies, skin, children's health.</div>
      <div class="box"><div class="t m">From €45</div><div class="p">20 min · video</div></div>
-     <div class="chk"><i></i>Advice on symptoms</div><div class="chk"><i></i>Follow-up and referrals</div>
+     <div class="chk"><i></i>Advice on symptoms</div><div class="chk"><i></i>Follow-up when appropriate</div>
      <div class="warn">Not for emergencies: call 112.</div>
      <div class="spacer"></div>
      <div class="btn d">Book General care</div>
@@ -737,21 +928,21 @@ td.k{font:10px ui-monospace,Menlo,monospace;text-transform:uppercase;color:var(-
 
 <!-- ================= MOBILE B ================= -->
 <section class="page">
- <div class="ph"><div><div class="kick">Section 5 · Mobile · Stages 2–3 Decide and book</div><h2>Mobile 04–07 · Decide and book</h2></div><div class="legend" style="font-size:10px"><span><i class="sw d" style="width:20px;height:14px"></i>All new</span></div></div>
+ <div class="ph"><div><div class="kick">Section 5 · Mobile · Stages 2–3 Decide and book</div><h2>Mobile 04–07 · Decide and book</h2><span class="flag">Steps 1 (care) and 5 (consent) look like the web screens</span></div><div class="legend" style="font-size:10px"><span><i class="sw d" style="width:20px;height:14px"></i>All new</span></div></div>
  <div class="phones">
   <div class="scr"><div class="phone new">
-    <div class="mono">Step 1 of 4</div>
+    <div class="mono">Step 2 of 6</div>
     <div class="warn">Emergency? Call 112.</div>
     <div class="t l">Who is this visit for?</div>
     <div class="g2" style="gap:6px"><div class="chip on">Me</div><div class="chip">My child</div></div>
     <div class="chip">Another adult</div>
-    <div class="t m" style="margin-top:5px">Where will you be?</div>
-    <div class="field">Country ▾</div>
-    <div class="p">You need to be in a supported country at visit time.</div>
+    <div class="t m" style="margin-top:5px">In mainland Portugal during the visit?</div>
+    <div class="g2" style="gap:6px"><div class="chip on">Yes</div><div class="chip">No</div></div>
+    <div class="p">Madeira and the Azores aren't covered yet.</div>
     <div class="spacer"></div><div class="btn d">Continue</div>
-   </div><div class="cap"><span class="num">04</span><b>Who and where</b><p>Age and country checked first.</p></div></div>
+   </div><div class="cap"><span class="num">04</span><b>Who and where</b><p>Age and place checked before any details.</p></div></div>
   <div class="scr"><div class="phone new">
-    <div class="mono">Step 2 of 4 · General care</div>
+    <div class="mono">Step 3 of 6 · General care</div>
     <div class="row" style="gap:4px;flex-wrap:wrap"><span class="chip on">First available</span><span class="chip">Today</span><span class="chip">Tomorrow</span></div>
     <div class="field">Language: English ▾</div>
     <div class="box row" style="gap:7px"><i class="img av" style="width:28px;height:28px"></i><div><div class="t s">Clinician name</div><div class="p">GP · EN, PT</div></div></div>
@@ -761,21 +952,21 @@ td.k{font:10px ui-monospace,Menlo,monospace;text-transform:uppercase;color:var(-
     <div class="spacer"></div><div class="btn d">Continue · 10:10</div>
    </div><div class="cap"><span class="num">05</span><b>Clinician and time</b><p>"First available" sits first for speed.</p></div></div>
   <div class="scr"><div class="phone new">
-    <div class="mono">Step 3 of 4</div>
+    <div class="mono">Step 4 of 6</div>
     <div class="p" style="color:var(--ink)">10:10 held for 10 minutes</div>
     <div class="t l">Your account</div>
-    <div class="field">Full name</div><div class="field">Email</div><div class="field">Password</div><div class="field">Date of birth</div>
+    <div class="g2" style="gap:6px"><div class="field">First name</div><div class="field">Last name</div></div><div class="field">Email</div><div class="field">Mobile</div><div class="field">Date of birth</div><div class="field">Password</div>
     <div class="box" style="border-style:dashed"><b class="t s">Booking for your child?</b><div class="p">Add their details next.</div></div>
     <div class="spacer"></div><div class="btn d">Create account</div><div class="p" style="text-align:center">Already have one? <u>Sign in</u></div>
    </div><div class="cap"><span class="num">06</span><b>Your account</b><p>After the time is held, not before.</p></div></div>
   <div class="scr"><div class="phone new">
-    <div class="mono">Step 4 of 4</div>
+    <div class="mono">Step 6 of 6</div>
     <div class="t l">Review and pay</div>
     <div class="box" style="padding:2px 8px"><div class="li"><span>General care</span><b>€45</b></div><div class="li"><span>Today · 10:10</span><u>Edit</u></div><div class="li" style="border:none"><span>For: Me</span><u>Edit</u></div></div>
-    <div class="box" style="background:var(--soft)"><div class="chk"><i class="x"></i>No subscription</div><div class="chk"><i class="x"></i>Free rebook if video fails</div></div>
-    <div class="field">Card number</div><div class="g2" style="gap:6px"><div class="field">MM/YY</div><div class="field">CVC</div></div>
-    <div class="spacer"></div><div class="btn d">Pay €45 and confirm</div>
-   </div><div class="cap"><span class="num">07</span><b>Review and pay</b><p>Reassurance beside the Pay button.</p></div></div>
+    <div class="box" style="background:var(--soft)"><div class="chk"><i class="x"></i>No subscription</div><div class="chk"><i class="x"></i>Video fails? Reconnect, then reschedule</div></div>
+    <div class="box" style="border-style:dashed"><div class="p">Payment provider to be chosen. The demo has no card fields.</div></div>
+    <div class="spacer"></div><div class="btn d">Pay €45 (demo)</div>
+   </div><div class="cap"><span class="num">07</span><b>Review and pay</b><p>Reassurance beside the Pay button. Consent comes just before (step 5).</p></div></div>
  </div>
  <div class="foot"><span>Carevia · Patient journey and wireframes</span></div>
 </section>
@@ -799,9 +990,9 @@ td.k{font:10px ui-monospace,Menlo,monospace;text-transform:uppercase;color:var(-
     <div class="t m">Clinician name will join at 10:10</div>
     <div class="p">Stay on this screen.</div>
     <div class="spacer"></div>
-    <div class="warn">Connection trouble? Rebook for free.</div>
+    <div class="warn">Connection trouble? Rejoin until 11:10, then choose a new time.</div>
     <div class="btn d">Join when ready</div>
-   </div><div class="cap"><span class="num">09</span><b>Waiting room</b><p>Device check and the free-rebook safety net.</p></div></div>
+   </div><div class="cap"><span class="num">09</span><b>Waiting room</b><p>Device check, and the same appointment if the call drops.</p></div></div>
   <div class="scr"><div class="phone new" style="padding:8px">
     <div class="video" style="flex:1"><i class="self" style="width:52px;height:72px;right:8px;top:8px"></i></div>
     <div class="row" style="justify-content:space-between;padding:0 4px"><span class="p">Clinician name · GP</span><span class="chip">Your questions (3)</span></div>
@@ -817,14 +1008,12 @@ td.k{font:10px ui-monospace,Menlo,monospace;text-transform:uppercase;color:var(-
  <div class="phones">
   <div class="scr"><div class="phone new">
     <div class="mono">5 Nov · General care</div>
-    <div class="t l">Your consultation summary</div>
-    <div class="ln"></div><div class="ln"></div><div class="ln" style="width:70%"></div>
-    <div class="t m" style="margin-top:4px">Next steps</div>
-    <div class="chk"><i></i>Rest and fluids for 3 days</div><div class="chk"><i></i>Follow-up if not better</div>
-    <div class="t m" style="margin-top:4px">Documents</div>
-    <div class="li"><b>Prescription</b><u>Download</u></div><div class="li"><b>Sick-leave certificate</b><u>Download</u></div>
+    <div class="t l">Your visit is complete</div>
+    <div class="p">If you're not getting better, or have new worries, book a follow-up.</div>
+    <div class="box"><b class="t s">Your clinical record</b><div style="margin:4px 0"><span class="chip">iMED: not connected</span></div><div class="p">Your doctor records this visit in iMED. Your clinical summary and anything your doctor decides to issue are available through iMED, not in Carevia.</div></div>
+    <div class="warn">Not an emergency service. In an emergency, call 112.</div>
     <div class="spacer"></div><div class="btn d">Book a follow-up</div>
-   </div><div class="cap"><span class="num">11</span><b>Summary and documents</b><p>Documents appear only when the clinician issues them.</p></div></div>
+   </div><div class="cap"><span class="num">11</span><b>After the visit</b> <span class="tag rev" style="font-size:8px;padding:1px 6px">Revised</span><p>A status and where the record is. Never a document.</p></div></div>
   <div class="scr"><div class="phone new">
     <div class="row" style="justify-content:space-between"><i class="logo" style="width:44px"></i><span class="pill">Name ▾</span></div>
     <div class="t l">Hello again</div>
@@ -851,10 +1040,10 @@ td.k{font:10px ui-monospace,Menlo,monospace;text-transform:uppercase;color:var(-
 <section class="page">
  <div class="ph"><div><div class="kick">Section 6</div><h2>When things don't go to plan</h2><p class="lead">A good journey also handles the bad days. These four situations are designed into the screens above.</p></div></div>
  <div class="cards" style="grid-template-columns:1fr 1fr;align-content:start">
-  <div class="card dash"><b style="font-size:14px">It's an emergency</b><p class="p"><b style="color:var(--ink)">Where:</b> any screen.</p><p>"Call 112" shows on the service details, the search (for urgent-sounding words), booking step 1, the waiting room and the summary. Carevia never looks like an emergency service.</p></div>
-  <div class="card dash"><b style="font-size:14px">I can't use Carevia (country or age)</b><p class="p"><b style="color:var(--ink)">Where:</b> booking step 1 (screen 04).</p><p>Checked before any personal details or payment. The patient sees a short, kind explanation and what to do instead. Under-18s are booked by a parent or guardian.</p></div>
-  <div class="card dash"><b style="font-size:14px">The video doesn't work</b><p class="p"><b style="color:var(--ink)">Where:</b> waiting room or during the call (screens 09–10).</p><p>One tap to rebook for free. Booking reopens at step 2 with the service and patient already filled in, so only a new time is needed.</p></div>
-  <div class="card dash"><b style="font-size:14px">It can't be treated online</b><p class="p"><b style="color:var(--ink)">Where:</b> during the call, then the summary (screen 11).</p><p>The clinician recommends in-person care. The summary shows a referral and clear next steps instead of a prescription.</p></div>
+  <div class="card dash"><b style="font-size:14px">It's an emergency</b><p class="p"><b style="color:var(--ink)">Where:</b> any screen.</p><p>"Call 112" shows on the service details, the search (for urgent-sounding words), booking steps 1 and 2, the waiting room and after the visit. Carevia never looks like an emergency service.</p></div>
+  <div class="card dash"><b style="font-size:14px">I can't use Carevia (place or age)</b><p class="p"><b style="color:var(--ink)">Where:</b> booking step 2 (screen 04).</p><p>Checked before any personal details or payment. The patient sees a short, kind explanation and what to do instead. Under-18s are booked by a parent or guardian.</p></div>
+  <div class="card dash"><b style="font-size:14px">The video doesn't work</b><p class="p"><b style="color:var(--ink)">Where:</b> waiting room or during the call (screens 09–10).</p><p>The same appointment stays open: rejoin until 60 minutes after the end. After that, or if the doctor records "ended: poor connection", the patient picks a new time for the same appointment (screen 08c). No second booking and no second charge.</p></div>
+  <div class="card dash"><b style="font-size:14px">It can't be treated online</b><p class="p"><b style="color:var(--ink)">Where:</b> during the call, then the visit status (screen 11).</p><p>The doctor records "needs in-person care". The status says so and asks the patient to arrange an in-person visit. Any referral is issued in iMED, never in Carevia.</p></div>
  </div>
  <div class="foot"><span>Carevia · Patient journey and wireframes</span></div>
 </section>
@@ -869,9 +1058,11 @@ td.k{font:10px ui-monospace,Menlo,monospace;text-transform:uppercase;color:var(-
    <p><b>2. Holding a time.</b> Is 10 minutes right while a new patient creates an account? <span class="p">Screen 06</span></p>
    <p><b>3. Payment.</b> Which payment provider? Do we need insurance, vouchers or company billing? <span class="p">Screen 07</span></p>
    <p><b>4. Cancelling.</b> Until when can a patient cancel or reschedule for free? <span class="p">Screens 08, 12</span></p>
-   <p><b>5. Countries and languages.</b> Which countries and languages at launch? <span class="p">Screens 04, 05</span></p>
+   <p><b>5. Place and language.</b> <i>Answered:</i> mainland Portugal at launch; the demo is in English and Portuguese is a launch requirement. <span class="p">Screens 04, 05</span></p>
    <p><b>6. Emergency wording.</b> Can your clinical team approve the emergency messages and the symptom words that trigger them? <span class="p">Screens 01b, 04, 09</span></p>
-   <p><b>7. Recordings.</b> Are calls recorded? The website currently says to ask support. <span class="p">Screen 10</span></p>
+   <p><b>7. Recordings.</b> <i>Answered:</i> never in this build; it would need its own consent. <span class="p">Screens 06b, 10</span></p>
+   <p><b>8. Service names.</b> Some services are named after a document ("Sick leave", "Illness certificate", "Medical treatment renewal"). Should they be renamed as assessments, so no name reads as a promise? <span class="p">Screens 02, 03b</span></p>
+   <p><b>9. Reminders.</b> Email and SMS reminders need a sender and a data-processing agreement. Which provider? <span class="p">Screen 08</span></p>
   </div>
   <div class="col" style="gap:10px">
    <h3 style="font-size:14px">Suggested next steps</h3>

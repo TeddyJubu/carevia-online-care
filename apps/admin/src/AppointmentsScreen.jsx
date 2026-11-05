@@ -48,7 +48,7 @@ export default function AppointmentsScreen({ onAuthError }) {
         {state.phase === 'loading' ? 'Loading…' : state.phase === 'ready' ? `${state.rows.length} appointment${state.rows.length === 1 ? '' : 's'}` : ''}
       </p>
       {state.rows.length ? (
-        <div className="table-wrap">
+        <div className="table-wrap" tabIndex={0} role="region" aria-label="Appointments table, scrolls sideways">
           <table>
             <caption className="visually-hidden">Appointments on {date}</caption>
             <thead>
