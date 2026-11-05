@@ -518,6 +518,7 @@ button.nav-pill:hover { border-color: #d5eaff66; }
 .empty-state .eyebrow { font-size: 15px; }
 .empty-state h2 { font-size: clamp(24px, 2.4vw, 30px); }
 .empty-state p { max-width: 52ch; color: var(--muted); }
+.empty-state p.eyebrow { color: var(--accent); }
 .empty-state .button { margin-top: 8px; }
 
 .service-row { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px 14px; padding: 16px 0; border-top: 1px solid var(--hair); }
