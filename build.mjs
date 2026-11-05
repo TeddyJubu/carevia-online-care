@@ -1,4 +1,4 @@
-import {cp,rm,mkdir,readFile,writeFile} from 'node:fs/promises';
+import {cp,rm,mkdir,readFile,readdir,writeFile} from 'node:fs/promises';
 import {services,faqs,guides} from './src/content.mjs';
 import {services as design42Services} from './src/services-04-2.mjs';
 const esc=s=>String(s).replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('"','&quot;');
@@ -13,8 +13,9 @@ html=html.replace('<!-- GUIDES -->',guides.map(g=>`<button class="guide-card" da
 html=html.replace(/src="assets\/([^"]+)\.jpg"/g,(match,name)=>{const doctor=name.startsWith('doctor');const widths=doctor?[480,768]:[480,960,1600];return `${match} srcset="${widths.map(w=>`assets/${name}-${w}.jpg ${w}w`).join(', ')}" sizes="${doctor?'(max-width: 599px) 132px, 33vw':'(max-width: 599px) 100vw, 50vw'}"`;});
 html=html.replace(/<button class="care-card"[\s\S]*?<\/button>/g,card=>card.replace(/sizes="[^"]+"/,'sizes="750px"'));
 html=html.replace(/<img[^>]+fetchpriority="high"[^>]*>/g,tag=>tag.replace(/sizes="[^"]+"/,'sizes="(max-width: 809px) 150vh, 100vw"'));
-await rm('dist',{recursive:true,force:true});await mkdir('dist',{recursive:true});await cp('src/assets','dist/assets',{recursive:true});await cp('src/styles','dist/styles',{recursive:true});await cp('src/scripts','dist/scripts',{recursive:true});await cp('src/content.mjs','dist/scripts/content.mjs');
-await cp('src/services-04-2.mjs','dist/scripts/services-04-2.mjs');
+await rm('dist',{recursive:true,force:true});await mkdir('dist',{recursive:true});await cp('src/assets','dist/assets',{recursive:true});await cp('src/styles','dist/styles',{recursive:true});await cp('src/scripts','dist/scripts',{recursive:true});await cp('src/content.mjs','dist/scripts/content.js');
+// Served as .js: nginx's stock mime.types has no .mjs, and a module served as application/octet-stream breaks every homepage script that imports it.
+await writeFile('dist/scripts/services-04-2.js',(await readFile('src/services-04-2.mjs','utf8')).replace("from './content.mjs'","from './content.js'"));
 await writeFile('dist/design-03.html',html);
 // The Smilara-inspired fourth design uses its own presentation and interactions.
 let editorial=await readFile('src/design-04-2.html','utf8');
@@ -171,5 +172,8 @@ const v45Home=v45Story
 if(!v45Home.includes('data-portal=')||!v45Home.includes('/signin">Sign in')||!v45Home.includes('>Not sure which one?</a>')||!v45Home.includes('/signup">Create your account')||v45Home.split(external).length-1!==2)throw new Error('Design 04.5 portal links failed');
 await writeFile('dist/design-04-5.html',v45Home);
 await writeFile('dist/index.html',v45Home.replace('rel="canonical" href="https://carevia.claudemod.tech/design-04-5.html"','rel="canonical" href="https://carevia.claudemod.tech/"'));
+
+// Every served module must be .js: a .mjs import 404s or arrives as application/octet-stream on stock nginx.
+for(const name of await readdir('dist/scripts'))if(name.endsWith('.mjs')||/from ?['"][^'"]+\.mjs['"]|import\(['"][^'"]+\.mjs/.test(name.endsWith('.js')?await readFile('dist/scripts/'+name,'utf8'):''))throw new Error(`dist/scripts/${name} uses .mjs`);
 
 console.log('Built Carevia designs 03, 04.2 and 04.5.');
