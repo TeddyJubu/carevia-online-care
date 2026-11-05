@@ -1,0 +1,90 @@
+// Shapes from docs/patient-journey/API-CONTRACT.md. No clinical fields exist here, by design.
+
+export type Role = 'patient' | 'clinician' | 'admin'
+
+export type User = {
+  id: string
+  email: string
+  emailVerified: boolean
+  firstName: string
+  lastName: string
+  phone: string
+  dateOfBirth: string
+  role: Role
+  twoFactorEnabled?: boolean
+}
+
+export type Session = { session: { id: string; expiresAt: string }; user: User }
+
+export type GroupSlug = 'general' | 'mental' | 'nutrition' | 'specialist' | 'certificates' | 'treatments' | 'renewals'
+
+export type ServiceGroup = {
+  id: number
+  slug: GroupSlug
+  name: string
+  blurb: string
+  icon: string
+  fromFee: number
+  services: { id: number; name: string }[]
+}
+
+export type Doctor = {
+  id: number
+  name: string
+  initials: string
+  specialty: string
+  languages: string
+  fee: number
+  cedula: string
+  experience?: string
+  education?: string
+  approach?: string
+  group?: number
+  groupName?: string
+  service?: string
+  nextAvailableAt?: string | null
+}
+
+export type DoctorBrief = Pick<Doctor, 'id' | 'name' | 'initials' | 'specialty' | 'languages' | 'cedula'> & { fee?: number }
+
+// The contract leaves the slot id type open (the database uses integers); treat it as opaque.
+export type SlotId = number | string
+export type Slot = { id: SlotId; startsAt: string; endsAt: string }
+export type SlotWithDoctor = Slot & { doctor: DoctorBrief & { fee: number } }
+
+export type For = 'self' | 'child' | 'adult'
+export type Status = 'held' | 'confirmed' | 'completed' | 'cancelled' | 'expired'
+export type Outcome = 'completed' | 'ended_poor_quality' | 'needs_in_person' | 'no_show'
+export type CallState = 'not_started' | 'in_progress' | 'ended'
+
+export type Appointment = {
+  id: string
+  status: Status
+  outcome: Outcome | null
+  holdExpiresAt: string | null
+  startsAt: string
+  endsAt: string
+  channel: 'video'
+  fee: number
+  for?: For
+  service: { id: number; name: string; groupSlug: GroupSlug; groupName: string }
+  doctor: DoctorBrief
+  patient: { kind: 'self' | 'family'; displayName: string } | null
+  consent: { version: string; acceptedAt: string } | null
+  payment: { status: 'paid'; method: 'demo' } | null
+  preJoin: { confirmedAt: string | null; companion: boolean } | null
+  call: { joinOpensAt: string; joinClosesAt: string; state: CallState; reconnects: number }
+  imed: { status: 'not_connected' }
+}
+
+export type FamilyMember = { id: string; firstName: string; lastName: string; dateOfBirth: string; relationship: 'child' | 'adult' }
+
+export type Consent = { version: string; title: string; body: string; recordingOffered: false }
+
+export type VideoToken = { token: string; url: string; roomName: string; expiresAt: string }
+
+export type DemoInfo = { enabled: true; accounts: { role: Role; email: string; password: string; label: string }[] }
+
+export type OutboxMessage = { id: string; to: string; subject: string; text: string; links: string[]; sentAt: string }
+
+export type CallEvent = 'joined' | 'left' | 'reconnect' | 'error'
