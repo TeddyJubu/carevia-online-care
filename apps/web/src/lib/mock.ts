@@ -381,6 +381,21 @@ on('POST', '/api/appointments/([^/]+)/cancel', (m) => {
   a.status = 'cancelled'
   return ok({ appointment: view(a) })
 })
+on('POST', '/api/appointments/([^/]+)/reschedule', (m, b) => {
+  const u = needRole('patient'); if (isRes(u)) return u
+  const a = ownAppt(u, m[1]); if (isRes(a)) return a
+  const now = Date.now()
+  const ok2 = a.status === 'confirmed' && (now < Date.parse(a.startsAt) || (a.outcome === 'ended_poor_quality' && now >= windowOf(a).closes))
+  if (!ok2) return err(409, 'CANNOT_RESCHEDULE', 'This visit can no longer be moved.')
+  const [docId, startsAt] = String(b.slotId).split('_')
+  const d = doctors[+docId]
+  if (!d || !startsAt) return err(404, 'SLOT_NOT_FOUND', 'That time no longer exists. Choose another time.')
+  if (d.id !== a.doctorId && d.groupIndex !== services.find((s) => s.id === a.serviceId)!.groupIndex) return err(400, 'SERVICE_MISMATCH', 'Choose the same doctor, or another doctor in the same area of care.')
+  if (!slotsFor(d, lisbonDay(startsAt), 1).some((s) => s.startsAt === startsAt)) return err(409, 'SLOT_TAKEN', 'That time was just booked. Choose another time.')
+  Object.assign(a, { doctorId: d.id, startsAt, endsAt: new Date(Date.parse(startsAt) + SLOT_MIN * 60000).toISOString(), outcome: null, callState: 'not_started', reconnects: 0, preJoin: null })
+  mail(u.email, 'Your Carevia visit has a new time', `Your video consultation with ${d.name} has a new time.`, [`/app/visits/${a.id}`])
+  return ok({ appointment: view(a) })
+})
 on('POST', '/api/appointments/([^/]+)/pre-join', (m, b) => {
   const u = needRole('patient'); if (isRes(u)) return u
   const a = ownAppt(u, m[1]); if (isRes(a)) return a

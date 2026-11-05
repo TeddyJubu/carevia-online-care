@@ -324,23 +324,44 @@ type Mode = 'first' | 'today' | 'tomorrow' | 'date'
 const LANGUAGES = ['English', 'Portuguese', 'French', 'German', 'Spanish', 'Italian']
 type Row = { doctor: SlotWithDoctor['doctor']; slots: { id: SlotWithDoctor['id']; startsAt: string }[] }
 
-export function BookTime() {
-  const { group, service, draft, update, setAppt, continueSignedIn } = useBooking()
-  const { user } = useSession()
-  const navigate = useNavigate()
+export type Picked = { id: Row['slots'][0]['id']; startsAt: string; doctor: Row['doctor'] }
+
+/**
+ * The J3 doctor-and-time picker, shared by booking and reschedule: first available, day filters and language,
+ * doctors with their times. `submit` gets the chosen slot; a SLOT_TAKEN error reloads the times.
+ */
+export function TimePicker({ groupSlug, service, preferredDoctorId, preferredLabel = 'Your last doctor', includePreferred, back, verb, pendingLabel, submit }: {
+  groupSlug: GroupSlug
+  service: { id: number; name: string }
+  preferredDoctorId?: number
+  preferredLabel?: string
+  /** Reschedule: always offer the preferred doctor's own times, even if they don't list this exact service. */
+  includePreferred?: boolean
+  back: string
+  verb: string
+  pendingLabel: string
+  submit: (picked: Picked) => Promise<void>
+}) {
   const [mode, setMode] = useState<Mode>('first')
   const [date, setDate] = useState(addDays(lisbonDay(), 2))
   const [language, setLanguage] = useState('')
-  const [picked, setPicked] = useState<{ id: Row['slots'][0]['id']; startsAt: string; doctor: Row['doctor'] } | null>(null)
+  const [picked, setPicked] = useState<Picked | null>(null)
   const [profile, setProfile] = useState<number | null>(null)
   const [pending, setPending] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
   const day = mode === 'today' ? lisbonDay() : mode === 'tomorrow' ? addDays(lisbonDay(), 1) : date
   const rows = useLoad<Row[]>(async () => {
-    if (!group || !service) return []
+    const list = await listRows()
+    if (!includePreferred || preferredDoctorId === undefined || list.some((r) => r.doctor.id === preferredDoctorId)) return list
+    const [{ doctor }, { slots }] = await Promise.all([api.doctor(preferredDoctorId), api.slots(preferredDoctorId, mode === 'first' ? lisbonDay() : day, mode === 'first' ? 7 : 1)])
+    if (language && !doctor.languages.split(' · ').includes(language)) return list
+    return slots.length ? [{ doctor, slots: mode === 'first' ? slots.slice(0, 6) : slots }, ...list] : list
+  }, [groupSlug, service.id, mode, day, language, includePreferred, preferredDoctorId])
+
+  async function listRows(): Promise<Row[]> {
     if (mode === 'first') {
-      const { slots } = await api.firstAvailable({ groupSlug: group.slug, serviceId: service.id, language: language || undefined, limit: 12 })
+      const { slots } = await api.firstAvailable({ groupSlug, serviceId: service.id, language: language || undefined, limit: 12 })
       const byDoc = new Map<number, Row>()
       for (const s of slots) {
         const r = byDoc.get(s.doctor.id) ?? { doctor: s.doctor, slots: [] }
@@ -349,30 +370,23 @@ export function BookTime() {
       }
       return [...byDoc.values()]
     }
-    const { doctors } = await api.doctors({ groupSlug: group.slug, service: service.name, language: language || undefined })
+    const { doctors } = await api.doctors({ groupSlug, service: service.name, language: language || undefined })
     const withSlots = await Promise.all(doctors.map(async (d: Doctor) => ({ doctor: { ...d, fee: d.fee }, slots: (await api.slots(d.id, day, 1)).slots })))
     return withSlots.filter((r) => r.slots.length)
-  }, [group?.slug, service?.id, mode, day, language])
+  }
 
   // A follow-up's doctor goes first.
   const sorted = useMemo(() => {
     const list = rows.data ?? []
-    return draft.doctorId === undefined ? list : [...list].sort((a, b) => Number(b.doctor.id === draft.doctorId) - Number(a.doctor.id === draft.doctorId))
-  }, [rows.data, draft.doctorId])
+    return preferredDoctorId === undefined ? list : [...list].sort((a, b) => Number(b.doctor.id === preferredDoctorId) - Number(a.doctor.id === preferredDoctorId))
+  }, [rows.data, preferredDoctorId])
 
-  if (!group || !service) return <NeedCare />
-  if (!draft.for || !draft.inMainland) return <div><PageTitle lede="Tell us who the visit is for and where you’ll be first.">One step first</PageTitle><Link to="/book/who" className="btn btn-primary mt-8">Who and where</Link></div>
-
-  async function hold() {
+  async function go() {
     if (!picked) return setError('Choose a time.')
     setPending(true)
     setError(null)
     try {
-      const { appointment } = await api.hold({ slotId: picked.id, serviceId: service!.id, for: draft.for! })
-      update({ appointmentId: appointment.id })
-      setAppt(appointment)
-      if (user?.role === 'patient') await continueSignedIn(appointment)
-      else navigate('/book/account')
+      await submit(picked)
     } catch (e) {
       const err = e as ApiError
       setError(err.message)
@@ -386,7 +400,6 @@ export function BookTime() {
 
   return (
     <div>
-      <PageTitle eyebrow={`${group.name} · ${service.name}`} lede="Pick a doctor and a time. We’ll hold it for 10 minutes while you finish.">Doctor and time</PageTitle>
       <div className="mt-6 flex flex-wrap items-center gap-2" role="group" aria-label="When">
         {chip('first', 'First available')}{chip('today', 'Today')}{chip('tomorrow', 'Tomorrow')}{chip('date', 'Pick a date')}
       </div>
@@ -414,7 +427,7 @@ export function BookTime() {
                 <DoctorAvatar doctor={r.doctor} />
                 <div className="min-w-0 flex-1">
                   <div className="flex flex-wrap items-baseline justify-between gap-x-4">
-                    <h2 className="font-sans text-[18px] font-medium">{r.doctor.name}{r.doctor.id === draft.doctorId && <span className="badge ml-2 align-middle">Your last doctor</span>}</h2>
+                    <h2 className="font-sans text-[18px] font-medium">{r.doctor.name}{r.doctor.id === preferredDoctorId && <span className="badge ml-2 align-middle">{preferredLabel}</span>}</h2>
                     <span className="font-medium">{euro(r.doctor.fee)}</span>
                   </div>
                   <p className="fine">{r.doctor.specialty} · {r.doctor.languages}</p>
@@ -437,12 +450,33 @@ export function BookTime() {
           ))}
       </section>
       <FormError error={error} />
-      <Actions back="/book/who">
-        <button type="button" className="btn btn-primary" disabled={!picked || pending} onClick={hold}>
-          {pending ? 'Holding your time…' : picked ? `Continue with ${dayLabel(picked.startsAt) === 'Today' ? '' : dayLabel(picked.startsAt) + ', '}${hhmm(picked.startsAt)}` : 'Choose a time'}
+      <Actions back={back}>
+        <button type="button" className="btn btn-primary" disabled={!picked || pending} onClick={go}>
+          {pending ? pendingLabel : picked ? `${verb} ${dayLabel(picked.startsAt) === 'Today' ? '' : dayLabel(picked.startsAt) + ', '}${hhmm(picked.startsAt)}` : 'Choose a time'}
         </button>
       </Actions>
       <DoctorProfile id={profile} onClose={() => setProfile(null)} />
+    </div>
+  )
+}
+
+export function BookTime() {
+  const { group, service, draft, update, setAppt, continueSignedIn } = useBooking()
+  const { user } = useSession()
+  const navigate = useNavigate()
+  if (!group || !service) return <NeedCare />
+  if (!draft.for || !draft.inMainland) return <div><PageTitle lede="Tell us who the visit is for and where you’ll be first.">One step first</PageTitle><Link to="/book/who" className="btn btn-primary mt-8">Who and where</Link></div>
+  return (
+    <div>
+      <PageTitle eyebrow={`${group.name} · ${service.name}`} lede="Pick a doctor and a time. We’ll hold it for 10 minutes while you finish.">Doctor and time</PageTitle>
+      <TimePicker groupSlug={group.slug} service={service} preferredDoctorId={draft.doctorId} back="/book/who" verb="Continue with" pendingLabel="Holding your time…"
+        submit={async (picked) => {
+          const { appointment } = await api.hold({ slotId: picked.id, serviceId: service.id, for: draft.for! })
+          update({ appointmentId: appointment.id })
+          setAppt(appointment)
+          if (user?.role === 'patient') await continueSignedIn(appointment)
+          else navigate('/book/account')
+        }} />
     </div>
   )
 }

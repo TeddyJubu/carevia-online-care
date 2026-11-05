@@ -1,4 +1,5 @@
-// Books a visit for the demo child, screenshotting each step: node scripts/walk-booking.mjs <outDir> [width]
+// Books a visit for a child, screenshotting each step: node scripts/walk-booking.mjs <outDir> [width]
+// SIGNUP=1 creates a new account and adds a new child; otherwise it signs in as the demo patient and picks Leo.
 import { chromium } from 'playwright'
 const [out, w = '1280'] = process.argv.slice(2)
 const width = Number(w)
@@ -16,10 +17,21 @@ await p.getByRole('button', { name: 'Continue' }).click()
 await p.locator('[role=radiogroup] [role=radio]').first().waitFor(); await p.locator('[role=radiogroup] [role=radio]').first().click(); await shot('j3-time')
 await p.getByRole('button', { name: /^Continue with/ }).click()
 await p.getByRole('heading', { name: 'Create your account' }).waitFor(); await shot('j4-account')
-await p.getByRole('button', { name: 'Sign in instead' }).click()
-await p.fill('input[name=email]', 'patient@example.com'); await p.fill('input[name=password]', 'demo-password')
-await p.getByRole('button', { name: 'Sign in and continue' }).click()
-await p.waitForURL(/book\/family/); await shot('j4b-family')
+if (process.env.SIGNUP) {
+  const stamp = Date.now().toString(36)
+  await p.fill('input[name=firstName]', 'Rita'); await p.fill('input[name=lastName]', 'Walker')
+  await p.fill('input[name=email]', `walk-${stamp}@example.com`); await p.fill('input[name=phone]', '912 345 678')
+  await p.fill('input[name=dateOfBirth]', '1986-04-12'); await p.fill('input[name=password]', `Cv-${stamp}-tide-lantern-58`)
+  await p.getByRole('button', { name: 'Create account and continue' }).click()
+  await p.waitForURL(/book\/family/); await p.locator('input[name=firstName]').waitFor()
+  await p.fill('input[name=firstName]', 'Tomas'); await p.fill('input[name=lastName]', 'Walker'); await p.fill('input[name=dateOfBirth]', '2019-06-01')
+} else {
+  await p.getByRole('button', { name: 'Sign in instead' }).click()
+  await p.fill('input[name=email]', 'patient@example.com'); await p.fill('input[name=password]', 'demo-password')
+  await p.getByRole('button', { name: 'Sign in and continue' }).click()
+  await p.waitForURL(/book\/family/)
+}
+await shot('j4b-family')
 await p.getByRole('button', { name: 'Continue' }).click()
 await p.waitForURL(/book\/consent/); await p.getByRole('checkbox').waitFor(); await shot('j5-consent')
 await p.getByRole('checkbox').check(); await p.getByRole('button', { name: 'Agree and continue' }).click()
