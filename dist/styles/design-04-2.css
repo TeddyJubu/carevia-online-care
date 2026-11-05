@@ -30,8 +30,8 @@
 /* Arc Expanding Search, adapted to the centered hero and Carevia's deep-blue glass. */
 .hero-intro{position:absolute;z-index:5;left:50%;top:50svh;margin:0;padding-top:0;transform:translate(-50%,-50%)}
 .care-search{position:relative;width:100%;max-width:540px;height:60px;margin:42px auto 0;pointer-events:none;animation-delay:.25s;--search-collapsed:500px;--search-expanded-width:540px}
-.care-search [hidden]{display:none!important}
-.search-shell,.search-panel{position:absolute;left:50%;width:min(100%,var(--search-collapsed));transform:translateX(-50%);border:1px solid #d3e9ff47;background:#0b2b4abf;color:#f7fbff;box-shadow:0 14px 40px #051b3333,inset 0 1px #ffffff0d;backdrop-filter:blur(24px) saturate(140%);-webkit-backdrop-filter:blur(24px) saturate(140%);pointer-events:auto;transition:width .55s cubic-bezier(.2,.9,.25,1.12),border-radius .45s var(--ease),background .25s,border-color .25s,box-shadow .25s}
+.care-search [hidden]:not(.search-panel,.search-trigger){display:none!important}
+.search-shell,.search-panel{position:absolute;left:50%;width:min(100%,var(--search-collapsed));transform:translateX(-50%);border:1px solid #d3e9ff47;background:#0b2b4abf;color:#f7fbff;box-shadow:0 14px 40px #051b3333,inset 0 1px #ffffff0d;backdrop-filter:blur(24px) saturate(140%);-webkit-backdrop-filter:blur(24px) saturate(140%);pointer-events:auto;transition:width .75s var(--ease),border-radius .6s var(--ease),background .4s ease,border-color .4s ease,box-shadow .4s ease}
 .search-shell{top:0;height:100%;border-radius:30px;overflow:hidden}
 .care-search[data-expanded=true] .search-shell,.care-search[data-expanded=true] .search-panel{width:100%}
 .care-search[data-expanded=true] .search-shell{border-radius:16px;border-color:#d7edff80;background:#0b2b4ae6}
@@ -39,18 +39,18 @@
 .search-shell:hover{border-color:#d7edff80;background:#11375bd9}
 .search-icon{position:absolute;top:calc(50% - 10px);left:20px;pointer-events:none;color:#e1f0fc}
 .search-trigger{position:absolute;z-index:1;inset:0;width:100%;padding:0 24px 0 52px;border:0;border-radius:inherit;background:none;color:inherit;text-align:left;font-size:16px;font-weight:400}
-.search-trigger>span{opacity:.4}
+.search-trigger>span{opacity:.4}.search-trigger{transition:opacity .3s ease,display .3s allow-discrete}.search-trigger[hidden]{display:none;opacity:0;pointer-events:none}@starting-style{.search-trigger{opacity:0}}
 .search-trigger:focus-visible{outline:none}
 /* The faint focus-within glow alone is not a visible focus indicator on the navy hero (WCAG 2.4.7). */
 .search-shell:has(.search-trigger:focus-visible){outline:2px solid #a6c9ec;outline-offset:3px}
-.search-input{position:absolute;inset:0;width:100%;height:100%;margin:0;padding:0 48px 0 52px;border:0;border-radius:inherit;background:none;color:white;caret-color:white;font:inherit;font-size:16px;outline:0;opacity:0;transition:opacity .14s ease;text-overflow:ellipsis}
-.care-search[data-expanded=true] .search-input{opacity:1;transition-delay:.08s}
+.search-input{position:absolute;inset:0;width:100%;height:100%;margin:0;padding:0 48px 0 52px;border:0;border-radius:inherit;background:none;color:white;caret-color:white;font:inherit;font-size:16px;outline:0;opacity:0;transition:opacity .25s ease;text-overflow:ellipsis}
+.care-search[data-expanded=true] .search-input{opacity:1;transition-duration:.45s;transition-delay:.06s}
 .search-input::placeholder{color:#d1e2f1;opacity:.4}
 .search-input:focus-visible{outline:none}
 .search-input[inert]{pointer-events:none}
 .search-clear{position:absolute;z-index:2;top:calc(50% - 16px);right:10px;display:grid;place-items:center;width:32px;height:32px;padding:0;border-radius:50%;background:transparent;color:#d1e2f1}
 .search-clear:hover{background:#ffffff14;color:white}
-.search-panel{z-index:50;top:calc(100% + 8px);overflow:hidden;border-radius:18px;background:#0b2745f2;animation:search-panel-in .22s var(--ease) both}
+.search-panel{z-index:50;top:calc(100% + 8px);overflow:hidden;border-radius:18px;background:#0b2745f2;transition:opacity .4s ease,translate .6s var(--ease),width .75s var(--ease),display .6s allow-discrete}.search-panel[hidden]{display:none;opacity:0;translate:0 8px;transition-duration:.3s}@starting-style{.search-panel{opacity:0;translate:0 8px}}
 .care-search[data-side=above] .search-panel{top:auto;bottom:calc(100% + 8px)}
 .search-panel-body{position:relative;width:calc(var(--search-expanded-width) - 2px);max-height:min(22rem,60svh,var(--search-space,22rem));padding:8px;overflow-x:hidden;overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin;scrollbar-color:#b8d6f04d transparent;text-align:left}
 #care-search-listbox{position:relative;isolation:isolate}
@@ -66,7 +66,7 @@
 .search-announcement{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
 @keyframes search-panel-in{from{opacity:0;translate:0 6px}to{opacity:1;translate:0 0}}
 @media(max-width:600px){.care-search{height:56px;margin-top:36px;--search-collapsed:100%}.search-option{min-height:62px}.search-option-title{font-size:14px}}
-@media(prefers-reduced-motion:reduce){.care-search,.search-panel{animation:none}.search-shell,.search-panel,.search-input,.search-highlight{transition:none}}
+@media(prefers-reduced-motion:reduce){.care-search,.search-panel{animation:none}.search-shell,.search-panel,.search-input,.search-highlight,.search-trigger{transition:none}}
 /* Arc FAQ Section: its light accordion layout, styled for Carevia. */
 .care-faq{padding-block:160px;background:#fcfdff}
 .care-faq-inner{width:calc(100% - 48px);max-width:720px;margin-inline:auto}
