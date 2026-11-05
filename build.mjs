@@ -180,4 +180,18 @@ await writeFile('dist/index.html',v45Home.replace('rel="canonical" href="https:/
 // Every served module must be .js: a .mjs import 404s or arrives as application/octet-stream on stock nginx.
 for(const name of await readdir('dist/scripts'))if(name.endsWith('.mjs')||/from ?['"][^'"]+\.mjs['"]|import\(['"][^'"]+\.mjs/.test(name.endsWith('.js')?await readFile('dist/scripts/'+name,'utf8'):''))throw new Error(`dist/scripts/${name} uses .mjs`);
 
-console.log('Built Carevia designs 03, 04.2 and 04.5.');
+// Cache busting: script and style URLs never change, and nginx lets browsers keep them for 7 days, so a returning
+// browser could run last week's modules against this week's page. Every reference gets ?v=<hash of this build's
+// scripts and styles>, including module-to-module imports, because an old module would only import other old ones.
+const {createHash}=await import('node:crypto');
+const built=async dir=>(await readdir(dir,{recursive:true})).filter(f=>/\.(js|css)$/.test(f)).sort().map(f=>dir+'/'+f);
+const assets=[...await built('dist/scripts'),...await built('dist/styles')];
+const hash=createHash('sha256');for(const f of assets)hash.update(f).update(await readFile(f));
+const v=hash.digest('hex').slice(0,10);
+for(const f of (await readdir('dist')).filter(f=>f.endsWith('.html')).map(f=>'dist/'+f))
+  await writeFile(f,(await readFile(f,'utf8')).replace(/((?:src|href)="(?:scripts|styles)\/[^"?]+\.(?:js|css))"/g,`$1?v=${v}"`));
+for(const f of assets.filter(f=>f.endsWith('.js')))
+  await writeFile(f,(await readFile(f,'utf8')).replace(/((?:\bfrom|\bimport)\s*\(?\s*)(['"])(\.\.?\/[^'"?]+\.js)\2/g,`$1$2$3?v=${v}$2`));
+if(!(await readFile('dist/index.html','utf8')).includes(`scripts/design-04.js?v=${v}"`))throw new Error('Cache-busting stamp missing on index.html');
+
+console.log(`Built Carevia designs 03, 04.2 and 04.5 (assets ?v=${v}).`);
