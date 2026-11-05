@@ -3,6 +3,7 @@ import type { ApiError } from '../lib/api'
 import type { Appointment } from '../lib/types'
 import { useNow } from '../lib/load'
 import { countdown } from '../lib/time'
+import { EmptyArt, type EmptyScene } from './empty-art'
 
 /** Sets the tab title and moves focus to the page heading after navigation, so screen readers hear the new page. */
 export function PageTitle({ children, title, eyebrow, lede, className = '' }: { children: ReactNode; title?: string; eyebrow?: ReactNode; lede?: ReactNode; className?: string }) {
@@ -76,10 +77,11 @@ export function Spinner({ label }: { label: string }) {
   return <span role="status" className="inline-flex items-center gap-3 muted"><span className="spinner" aria-hidden="true" />{label}</span>
 }
 
-export function Empty({ title, children, action, image }: { title: string; children?: ReactNode; action?: ReactNode; image?: ReactNode }) {
+export function Empty({ title, children, action, image, art }: { title: string; children?: ReactNode; action?: ReactNode; image?: ReactNode; art?: EmptyScene }) {
   return (
     <div className="card text-center py-10 px-6">
       {image && <div className="mx-auto mb-6 max-w-[320px] overflow-hidden rounded-[12px]">{image}</div>}
+      {!image && art && <EmptyArt scene={art} />}
       <h3>{title}</h3>
       {children && <p className="muted mt-2 max-w-[44ch] mx-auto">{children}</p>}
       {action && <div className="mt-5">{action}</div>}

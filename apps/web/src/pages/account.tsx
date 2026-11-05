@@ -151,7 +151,7 @@ export function AccountHome() {
       <Section title="Past visits">
         {past.loading && !past.data ? <Loading label="Loading past visits" lines={2} />
           : past.error ? <ErrorState error={past.error} onRetry={past.reload} title="We couldn’t load your past visits" />
-          : past.data!.appointments.length === 0 ? <Empty title="No past visits yet">Visits you’ve had will be listed here.</Empty>
+          : past.data!.appointments.length === 0 ? <Empty title="No past visits yet" art="caught-up">Visits you’ve had will be listed here.</Empty>
           : (
             <ul className="card rows p-0">
               {past.data!.appointments.map((a) => {
@@ -591,7 +591,7 @@ export function PaymentsPage() {
         <h2 id="payments-title" className="sr-only">Your payments</h2>
         {error ? <ErrorState error={error} onRetry={() => { upcoming.reload(); past.reload() }} title="We couldn’t load your payments" />
           : loading ? <Loading label="Loading your payments" lines={3} />
-          : paid.length === 0 ? <Empty title="No payments yet" action={<Link to="/book" className="btn btn-primary btn-sm">Book new care</Link>}>When you pay for a visit, it appears here with its receipt.</Empty>
+          : paid.length === 0 ? <Empty title="No payments yet" art="caught-up" action={<Link to="/book" className="btn btn-primary btn-sm">Book new care</Link>}>When you pay for a visit, it appears here with its receipt.</Empty>
           : (
             <ul className="card card-tight rows">
               {paid.map((a) => {

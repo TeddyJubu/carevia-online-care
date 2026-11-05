@@ -44,7 +44,7 @@ function OutboxList() {
       <div className="mt-8 max-w-[760px]">
         {box.loading && !box.data ? <Loading label="Loading the outbox" lines={3} />
           : box.error ? <ErrorState error={box.error} onRetry={box.reload} title="We couldn’t load the outbox" />
-          : messages.length === 0 ? <Empty title="No emails yet">Sign up, book a visit or ask for a password reset, then refresh.</Empty>
+          : messages.length === 0 ? <Empty title="No emails yet" art="caught-up">Sign up, book a visit or ask for a password reset, then refresh.</Empty>
           : (
             <ol className="grid gap-4" aria-label="Emails, newest first">
               {messages.map((m) => (

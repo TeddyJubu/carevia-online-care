@@ -1,3 +1,4 @@
+import { EmptyArt } from './EmptyArt.jsx'
 import { useEffect, useState } from 'react'
 import { getPatient, listPatients, savePatient, sessionFailure } from './api.js'
 
@@ -77,7 +78,14 @@ function PatientList({ onSignOut, onDenied }) {
       {error ? <p className="notice" data-tone="error" role="alert">{error}</p> : null}
       {state === 'loading' ? <p className="lede" role="status">Loading patients…</p> : null}
       {state === 'ready' && patients.length === 0 ? (
-        <p className="empty">{query.trim() ? 'No patients match that search.' : 'No patients have registered yet.'}</p>
+        query.trim() ? (
+          <div className="empty-state">
+            <EmptyArt scene="search" />
+            <h2>No patients match that search</h2>
+            <p>Nothing matches “{query.trim()}”. Try part of a name, an email, or a phone number with +351.</p>
+            <button className="button button-quiet" type="button" onClick={() => setQuery('')}>Clear search</button>
+          </div>
+        ) : <p className="empty">No patients have registered yet.</p>
       ) : null}
       {state === 'ready' && patients.length > 0 ? (
         <ul className="roster">

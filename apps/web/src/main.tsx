@@ -1,4 +1,5 @@
 import { StrictMode } from 'react'
+import { EmptyArt } from './ui/empty-art'
 import { createRoot } from 'react-dom/client'
 import { createBrowserRouter, Link, Navigate, RouterProvider } from 'react-router'
 import type { ComponentType, ReactNode } from 'react'
@@ -16,6 +17,7 @@ function Index() {
 function NotFound() {
   return (
     <div className="page-narrow">
+      <EmptyArt scene="not-found" />
       <PageTitle lede="The link may be old, or the page has moved.">We couldn’t find that page</PageTitle>
       <div className="mt-8 flex flex-wrap gap-3">
         <Link to="/account" className="btn btn-primary">Go to your account</Link>

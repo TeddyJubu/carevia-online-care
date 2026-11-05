@@ -678,3 +678,14 @@ tbody tr:last-child td { border-bottom: 0; }
 @media (prefers-reduced-motion: reduce) {
   *, ::before, ::after { animation-duration: 0.01ms !important; animation-delay: 0s !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; transition-delay: 0s !important; scroll-behavior: auto !important; }
 }
+
+/* Empty-state line art (EmptyArt). Strokes stay 1.5px at any size; tones map uiarc's palette onto Carevia's ink, line, muted and ok. */
+.empty-art { display: block; width: min(100%, 240px); aspect-ratio: 320 / 216; margin: 0 auto 20px; overflow: visible; }
+.empty-art path { vector-effect: non-scaling-stroke; fill: #fff; stroke: #102d50; stroke-width: 1.5px; stroke-linecap: round; stroke-linejoin: round; }
+.empty-art [data-tone="tuck"], .empty-art [data-tone="slot"] { stroke: #102d5040; }
+.empty-art [data-tone="back"], .empty-art [data-tone="muted"] { stroke: #5c6d80; }
+.empty-art [data-tone="shade"] { fill: #e8eff6; }
+.empty-art [data-tone="dot"] { fill: #102d50; stroke: none; }
+.empty-art [data-tone="success"] { stroke: #1d6b45; }
+.empty-art :is([data-kind="stroke"], [data-kind="mark"]) { fill: none; }
+.empty-state .empty-art { width: min(100%, 200px); margin: 0 0 4px; }

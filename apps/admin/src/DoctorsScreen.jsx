@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { EmptyArt } from './EmptyArt.jsx'
 import {
   addDoctorSlot,
   createDoctor,
@@ -128,6 +129,7 @@ function DoctorList({ onSignOut, onDenied }) {
       {state === 'ready' && doctors.length === 0 ? (
         query.trim() ? (
           <div className="empty-state doctors-empty">
+            <EmptyArt scene="search" />
             <p className="eyebrow">Search</p>
             <h2>No doctors match that search</h2>
             <p>Nothing matches “{query.trim()}”. Check the spelling, or try a specialty, a service, or a cédula number.</p>

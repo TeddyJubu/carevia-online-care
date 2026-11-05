@@ -58,7 +58,7 @@ export function Agenda() {
       <div className="mt-4">
         {agenda.error ? <ErrorState error={agenda.error} onRetry={agenda.reload} />
           : agenda.loading && !agenda.data ? <Loading label="Loading your agenda" />
-          : !agenda.data!.appointments.length ? <Empty title="No visits on this day">Patients book into your open times. New bookings appear here.</Empty>
+          : !agenda.data!.appointments.length ? <Empty title="No visits on this day" art="caught-up">Patients book into your open times. New bookings appear here.</Empty>
           : (
             <ol className="card card-tight rows">
               {agenda.data!.appointments.map((a) => {
