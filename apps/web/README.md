@@ -6,7 +6,7 @@ Plan and rules: `docs/patient-journey/PLAN.md`. Endpoints: `docs/patient-journey
 | Command (from `apps/web`) | What it does |
 |---|---|
 | `npm run dev:mock` | Dev server on http://localhost:5180/app/ with the in-memory mock API and demo UI. No API needed. |
-| `npm run dev` | Dev server on 5180, proxying `/api` to `API_URL` (default `http://localhost:4001`). |
+| `npm run dev` | Dev server on 5180, proxying `/api` to `API_URL` (default `http://127.0.0.1:4001`; the API binds IPv4). |
 | `npm run build` | Typecheck and production build to `dist/`. No mock, no demo logins. |
 | `npm run build:demo` | The same with demo mode on. Demo UI still needs `GET /api/demo` (API with `DEMO_MODE=true`). |
 | `node scripts/check-time.ts` | Self-check for Lisbon time, DST and age rules. |
