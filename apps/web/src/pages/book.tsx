@@ -357,6 +357,7 @@ function NeedCare() {
 // ---------- J3: doctor and time ----------
 type Mode = 'first' | 'today' | 'tomorrow' | 'date'
 const LANGUAGES = ['English', 'Portuguese', 'French', 'German', 'Spanish', 'Italian']
+const PRICE_CAPS = [60, 80, 100, 150]
 type Row = { doctor: SlotWithDoctor['doctor']; slots: { id: SlotWithDoctor['id']; startsAt: string }[] }
 
 export type Picked = { id: Row['slots'][0]['id']; startsAt: string; doctor: Row['doctor'] }
@@ -380,6 +381,7 @@ export function TimePicker({ groupSlug, service, preferredDoctorId, preferredLab
   const [mode, setMode] = useState<Mode>('first')
   const [date, setDate] = useState(addDays(lisbonDay(), 2))
   const [language, setLanguage] = useState('')
+  const [maxPrice, setMaxPrice] = useState('')
   const [picked, setPicked] = useState<Picked | null>(null)
   const [profile, setProfile] = useState<number | null>(null)
   const [pending, setPending] = useState(false)
@@ -410,11 +412,11 @@ export function TimePicker({ groupSlug, service, preferredDoctorId, preferredLab
     return withSlots.filter((r) => r.slots.length)
   }
 
-  // A follow-up's doctor goes first.
+  // A follow-up's doctor goes first. ponytail: price is filtered client-side; first-available fetches 12 slots, so a tight cap can show fewer doctors. Push it to the API if that bites.
   const sorted = useMemo(() => {
-    const list = rows.data ?? []
+    const list = (rows.data ?? []).filter((r) => !maxPrice || r.doctor.fee == null || r.doctor.fee <= Number(maxPrice))
     return preferredDoctorId === undefined ? list : [...list].sort((a, b) => Number(b.doctor.id === preferredDoctorId) - Number(a.doctor.id === preferredDoctorId))
-  }, [rows.data, preferredDoctorId])
+  }, [rows.data, preferredDoctorId, maxPrice])
 
   async function go() {
     if (!picked) return setError('Choose a time.')
@@ -444,6 +446,10 @@ export function TimePicker({ groupSlug, service, preferredDoctorId, preferredLab
           <option value="">Any language</option>
           {LANGUAGES.map((l) => <option key={l}>{l}</option>)}
         </Field>
+        <Field as="select" label="Consultation price" value={maxPrice} onChange={(e) => { setMaxPrice(e.target.value); setPicked(null) }}>
+          <option value="">Any price</option>
+          {PRICE_CAPS.map((p) => <option key={p} value={p}>Up to €{p}</option>)}
+        </Field>
       </div>
 
       <section className="mt-6 grid gap-3" aria-label="Doctors and times" aria-busy={rows.loading}>
@@ -453,7 +459,7 @@ export function TimePicker({ groupSlug, service, preferredDoctorId, preferredLab
           : !sorted.length ? (
             <div className="card text-center">
               <h2 className="text-[22px]">No times {mode === 'first' ? 'in the next week' : dayLabel(`${day}T12:00:00Z`).replace(/^(?!Today|Tomorrow)/, 'on ').toLowerCase()}</h2>
-              <p className="muted mt-2">Try another day{language && ', or any language'}.</p>
+              <p className="muted mt-2">Try another day{language && ', or any language'}{maxPrice && ', or any price'}.</p>
               {mode !== 'first' && <button type="button" className="btn btn-secondary btn-sm mt-4" onClick={() => setMode('first')}>Show first available</button>}
             </div>
           ) : sorted.map((r) => (
