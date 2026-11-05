@@ -1,0 +1,31 @@
+# Carevia API + Postgres on the shared VPS. Secrets live in ~/carevia/api.env on the server, never in git.
+# Run: docker compose --env-file ~/carevia/api.env up -d --build
+name: carevia
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: carevia
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set in api.env}
+      POSTGRES_DB: carevia
+    # Loopback only. 5442 because the host already uses the usual ports for other projects.
+    ports: ["127.0.0.1:5442:5432"]
+    volumes: [pgdata:/var/lib/postgresql/data]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U carevia"]
+      interval: 5s
+      retries: 20
+  api:
+    build:
+      context: ../..
+      dockerfile: deploy/vps/api.Dockerfile
+    restart: unless-stopped
+    # ponytail: host network because src/server.js binds 127.0.0.1; nginx proxies to 127.0.0.1:4100.
+    network_mode: host
+    env_file: ${HOME}/carevia/api.env
+    depends_on:
+      db:
+        condition: service_healthy
+volumes:
+  pgdata:
