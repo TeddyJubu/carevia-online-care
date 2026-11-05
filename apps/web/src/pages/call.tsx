@@ -5,7 +5,7 @@ import { api, ApiError } from '../lib/api'
 import { useNow } from '../lib/load'
 import { useQuestions } from '../lib/questions'
 import { hhmm } from '../lib/time'
-import { Dialog, ErrorState, Notice } from '../ui/kit'
+import { Dialog, ErrorState, Notice, Still } from '../ui/kit'
 import { phaseOf, useAppointment, VisitGate } from './visit'
 
 type State = { kind: 'loading' } | { kind: 'error'; error: ApiError } | { kind: 'joined'; since: number } | { kind: 'dropped' }
@@ -98,7 +98,9 @@ function CallError({ error, who, appointmentId, onRetry }: { error: ApiError; wh
 
 export function VideoOff({ who }: { who: 'patient' | 'clinician' }) {
   return (
-    <div className="card bg-navy text-white on-navy" role="status">
+    <div className="card overflow-hidden bg-navy p-0 text-white on-navy" role="status">
+      <Still name="empty-video-off" className="aspect-[5/2]" />
+      <div className="p-6">
       <p className="eyebrow">Video is off</p>
       <h2 className="mt-2 text-white">Video calls aren’t switched on right now</h2>
       <p className="mt-3 text-[#c0d2e7]">
@@ -106,6 +108,7 @@ export function VideoOff({ who }: { who: 'patient' | 'clinician' }) {
           ? 'Your appointment is kept and nothing has been lost. Please try again in a few minutes. If it’s still off, Carevia will contact you to arrange your visit.'
           : 'Add the Daily API key in the admin app’s Daily settings. Video stays off until a key is saved.'}
       </p>
+      </div>
     </div>
   )
 }

@@ -102,7 +102,7 @@ export function Prepare() {
           </div>
           <Dialog open={cancelling} onClose={() => setCancelling(false)} title="Cancel this visit?">
             <p>{when(a.startsAt)} with {a.doctor.name}.</p>
-            <div className="card card-mist mt-4"><Markdown source={content('cancellation').body} /></div>
+            <div className="card card-mist mt-4 max-h-[40svh] overflow-auto" tabIndex={0} role="region" aria-label="Cancellation terms"><Markdown source={content("cancellation").body} /></div>
             <FormError error={cancelError} />
             <div className="mt-6 flex flex-wrap gap-3">
               <button type="button" className="btn btn-danger" disabled={pending} onClick={async () => {

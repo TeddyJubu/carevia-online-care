@@ -4,7 +4,7 @@ import { api } from '../lib/api'
 import { useLoad, useNow } from '../lib/load'
 import { readQuestions } from '../lib/questions'
 import { countdown, hhmm } from '../lib/time'
-import { Emergency, Notice, PageTitle } from '../ui/kit'
+import { Emergency, Notice, PageTitle, Still } from '../ui/kit'
 import { VideoOff } from './call'
 import { phaseOf, useAppointment, VisitGate } from './visit'
 
@@ -142,7 +142,8 @@ export function Waiting() {
             <section aria-label="Your camera">
               <div className="relative aspect-[4/3] overflow-hidden rounded-[14px] bg-navy-3 max-[1024px]:aspect-video">
                 <video ref={dev.attach} muted playsInline className="size-full -scale-x-100 object-cover" aria-label="Your camera preview" />
-                {dev.camera !== 'ok' && <p className="absolute inset-0 grid place-items-center p-6 text-center text-[#c0d2e7]">{dev.camera === 'checking' ? 'Asking for your camera…' : 'Your camera preview appears here'}</p>}
+                {dev.camera !== 'ok' && <Still name="waiting-room" className="absolute inset-0 h-full opacity-60" />}
+                {dev.camera !== 'ok' && <p className="absolute inset-0 grid place-items-center p-6 text-center text-white [text-shadow:0_1px_8px_#061c3a]">{dev.camera === 'checking' ? 'Asking for your camera…' : 'Your camera preview appears here'}</p>}
                 <span className="absolute bottom-3 left-3 rounded-full bg-navy/70 px-3 py-1 text-sm text-white">Only you see this preview</span>
               </div>
               <div aria-live="polite">

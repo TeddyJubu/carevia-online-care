@@ -54,9 +54,16 @@ function parse(raw: string): { meta: Record<string, string>; body: string } {
 const loaded = new Map<string, ContentDoc>()
 for (const raw of Object.values(files)) {
   const { meta, body } = parse(raw)
-  if (meta.id) loaded.set(meta.id, { id: meta.id as ContentId, version: meta.version ?? '', status: meta.status ?? '', title: meta.title ?? '', body, placeholder: false })
+  // Sections for Carevia's team ("Open decisions…") are not shown to patients.
+  let shown = body.replace(/^##\s+Open decisions[\s\S]*?(?=^##\s|(?![\s\S]))/gim, '').trim()
+  // The "> Draft for review…" line shows in development only (content thread's request).
+  if (import.meta.env.PROD) shown = shown.replace(/^>\s*Draft for review.*(\r?\n)*/im, '').trim()
+  if (meta.id) loaded.set(meta.id, { id: meta.id as ContentId, version: meta.version ?? '', status: meta.status ?? '', title: meta.title ?? '', body: shown, placeholder: false })
 }
 
 export function content(id: ContentId): ContentDoc {
   return loaded.get(id) ?? { id, ...fallback[id], placeholder: true }
 }
+
+/** The body as one line of plain text, without the draft note or Markdown. */
+export const plain = (body: string) => body.split(/\r?\n/).filter((l) => l.trim() && !l.startsWith('>') && !l.startsWith('#')).join(' ').replace(/\*\*/g, '')

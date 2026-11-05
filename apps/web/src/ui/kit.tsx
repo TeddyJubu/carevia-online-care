@@ -75,9 +75,10 @@ export function Spinner({ label }: { label: string }) {
   return <span role="status" className="inline-flex items-center gap-3 muted"><span className="spinner" aria-hidden="true" />{label}</span>
 }
 
-export function Empty({ title, children, action }: { title: string; children?: ReactNode; action?: ReactNode }) {
+export function Empty({ title, children, action, image }: { title: string; children?: ReactNode; action?: ReactNode; image?: ReactNode }) {
   return (
     <div className="card text-center py-10 px-6">
+      {image && <div className="mx-auto mb-6 max-w-[320px] overflow-hidden rounded-[12px]">{image}</div>}
       <h3>{title}</h3>
       {children && <p className="muted mt-2 max-w-[44ch] mx-auto">{children}</p>}
       {action && <div className="mt-5">{action}</div>}
@@ -148,6 +149,7 @@ export function Markdown({ source, headingLevel = 3 }: { source: string; heading
   for (const raw of source.split(/\r?\n/)) {
     const line = raw.trim()
     if (!line) flush()
+    else if (line.startsWith('>')) { flush(); out.push(<p key={out.length} className="fine italic">{inline(line.replace(/^>\s*/, ''))}</p>) }
     else if (/^#{1,6}\s/.test(line)) { flush(); out.push(<H key={out.length}>{inline(line.replace(/^#+\s*/, ''))}</H>) }
     else if (/^[-*]\s/.test(line)) { if (para.length) flush(); list.push(line.replace(/^[-*]\s*/, '')) }
     else { if (list.length) flush(); para.push(line) }
@@ -156,8 +158,25 @@ export function Markdown({ source, headingLevel = 3 }: { source: string; heading
   return <div className="prose">{out}</div>
 }
 
+// Dr Emma Laurent (demo doctor 0) has an illustrative portrait in the web app; everyone else is shown by initials.
+const PORTRAITS: Record<string, { src: string; alt: string }> = {
+  'Dr Emma Laurent': { src: '/app/images/doctor-emma-laurent-480.webp', alt: 'Illustrative portrait of Dr Emma Laurent, a fictional general practitioner' },
+}
+
 export function DoctorAvatar({ doctor, size = 52 }: { doctor: { id: number; initials: string; name: string }; size?: number }) {
-  return <span className="avatar" style={{ width: size, height: size, fontSize: size * 0.32 }} aria-hidden="true">{doctor.initials}</span>
+  const portrait = PORTRAITS[doctor.name]
+  if (!portrait) return <span className="avatar" style={{ width: size, height: size, fontSize: size * 0.32 }} aria-hidden="true">{doctor.initials}</span>
+  return (
+    <span className="grid flex-none justify-items-center gap-0.5">
+      <span className="avatar" style={{ width: size, height: size }}><img src={portrait.src} alt={portrait.alt} width={size} height={size} loading="lazy" /></span>
+      <span className="text-[10px] leading-none text-muted">Illustrative</span>
+    </span>
+  )
+}
+
+/** A calm still for empty states (from the content thread's images; none show a person). */
+export function Still({ name, alt = '', className = '' }: { name: 'empty-no-visits' | 'empty-no-family' | 'empty-video-off' | 'waiting-room'; alt?: string; className?: string }) {
+  return <img src={`/app/images/${name}-480.webp`} srcSet={`/app/images/${name}-480.webp 480w, /app/images/${name}-960.webp 960w`} sizes="(max-width: 600px) 90vw, 480px" alt={alt} loading="lazy" className={`w-full object-cover ${className}`} />
 }
 
 export const euro = (n: number) => `€${n}`

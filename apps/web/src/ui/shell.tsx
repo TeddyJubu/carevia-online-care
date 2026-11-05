@@ -1,7 +1,7 @@
 import { useEffect, type ReactNode } from 'react'
 import { Link, Navigate, Outlet, useLocation } from 'react-router'
 import { MOCK } from '../lib/api'
-import { content } from '../lib/content'
+import { content, plain } from '../lib/content'
 import { useDemo } from '../lib/demo'
 import { useSession } from '../lib/session'
 import type { Role } from '../lib/types'
@@ -65,8 +65,8 @@ function DemoBar() {
   if (!demo && !MOCK) return null
   return (
     <p className="demo-bar" role="note">
-      <strong className="font-medium">{content('demo-banner').body.split('.')[0]}.</strong>{' '}
-      {MOCK ? 'Mock API: data lives in this tab only.' : 'Nothing here is real: doctors, patients and payments are fictional.'}
+      <strong className="font-medium">{content('demo-banner').title.replace(/\.$/, '')}.</strong>{' '}
+      {plain(content('demo-banner').body)}{MOCK && ' Mock API: data lives in this tab only.'}
       {demo && <> <Link to="/dev/outbox" className="link ml-1">Outbox</Link></>}
     </p>
   )

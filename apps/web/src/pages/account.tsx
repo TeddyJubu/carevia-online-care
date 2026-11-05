@@ -5,7 +5,7 @@ import { useLoad, useNow } from '../lib/load'
 import { useSession } from '../lib/session'
 import { age, birthDate, fullDate, lisbonDay, when } from '../lib/time'
 import type { Appointment, FamilyMember } from '../lib/types'
-import { Dialog, Empty, ErrorState, Field, FormError, Loading, Notice, PageTitle } from '../ui/kit'
+import { Dialog, Empty, ErrorState, Field, FormError, Loading, Notice, PageTitle, Still } from '../ui/kit'
 import { toE164 } from './auth'
 
 type Errors = Record<string, string>
@@ -121,7 +121,7 @@ export function AccountHome() {
           {upcoming.loading && !upcoming.data ? <Loading label="Loading your visits" lines={2} />
             : upcoming.error ? <ErrorState error={upcoming.error} onRetry={upcoming.reload} title="We couldn’t load your visits" />
             : upcoming.data!.appointments.length === 0 ? (
-              <Empty title="No upcoming visits" action={<Link to="/book" className="btn btn-primary btn-sm">Book new care</Link>}>
+              <Empty title="No upcoming visits" image={<Still name="empty-no-visits" className="aspect-[3/2]" />} action={<Link to="/book" className="btn btn-primary btn-sm">Book new care</Link>}>
                 When you book a visit, it appears here with everything you need to get ready.
               </Empty>
             ) : upcoming.data!.appointments.map((a) => <UpcomingCard key={a.id} a={a} now={now} />)}
@@ -282,7 +282,7 @@ export function FamilyPage() {
         <h2 id="members-title" className="sr-only">Family members</h2>
         {family.loading && !family.data ? <Loading label="Loading your family" lines={2} />
           : family.error ? <ErrorState error={family.error} onRetry={family.reload} title="We couldn’t load your family" />
-          : family.data!.members.length === 0 ? <Empty title="No family members yet">Add a child or an adult you care for, and you can book visits for them.</Empty>
+          : family.data!.members.length === 0 ? <Empty title="No family members yet" image={<Still name="empty-no-family" className="aspect-[3/2]" />}>Add a child or an adult you care for, and you can book visits for them.</Empty>
           : (
             <ul className="card rows p-0">
               {family.data!.members.map((m) => (
