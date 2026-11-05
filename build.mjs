@@ -2,6 +2,8 @@ import {cp,rm,mkdir,readFile,writeFile} from 'node:fs/promises';
 import {services,faqs,guides} from './src/content.mjs';
 import {services as design42Services} from './src/services-04-2.mjs';
 const esc=s=>String(s).replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('"','&quot;');
+// The patient portal that 04.5 links into: PORTAL_URL=http://localhost:5180/app node build.mjs
+const PORTAL_URL=(process.env.PORTAL_URL||'/app').replace(/\/+$/,'');
 let html=await readFile('src/design-03.html','utf8');
 const featured=[services[0],services[1],services[6],services[3]];
 html=html.replace('<!-- SERVICE_CARDS -->',featured.map((s,i)=>`<button class="care-card" data-service="${s.id}"><span class="glass-image" data-glass="hover" data-src="assets/${s.image||'field.jpg'}" data-focus="${s.focus||'50% 55%'}"><img src="assets/${s.image||'field.jpg'}" alt="" loading="lazy" width="600" height="800"></span><span class="care-card-top"><span>0${i+1}</span></span><span class="care-card-bottom"><strong>${esc(s.name)}</strong><span class="card-meta"><span>From €${s.price}</span><span>${s.duration}</span></span></span></button>`).join(''));
@@ -33,7 +35,6 @@ const clashEditorial=editorial
  .replace(/<h1>Thoughtful care combining[\s\S]*?<\/h1>/,'<h1>Find the right care.<br>Feel better supported.</h1>')
  .replace('<a class="button light" href="#care">Find your care</a>',heroSearch)
 await writeFile('dist/design-04-2.html',clashEditorial);
-await writeFile('dist/index.html',clashEditorial.replace('rel="canonical" href="https://carevia-glass.triple-labs-8416.chatgpt.site/design-04-2.html"','rel="canonical" href="https://carevia-glass.triple-labs-8416.chatgpt.site/"'));
 // Design 04.5: Design 04.2 with the v5 night film in place of the glass hero photo.
 const heroFilm=`<video class="hero-photo hero-film" autoplay muted loop playsinline preload="auto" poster="assets/film/night.webp" aria-hidden="true"><source src="assets/film/night-720.mp4" type="video/mp4" media="(max-width: 767px)"><source src="assets/film/night-1080.mp4" type="video/mp4"></video><button class="film-toggle" type="button" aria-label="Pause film" aria-pressed="false"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect class="i-pause" x="6" y="5" width="4" height="14" rx="1"/><rect class="i-pause" x="14" y="5" width="4" height="14" rx="1"/><path class="i-play" d="M8 5.5v13l10.5-6.5z"/></svg></button><script>{const v=document.querySelector('.hero-film'),b=v.nextElementSibling,set=p=>{p?v.pause():v.play().catch(()=>{});b.setAttribute('aria-pressed',p);b.setAttribute('aria-label',p?'Play film':'Pause film')};if(matchMedia('(prefers-reduced-motion: reduce)').matches){v.removeAttribute('autoplay');set(true)}b.onclick=()=>set(!v.paused)}</script><script>addEventListener('DOMContentLoaded',()=>{const w=document.querySelector('.hero-wordmark');w&&w.addEventListener('pointermove',e=>{const r=w.getBoundingClientRect();w.style.setProperty('--mx',e.clientX-r.left+'px');w.style.setProperty('--my',e.clientY-r.top+'px')})})</script>`;
 const filmStyles=`<style>.hero-film{object-fit:cover;object-position:50% 50%}
@@ -139,6 +140,18 @@ const v45Story=v45
  .replace('</head>',`<script type="module" src="scripts/about-hscroll.js"></script>${aboutStyles}</head>`);
 if(!v45Story.includes('ah-track')||!v45Story.includes('clinician-45-3.jpg')||v45Story.includes('wide-banner')||!/id="care"[\s\S]*?<\/section><section class="start-steps/.test(v45Story))throw new Error('Design 04.5 about story or Start your care move failed');
 
-await writeFile('dist/design-04-5.html',v45Story);
+// Patient journey: 04.5 is the homepage and links into the portal (/book, /signin, /signup under PORTAL_URL).
+// design-04.js reads data-portal to turn each service dialog's button into "Book {service}".
+const portal=esc(PORTAL_URL),external='https://carevia.triple-labs-8416.chatgpt.site/';
+const v45Home=v45Story
+ .replace('data-design="04.5"',`data-design="04.5" data-portal="${portal}"`)
+ .replace('<a class="nav-pill nav-book" href="#care">Find your care</a>',`<a class="nav-pill nav-book" href="#care">Find your care</a><a class="nav-pill nav-signin" href="${portal}/signin">Sign in</a>`)
+ .replace('<button class="button dark" data-all-care>View all care options</button>',`<button class="button dark" data-all-care>View all care options</button><a class="button light" href="${portal}/book?service=general" style="text-decoration:underline;text-decoration-color:#a7bdd0;text-underline-offset:4px">Not sure which one?</a>`)
+ .replace(`<a class="button light" href="${external}" target="_blank" rel="noopener">Create your account</a>`,`<a class="button light" href="${portal}/signup">Create your account</a>`)
+ .replace(`<a class="button dark" href="${external}#doctors" target="_blank" rel="noopener">Explore Carevia’s clinicians</a>`,'<a class="button dark" href="#care">Find your clinician</a>');
+// Only the footer's and the FAQ's "Visit Carevia" keep the external site.
+if(!v45Home.includes('data-portal=')||!v45Home.includes('/signin">Sign in')||!v45Home.includes('>Not sure which one?</a>')||!v45Home.includes('/signup">Create your account')||v45Home.split(external).length-1!==2)throw new Error('Design 04.5 portal links failed');
+await writeFile('dist/design-04-5.html',v45Home);
+await writeFile('dist/index.html',v45Home.replace('rel="canonical" href="https://carevia-glass.triple-labs-8416.chatgpt.site/design-04-5.html"','rel="canonical" href="https://carevia-glass.triple-labs-8416.chatgpt.site/"'));
 
 console.log('Built Carevia designs 03, 04.2 and 04.5.');
