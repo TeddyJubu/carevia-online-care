@@ -51,6 +51,9 @@
 @media(max-width:1024px){.film-toggle{width:44px;height:44px}.care-open{min-height:46px;padding:12px 0 0;align-items:center}.emergency>p{font-size:14px}.emergency>a{display:inline-flex;align-items:center;min-height:44px;padding-inline:4px;font-size:14px;font-weight:500}.topbar :is(.menu-toggle,.nav-logo){flex:none;min-width:44px}}
 /* Phones: the heading wraps freely (balanced, no orphaned "you"). */
 @media(max-width:600px){.hero>h1{text-wrap:balance}.hero>h1 br{display:none}.emergency{gap:6px 12px}}
+/* Phones: menu and Sign in pinned to the screen edges with the logo centred; the heading centred just above the note and search.
+   bottom is measured up from the hero's foot, so 100% - 46svh is the intro's top line whatever the heading's height. */
+@media(max-width:600px){.topbar{left:16px;right:16px;transform:none;justify-content:space-between}.hero .hero-intro{top:46svh;transform:translateX(-50%)}.hero>h1{bottom:calc(100% - 46svh + 20px);text-align:center}}
 /* Desktop gets the same accessible sizing as touch: 44px film toggles and price rows, and a 14px 112 notice. The link's negative margin keeps its text on the notice's first line while its tap area stays 44px. */
 @media(min-width:1025px){.film-toggle{width:44px;height:44px}.care-open{min-height:46px;padding:12px 0 0;align-items:center}.emergency>p{font-size:14px}.emergency>a{display:inline-flex;align-items:center;min-height:44px;margin-block:-11.5px;padding-inline:4px;font-size:14px;font-weight:500}}
 /* Phones: Our care cards size to their content instead of 4.2's fixed 520px. Equal rows (sized by the tallest card) keep the sticky stack even, and any spare height sits above the price row so number, title and description read as one block. */
