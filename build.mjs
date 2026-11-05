@@ -88,7 +88,7 @@ const aboutStory=`<section class="about-h" id="about" aria-labelledby="about-tit
  +`<div class="ah-panel ah-image"><img src="assets/sea-1600.jpg" srcset="assets/sea-960.jpg 960w, assets/sea-1600.jpg 1600w" sizes="(max-width: 600px) 88vw, 72vw" alt="Friends enjoying a summer day by the sea" width="1600" height="1073" loading="lazy"></div>`
  +`<div class="ah-panel ah-copy"><p>Life doesn’t pause when you need care. We make it easier to speak to a doctor, understand your options, and get back to being you. A conversation that fits your life, wherever it finds you.</p><a class="button dark" href="#care">Explore your options</a></div>`
  +`<div class="ah-panel ah-facts"><div class="ah-fact"><strong>7</strong><span class="ah-fact-label">Areas of care</span><p>From everyday health and mental wellbeing to specialist support.</p></div><div class="ah-fact"><strong>€0</strong><span class="ah-fact-label">Monthly fees</span><p>Pay per consultation, with the price shown before you book.</p></div></div>`
- +`</div></div></section>`;
+ +`</div><div class="ah-progress" aria-hidden="true"><span></span></div></div></section>`;
 const aboutStyles=`<style>
 .about-h{position:relative;height:calc(var(--travel,0px) + 100vh)}
 .ah-pin{position:sticky;top:0;height:100vh;overflow:hidden}
@@ -112,8 +112,14 @@ const aboutStyles=`<style>
 /* People cards: gentle lift and a slow photo push-in on hover. Uses translate/scale so it doesn't fight the reveal animation's transform. */
 .person{transition:translate .5s cubic-bezier(.2,.7,.2,1),box-shadow .5s}.person img{transition:scale .9s cubic-bezier(.2,.7,.2,1)}@media(hover:hover){.person:hover{translate:0 -6px;box-shadow:0 22px 40px -24px #102d5059}.person:hover img{scale:1.035}}.wide-banner .banner-toggle{top:20px;right:20px;bottom:auto;z-index:2}
 @media(max-width:600px){.ah-image,.ah-copy{width:88vw}.ah-image img{height:56vh}.about-h .ah-title .mono{font-size:18px!important}.ah-facts{width:100vw;flex-direction:column;justify-content:center;gap:40px}.ah-fact{flex:none;max-width:none;width:100%}.ah-fact strong{font-size:96px}.ah-fact-label{font-size:20px;margin-top:16px}.ah-fact p{font-size:15px}}
-/* Tablets: the last panel fills the screen, so the story comes to rest on the facts alone rather than beside a sliver of cut-off copy (the blur strip is off at rest). */
-@media(min-width:601px) and (max-width:1024px){.ah-facts{width:100vw}}
+/* The last panel fills the screen at every width, so the story rests on the facts alone rather than beside a sliver of cut-off copy (the blur strip is off at rest). The pair stays a centred block instead of spreading across wide screens. */
+.ah-facts{width:100vw;gap:clamp(40px,5vw,96px)}
+@media(min-width:601px){.ah-fact{max-width:min(30vw,440px)}}
+/* Progress line: a quiet hairline that fills as the story travels, so scrolling down reads as moving sideways. --p comes from about-hscroll.js. */
+.ah-progress{position:absolute;left:6vw;bottom:calc(clamp(24px,5vh,48px) + env(safe-area-inset-bottom,0px));width:min(320px,calc(100vw - 12vw));height:2px;border-radius:2px;background:#102d501f;overflow:hidden;z-index:3;pointer-events:none}
+.ah-progress span{display:block;height:100%;background:#b54e14;transform-origin:0 50%;transform:scaleX(var(--p,0))}
+/* Reduced motion: no pin, no sideways travel, no blur, no progress line, just the panels stacked in normal flow. */
+@media(prefers-reduced-motion:reduce){.about-h{height:auto}.ah-pin{position:static;height:auto;overflow:visible}.ah-pin::after,.ah-progress{display:none}.ah-track{display:block;height:auto;transform:none!important;will-change:auto}.ah-panel{width:auto;height:auto;padding:clamp(40px,7vw,96px) 6vw}.ah-image img{height:auto;aspect-ratio:3/2;max-height:80vh}.ah-facts{justify-content:flex-start;padding-bottom:clamp(64px,10vw,140px)}}
 </style>`;
 // The "Your next chapter" banner plays the morning film instead of the nurse photo; it only loads and plays while on screen.
 const bannerFilm=`<video class="banner-film" muted loop playsinline preload="none" poster="assets/film/morning.webp" aria-hidden="true"><source src="assets/film/morning-720.mp4" type="video/mp4" media="(max-width: 767px)"><source src="assets/film/morning-1080.mp4" type="video/mp4"></video><button class="film-toggle banner-toggle" type="button" aria-label="Pause film" aria-pressed="false"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect class="i-pause" x="6" y="5" width="4" height="14" rx="1"/><rect class="i-pause" x="14" y="5" width="4" height="14" rx="1"/><path class="i-play" d="M8 5.5v13l10.5-6.5z"/></svg></button><script>{const v=document.querySelector('.banner-film'),b=v.nextElementSibling;let on=!matchMedia('(prefers-reduced-motion: reduce)').matches;const sync=()=>{b.setAttribute('aria-pressed',!on);b.setAttribute('aria-label',on?'Pause film':'Play film')};new IntersectionObserver(([e])=>{e.isIntersecting&&on?v.play().catch(()=>{}):v.pause()},{rootMargin:'200px'}).observe(v);b.onclick=()=>{on=!on;on?v.play().catch(()=>{}):v.pause();sync()};sync()}</script>`;
