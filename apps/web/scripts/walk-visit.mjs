@@ -2,7 +2,7 @@
 import { chromium } from 'playwright'
 const [out, w = '1280'] = process.argv.slice(2)
 const width = Number(w)
-const base = process.env.BASE ?? 'http://localhost:5180'
+const base = (process.env.BASE_URL ?? process.env.BASE ?? 'http://localhost:5180').replace(/\/(app\/?)?$/, '')
 const b = await chromium.launch({ args: ['--use-fake-ui-for-media-stream', '--use-fake-device-for-media-stream'] })
 const ctx = await b.newContext({ viewport: { width, height: width < 600 ? 844 : 860 }, reducedMotion: 'reduce', permissions: ['camera', 'microphone'] })
 const p = await ctx.newPage()
