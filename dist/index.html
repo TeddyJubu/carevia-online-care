@@ -65,6 +65,8 @@
 /* Phones: the brand and copyright sit in the right column, beside "The conversation", instead of a row of their own.
    The left links span two rows; the brand takes the second row on the right and aligns to its foot. */
 @media(min-width:361px) and (max-width:600px){.footer-grid>.footer-info:nth-child(3){grid-row:span 2}.footer-copyright{grid-column:2;align-self:end}}
+/* Phones: the About story drops the sea photo and the 7 / €0 facts (whole panels, so about-hscroll.js measures a shorter track), and the footer's call to action sits centred. */
+@media(max-width:600px){.about-h :is(.ah-image,.ah-facts){display:none}.footer-grid>div:nth-child(2){text-align:center}}
 /* Touch: the WebGL rim no longer loads, so a tapped nav pill gets a plain CSS orange rim instead (same #ff9a4d as the shader). */
 @media(hover:none),(pointer:coarse){.topbar .nav-pill:active{box-shadow:inset 0 0 0 1.5px #ff9a4d}}
 </style><script type="module" src="scripts/about-hscroll.js?v=cca28bc34e"></script><style>
