@@ -18,3 +18,12 @@
 - A visit is confirmed only after payment. Video then follows intake, device check, waiting room, and the Daily call. Audio is stored on the appointment and waits. Recording stays off unless the patient gives separate consent. A dropped call keeps the same appointment open.
 - The initial patient-flow wireframe is `/Users/tamannajuthi/Documents/ChatGPT/Online Doctor platform/patient-booking-wireframe-before-portugal.html`.
 - Planning skills for this product live in `.cursor/skills/`: `portugal-telemedicine-constraints`, `dronline-product-reference`, `imed-clinical-documents`, `daily-video-consultations`, and `cellular-audio-consultations`.
+
+## Patient journey decisions (5 November 2026)
+
+- The full patient journey is built on the `patient-journey` branch, which combines the Design 04.5 frontend and `backend`. Work on it happens in per-thread branches (`pj/api`, `pj/web`, `pj/homepage`, `pj/content`) that the orchestrating thread merges. The plan, rules, file ownership and ports are in `docs/patient-journey/PLAN.md`; the API contract is in `docs/patient-journey/API-CONTRACT.md`.
+- Login uses Better Auth inside `apps/api` (Prisma adapter, same Postgres), replacing the hand-written sessions. Roles: patient, clinician, admin.
+- The real patient portal is `apps/web`, served under `/app/`, in the Design 04.5 look done in CSS only. It replaces `apps/portal` once it reaches parity. Design 04.5 is the homepage (`dist/index.html`) and links into `/app/`.
+- Demo payment is a no-card "Pay (demo)" step. Demo video uses real Daily calls on the free plan with the key saved in the admin app. Launch geography is mainland Portugal. The demo is in English; Portuguese is a launch requirement.
+- Demo mode is off by default and needs both `DEMO_MODE=true` on the API and a demo web build. Demo accounts: `patient@example.com`, `doctor@carevia.test`, `admin@carevia.test`.
+- Never put arrow glyphs (→ ↗ ←) on Carevia buttons or links.

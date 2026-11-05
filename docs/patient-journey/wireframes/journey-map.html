@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Carevia: patient journey and low-fi wireframes</title>
+<style>
+ :root{--ink:#1c1c1c;--mid:#6b6b6b;--line:#bdbdbd;--fill:#ececec;--bg:#fafaf8;--here:#1c1c1c;--ext:#9a9a9a}
+ *{box-sizing:border-box}
+ body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.45 ui-sans-serif,system-ui,-apple-system,sans-serif;padding:32px 28px 64px}
+ h1{font-size:26px;margin:0 0 4px;letter-spacing:-.01em}
+ h2{font-size:18px;margin:44px 0 6px}
+ .sub{color:var(--mid);margin:0 0 20px;max-width:760px}
+ .mono{font:11px/1.3 ui-monospace,SFMono-Regular,Menlo,monospace;text-transform:uppercase;letter-spacing:.06em;color:var(--mid)}
+ .legend{display:flex;gap:18px;flex-wrap:wrap;margin:14px 0 6px}
+ .legend span{display:flex;align-items:center;gap:8px}
+ .sw{width:22px;height:14px;border:2px solid var(--here);border-radius:3px}
+ .sw.ext{border:2px dashed var(--ext)}
+
+ /* journey map */
+ .map{display:grid;grid-template-columns:120px repeat(5,minmax(150px,1fr));border:1px solid var(--line);border-radius:8px;overflow:hidden;background:#fff;min-width:980px}
+ .map div{padding:10px 12px;border-right:1px solid var(--line);border-bottom:1px solid var(--line)}
+ .map .h{background:var(--fill);font-weight:600}
+ .map .rl{font:11px/1.3 ui-monospace,Menlo,monospace;text-transform:uppercase;color:var(--mid);background:#f6f6f4}
+ .feel{display:flex;align-items:center;gap:6px}
+ .dot{width:10px;height:10px;border-radius:50%;background:var(--ink);flex:none}
+ .dot.lo{background:#fff;border:2px solid var(--ink)}
+ .scroll{overflow-x:auto;padding-bottom:6px}
+
+ /* stage rows */
+ .stage{margin-top:34px}
+ .stage-head{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap}
+ .stage-head h2{margin:0}
+ .tag{font:11px ui-monospace,Menlo,monospace;padding:3px 8px;border-radius:99px;border:1.5px solid var(--here)}
+ .tag.ext{border:1.5px dashed var(--ext);color:var(--mid)}
+ .row{display:flex;gap:0;align-items:flex-start;overflow-x:auto;padding:16px 2px 8px}
+ .link{flex:none;width:34px;align-self:center;height:2px;background:var(--line);margin-top:-40px}
+
+ /* phone frame */
+ .scr{flex:none;width:236px}
+ .phone{height:470px;border:2px solid var(--here);border-radius:22px;background:#fff;padding:12px 12px 14px;display:flex;flex-direction:column;gap:8px;overflow:hidden;position:relative}
+ .ext .phone{border:2px dashed var(--ext)}
+ .cap{margin-top:8px}
+ .cap b{display:block;font-size:13px}
+ .cap p{margin:3px 0 0;color:var(--mid);font-size:12px}
+ .num{font:600 11px ui-monospace,Menlo,monospace}
+
+ /* wire primitives */
+ .bar{display:flex;justify-content:space-between;align-items:center;gap:6px}
+ .pill{border:1.5px solid var(--ink);border-radius:99px;padding:3px 9px;font-size:10px;white-space:nowrap}
+ .logo{width:46px;height:12px;background:var(--ink);border-radius:2px}
+ .img{background:var(--fill);border:1px solid var(--line);border-radius:6px;position:relative;overflow:hidden}
+ .img::before,.img::after{content:"";position:absolute;inset:0;background:linear-gradient(to top right,transparent calc(50% - .5px),var(--line) 50%,transparent calc(50% + .5px))}
+ .img::after{background:linear-gradient(to top left,transparent calc(50% - .5px),var(--line) 50%,transparent calc(50% + .5px))}
+ .t{font-weight:700;line-height:1.15}
+ .t.xl{font-size:19px}.t.l{font-size:15px}.t.m{font-size:12.5px}
+ .p{font-size:10.5px;color:var(--mid);line-height:1.35}
+ .ln{height:6px;background:var(--fill);border-radius:3px}
+ .btn{border-radius:99px;padding:7px 10px;font-size:11px;text-align:center;font-weight:600}
+ .btn.d{background:var(--ink);color:#fff}
+ .btn.o{border:1.5px solid var(--ink)}
+ .field{border:1.5px solid var(--line);border-radius:8px;padding:7px 9px;font-size:10.5px;color:var(--mid)}
+ .li{display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--fill);padding:6px 0;font-size:10.5px;gap:6px}
+ .li b{font-size:11px}
+ .chip{border:1px solid var(--line);border-radius:6px;padding:4px 6px;font-size:10px;text-align:center}
+ .chip.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+ .grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:5px}
+ .grid2{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+ .box{border:1.5px solid var(--line);border-radius:8px;padding:8px}
+ .warn{border:1.5px dashed var(--ink);border-radius:8px;padding:6px 8px;font-size:10px}
+ .chk{display:flex;gap:6px;align-items:center;font-size:10.5px}
+ .chk i{width:11px;height:11px;border:1.5px solid var(--ink);border-radius:3px;flex:none}
+ .chk i.x{background:var(--ink)}
+ .av{width:30px;height:30px;border-radius:50%;flex:none}
+ .spacer{flex:1}
+ .overlay{position:absolute;inset:0;background:rgba(0,0,0,.28)}
+ .sheet{position:absolute;left:0;right:0;bottom:0;top:70px;background:#fff;border-radius:16px 16px 0 0;padding:12px;display:flex;flex-direction:column;gap:7px;border-top:2px solid var(--ink)}
+ .video{flex:1;background:#d9d9d9;border-radius:10px;position:relative}
+ .self{position:absolute;right:8px;top:8px;width:56px;height:76px;border-radius:6px;background:#bdbdbd;border:2px solid #fff}
+ .ctrl{display:flex;justify-content:center;gap:10px}
+ .ctrl span{width:30px;height:30px;border-radius:50%;border:1.5px solid var(--ink)}
+ .ctrl span.end{background:var(--ink)}
+
+ /* edge paths + notes */
+ .edges{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:12px;margin-top:10px}
+ .edge{background:#fff;border:1.5px dashed var(--ink);border-radius:10px;padding:12px 14px}
+ .edge b{display:block;margin-bottom:4px}
+ .edge p{margin:0;color:var(--mid);font-size:13px}
+ .notes{background:#fff;border:1px solid var(--line);border-radius:10px;padding:6px 18px}
+ .notes li{margin:10px 0}
+ code{font:12px ui-monospace,Menlo,monospace;background:var(--fill);padding:1px 5px;border-radius:4px}
+</style>
+</head>
+<body>
+
+<p class="mono">Carevia online care · patient journey · low fidelity</p>
+<h1>From "I need a doctor" to "I know what comes next"</h1>
+<p class="sub">One first-time patient, start to finish. Built from the live copy in <code>src/content.mjs</code> and <code>dist/design-04-5.html</code>. Screens 1 to 3 exist in this repo today. Screens 4 to 12 are what the site promises; they would live on the Carevia platform, which this repo links out to.</p>
+
+<div class="legend">
+ <span><i class="sw"></i> Built in this repo (marketing site)</span>
+ <span><i class="sw ext"></i> Implied by the copy, on the Carevia platform, not built here</span>
+</div>
+
+<h2>Journey map</h2>
+<div class="scroll">
+<div class="map">
+ <div class="h rl">Stage</div><div class="h">1 · Discover</div><div class="h">2 · Decide</div><div class="h">3 · Book</div><div class="h">4 · Visit</div><div class="h">5 · After</div>
+
+ <div class="rl">Patient goal</div>
+ <div>"Can someone help with this, without a waiting room?"</div>
+ <div>"Is this the right service, and what will it cost?"</div>
+ <div>"Get a time with someone I trust, for me or my child."</div>
+ <div>"Be heard, and leave knowing what to do."</div>
+ <div>"Find my summary and documents. Follow up if I need to."</div>
+
+ <div class="rl">They do</div>
+ <div>Land on hero. Search a symptom ("fever", "sick leave") or browse care.</div>
+ <div>Open a service card, read price, duration and what it covers. Scan FAQs.</div>
+ <div>Confirm country and who it's for. Pick a clinician, language and slot. Create an account. Pay.</div>
+ <div>Prepare, check camera and mic, wait briefly, join the secure video call.</div>
+ <div>Read the summary, download prescription or certificate, book a follow-up.</div>
+
+ <div class="rl">Feeling</div>
+ <div class="feel"><i class="dot lo"></i>Worried, a bit sceptical</div>
+ <div class="feel"><i class="dot"></i>Reassured by clear prices</div>
+ <div class="feel"><i class="dot lo"></i>Friction peak: forms, payment</div>
+ <div class="feel"><i class="dot lo"></i>Nervous before, relieved after</div>
+ <div class="feel"><i class="dot"></i>In control</div>
+
+ <div class="rl">Touchpoint</div>
+ <div>Hero, search, "Our care"</div>
+ <div>Care dialog, "Your first visit", FAQ</div>
+ <div>Carevia platform (external)</div>
+ <div>Email reminder, waiting room, video</div>
+ <div>Patient account</div>
+
+ <div class="rl">Risk</div>
+ <div>Emergency user in the wrong place</div>
+ <div>Handoff drops the chosen service</div>
+ <div>Country or age turns out ineligible, late</div>
+ <div>Connection fails</div>
+ <div>Clinician says "not suitable online"</div>
+</div>
+</div>
+
+<!-- STAGE 1 -->
+<section class="stage">
+ <div class="stage-head"><h2>1 · Discover</h2><span class="tag">exists</span></div>
+ <div class="row">
+
+  <div class="scr">
+   <div class="phone">
+    <div class="bar"><span class="pill">Menu</span><i class="logo"></i><span class="pill">Find your care</span></div>
+    <div class="img" style="flex:1"></div>
+    <div class="t xl">The doctor will see you at home.</div>
+    <div class="field">What care do you need?</div>
+    <div class="btn o">Browse our care</div>
+   </div>
+   <div class="cap"><span class="num">01</span><b>Home / hero</b><p>Night film behind the headline. Two ways in: search by symptom, or browse.</p></div>
+  </div>
+  <i class="link"></i>
+
+  <div class="scr">
+   <div class="phone">
+    <div class="field" style="border-color:var(--ink);color:var(--ink)">fever|</div>
+    <div class="box">
+     <div class="li"><b>General &amp; urgent care</b><span>€45</span></div>
+     <div class="p">matches "fever" · 20 min</div>
+    </div>
+    <div class="p">Search knows aliases: "sick leave" finds Certificates, "refill" finds Renewals.</div>
+    <div class="spacer"></div>
+    <div class="ln" style="width:70%"></div><div class="ln" style="width:50%"></div>
+   </div>
+   <div class="cap"><span class="num">01b</span><b>Symptom search</b><p>Patients describe a problem, not a department. The search maps one to the other.</p></div>
+  </div>
+  <i class="link"></i>
+
+  <div class="scr">
+   <div class="phone">
+    <div class="t l">Our care</div>
+    <div class="li"><b>General &amp; urgent</b><span>€45 · 20m</span></div>
+    <div class="li"><b>Mental health</b><span>€65 · 50m</span></div>
+    <div class="li"><b>Weight management</b><span>€45</span></div>
+    <div class="li"><b>Specialist care</b><span>€85 · 30m</span></div>
+    <div class="li"><b>Certificates</b><span>€39 · 15m</span></div>
+    <div class="li"><b>Treatments</b><span>€45</span></div>
+    <div class="li"><b>Tests &amp; renewals</b><span>€35 · 10m</span></div>
+    <div class="spacer"></div>
+    <div class="btn d">View all care options</div>
+   </div>
+   <div class="cap"><span class="num">02</span><b>Our care list</b><p>Seven services. Price and length shown up front, before any commitment.</p></div>
+  </div>
+  <i class="link"></i>
+
+  <div class="scr">
+   <div class="phone">
+    <div class="ln" style="width:60%"></div><div class="ln" style="width:40%"></div><div class="img" style="height:60px"></div>
+    <div class="overlay"></div>
+    <div class="sheet">
+     <div class="bar"><span class="mono">Care that fits your life</span><span>×</span></div>
+     <div class="t l">General &amp; urgent care</div>
+     <div class="p">Everyday concerns, infections, allergies, skin, children's health.</div>
+     <div class="box"><div class="t m">From €45</div><div class="p">20 min · video consultation</div></div>
+     <div class="chk"><i></i>Advice on symptoms</div>
+     <div class="chk"><i></i>Follow-up and referrals</div>
+     <div class="warn">Not for emergencies. Prices confirmed per country.</div>
+     <div class="spacer"></div>
+     <div class="btn d">Explore on Carevia</div>
+    </div>
+   </div>
+   <div class="cap"><span class="num">03</span><b>Care detail dialog</b><p>The decision point. Its button leaves the site for the generic services page.</p></div>
+  </div>
+
+ </div>
+</section>
+
+<!-- STAGE 2-3 -->
+<section class="stage ext">
+ <div class="stage-head"><h2>2–3 · Decide and book</h2><span class="tag ext">not built here</span></div>
+ <div class="row">
+
+  <div class="scr">
+   <div class="phone">
+    <div class="mono">Step 1 of 4</div>
+    <div class="t l">Who is this visit for?</div>
+    <div class="grid2"><div class="chip on">Me</div><div class="chip">My child</div></div>
+    <div class="chip">Another dependant</div>
+    <div class="t m" style="margin-top:6px">Where are you right now?</div>
+    <div class="field">Country ▾</div>
+    <div class="p">You need to be in a supported country at the time of the visit.</div>
+    <div class="spacer"></div>
+    <div class="warn">Emergency? Call 112.</div>
+    <div class="btn d">Continue</div>
+   </div>
+   <div class="cap"><span class="num">04</span><b>Eligibility</b><p>Ask country and "for whom" first, so nobody learns they're ineligible after paying.</p></div>
+  </div>
+  <i class="link"></i>
+
+  <div class="scr">
+   <div class="phone">
+    <div class="mono">Step 2 of 4 · General care</div>
+    <div class="grid3"><div class="chip on">Today</div><div class="chip">Tomorrow</div><div class="chip">Any</div></div>
+    <div class="field">Language: English ▾</div>
+    <div class="box" style="display:flex;gap:8px;align-items:center"><i class="img av"></i><div><div class="t m">Clinician name</div><div class="p">GP · EN, PT</div></div></div>
+    <div class="grid3"><div class="chip">09:30</div><div class="chip on">10:10</div><div class="chip">11:00</div></div>
+    <div class="box" style="display:flex;gap:8px;align-items:center"><i class="img av"></i><div><div class="t m">Clinician name</div><div class="p">GP · EN</div></div></div>
+    <div class="grid3"><div class="chip">13:20</div><div class="chip">14:00</div><div class="chip">16:40</div></div>
+    <div class="spacer"></div>
+    <div class="btn d">Continue · 10:10</div>
+   </div>
+   <div class="cap"><span class="num">05</span><b>Clinician and time</b><p>"Check language, availability and price before you book." Arrives with the service already picked.</p></div>
+  </div>
+  <i class="link"></i>
+
+  <div class="scr">
+   <div class="phone">
+    <div class="mono">Step 3 of 4</div>
+    <div class="t l">Your account</div>
+    <div class="p">Your summary and documents will be saved here.</div>
+    <div class="field">Email</div>
+    <div class="field">Password</div>
+    <div class="field">Date of birth (18+)</div>
+    <div class="box"><div class="t m">Booking for a child?</div><div class="p">Add them as a dependant.</div><div class="btn o" style="margin-top:6px">Add dependant</div></div>
+    <div class="spacer"></div>
+    <div class="btn d">Create account</div>
+    <div class="p" style="text-align:center">Already have one? Sign in</div>
+   </div>
+   <div class="cap"><span class="num">06</span><b>Account</b><p>Comes late, after the patient has a slot. Asking up front costs sign-ups.</p></div>
+  </div>
+  <i class="link"></i>
+
+  <div class="scr">
+   <div class="phone">
+    <div class="mono">Step 4 of 4</div>
+    <div class="t l">Review and pay</div>
+    <div class="box">
+     <div class="li"><span>General &amp; urgent care</span><b>€45</b></div>
+     <div class="li"><span>Today · 10:10 · 20 min</span><span></span></div>
+     <div class="li"><span>For: Me</span><span>Edit</span></div>
+    </div>
+    <div class="p">Pay per visit. No subscription. Free rebook if the video fails.</div>
+    <div class="field">Card number</div>
+    <div class="grid2"><div class="field">MM/YY</div><div class="field">CVC</div></div>
+    <div class="spacer"></div>
+    <div class="btn d">Pay €45 and confirm</div>
+   </div>
+   <div class="cap"><span class="num">07</span><b>Review and pay</b><p>Final price for the country, plus the reassurances from the FAQ at the point of doubt.</p></div>
+  </div>
+
+ </div>
+</section>
+
+<!-- STAGE 4 -->
+<section class="stage ext">
+ <div class="stage-head"><h2>4 · Visit</h2><span class="tag ext">not built here</span></div>
+ <div class="row">
+
+  <div class="scr">
+   <div class="phone">
+    <div class="t l">You're booked</div>
+    <div class="box"><div class="t m">Today, 10:10</div><div class="p">General care · video · 20 min</div></div>
+    <div class="btn o">Add to calendar</div>
+    <div class="t m" style="margin-top:6px">Before your visit</div>
+    <div class="chk"><i class="x"></i>Write down your questions</div>
+    <div class="chk"><i></i>List your medications</div>
+    <div class="chk"><i></i>Find a quiet, private place</div>
+    <div class="chk"><i></i>Charge your device</div>
+    <div class="spacer"></div>
+    <div class="btn d">Test camera and mic</div>
+   </div>
+   <div class="cap"><span class="num">08</span><b>Confirmation and prep</b><p>The "Before your visit" guide, turned into a checklist.</p></div>
+  </div>
+  <i class="link"></i>
+
+  <div class="scr">
+   <div class="phone">
+    <div class="mono">Waiting room</div>
+    <div class="img" style="height:150px"></div>
+    <div class="grid2"><div class="chip on">Camera ok</div><div class="chip on">Mic ok</div></div>
+    <div class="t m">Your clinician will join shortly</div>
+    <div class="p">Usually within a few minutes of 10:10.</div>
+    <div class="spacer"></div>
+    <div class="warn">Connection trouble? You can rebook for free.</div>
+    <div class="btn d">Join when ready</div>
+   </div>
+   <div class="cap"><span class="num">09</span><b>Waiting room</b><p>Most anxious moment. Show device status and the free-rebook safety net.</p></div>
+  </div>
+  <i class="link"></i>
+
+  <div class="scr">
+   <div class="phone">
+    <div class="video"><i class="self"></i></div>
+    <div class="bar"><span class="p">Clinician name · GP</span><span class="p">12:04</span></div>
+    <div class="ctrl"><span></span><span></span><span class="end"></span></div>
+   </div>
+   <div class="cap"><span class="num">10</span><b>Video consultation</b><p>"We listen." Nothing on screen but the conversation.</p></div>
+  </div>
+
+ </div>
+</section>
+
+<!-- STAGE 5 -->
+<section class="stage ext">
+ <div class="stage-head"><h2>5 · After</h2><span class="tag ext">not built here</span></div>
+ <div class="row">
+
+  <div class="scr">
+   <div class="phone">
+    <div class="mono">Today · General care</div>
+    <div class="t l">Your consultation summary</div>
+    <div class="ln"></div><div class="ln"></div><div class="ln" style="width:70%"></div>
+    <div class="t m" style="margin-top:4px">Next steps</div>
+    <div class="chk"><i></i>Rest and fluids for 3 days</div>
+    <div class="chk"><i></i>Book follow-up if no better</div>
+    <div class="t m" style="margin-top:4px">Documents</div>
+    <div class="li"><b>Prescription</b><span>Download</span></div>
+    <div class="li"><b>Sick-leave certificate</b><span>Download</span></div>
+    <div class="spacer"></div>
+    <div class="btn d">Book a follow-up</div>
+   </div>
+   <div class="cap"><span class="num">11</span><b>Summary and documents</b><p>"Wake up knowing what comes next." Documents only when clinically issued.</p></div>
+  </div>
+  <i class="link"></i>
+
+  <div class="scr">
+   <div class="phone">
+    <div class="bar"><i class="logo"></i><span class="pill">Me ▾</span></div>
+    <div class="t l">Hello again</div>
+    <div class="box"><div class="mono">Upcoming</div><div class="t m">Follow-up · Thu 09:30</div></div>
+    <div class="mono" style="margin-top:4px">Past visits</div>
+    <div class="li"><b>General care</b><span>Today</span></div>
+    <div class="li"><b>Tests &amp; renewals</b><span>Mar</span></div>
+    <div class="mono" style="margin-top:4px">Documents</div>
+    <div class="li"><b>3 files</b><span>View</span></div>
+    <div class="spacer"></div>
+    <div class="btn o">Book new care</div>
+   </div>
+   <div class="cap"><span class="num">12</span><b>Account home (returning)</b><p>The loop closes. A returning patient starts here, not at the hero.</p></div>
+  </div>
+
+ </div>
+</section>
+
+<h2>Off the happy path</h2>
+<div class="edges">
+ <div class="edge"><b>Emergency</b><p>Any screen. Site shows "Call 112" in the FAQ and care dialog. Keep it on 04 and 09 too.</p></div>
+ <div class="edge"><b>Not available in my country / under 18</b><p>Caught at 04, before clinician choice or payment. Under-18s are booked by a guardian as a dependant.</p></div>
+ <div class="edge"><b>Video fails</b><p>From 09 or 10: free rebook, back to 05 with the service and patient pre-filled.</p></div>
+ <div class="edge"><b>Not suitable online</b><p>At 10 the clinician recommends in-person care. 11 shows a referral instead of a prescription.</p></div>
+</div>
+
+<h2>What reading the code showed</h2>
+<ul class="notes">
+ <li><b>The repo ends at screen 03.</b> "Explore on Carevia", "Create your account" and "Visit Carevia" all link to the external site. Booking, payment, video and the account are not here.</li>
+ <li><b>The handoff loses context.</b> The care dialog always links to <code>…/#services</code>, whichever service is open. A patient who picked Mental health lands on the generic list and picks again. A <code>?service=mental</code> param would carry the choice to screen 05.</li>
+ <li><b>"Find your care" just scrolls.</b> The nav button, the hero's "Browse our care" and the footer CTA all jump to <code>#care</code> on the same page. That's fine for discovery, but nothing on the site acts as a "Book now".</li>
+ <li><b>Eligibility is only in the FAQ.</b> The 18+ rule and the country limit sit in a collapsed answer. Screen 04 brings them forward, before money is involved.</li>
+</ul>
+
+</body>
+</html>
