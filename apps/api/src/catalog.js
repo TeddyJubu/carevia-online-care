@@ -84,7 +84,7 @@ export const GROUPS = [
   {
     slug: 'certificates',
     name: 'Certificates & assessments',
-    blurb: 'Medical documents and fitness assessments',
+    blurb: 'Fitness and health assessments with a doctor',
     icon: 'file-check',
     services: [
       'Sick leave',
