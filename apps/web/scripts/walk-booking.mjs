@@ -1,10 +1,10 @@
 // Books a visit for a child, screenshotting each step: node scripts/walk-booking.mjs <outDir> [width]
 // SIGNUP=1 creates a new account and adds a new child; otherwise it signs in as the demo patient and picks Leo.
-import { chromium } from 'playwright'
+import { launch } from './browser.mjs'
 const [out, w = '1280'] = process.argv.slice(2)
 const width = Number(w)
 const base = (process.env.BASE_URL ?? process.env.BASE ?? 'http://localhost:5180').replace(/\/(app\/?)?$/, '')
-const b = await chromium.launch()
+const b = await launch()
 const p = await (await b.newContext({ viewport: { width, height: width < 600 ? 844 : 860 }, reducedMotion: 'reduce' })).newPage()
 p.on('pageerror', (e) => console.log('PAGE ERROR', e.message))
 p.on('console', (m) => m.type() === 'error' && console.log('CONSOLE', m.text()))

@@ -1,10 +1,10 @@
 // Lets a hold expire on J4 (signed out), then tries to continue: node scripts/walk-hold-expiry.mjs <outDir> [width]
 // Takes about 11 minutes: the API holds a slot for 10.
-import { chromium } from 'playwright'
+import { launch } from './browser.mjs'
 const [out, w = '390'] = process.argv.slice(2)
 const width = Number(w)
 const base = (process.env.BASE_URL ?? process.env.BASE ?? 'http://localhost:5180').replace(/\/(app\/?)?$/, '')
-const b = await chromium.launch()
+const b = await launch()
 const p = await (await b.newContext({ viewport: { width, height: width < 600 ? 844 : 860 }, reducedMotion: 'reduce' })).newPage()
 p.on('response', async (r) => { if (r.url().includes('/api/') && r.status() >= 400) console.log('api', r.status(), r.request().method(), new URL(r.url()).pathname, (await r.text().catch(() => '')).slice(0, 120)) })
 let failed = 0

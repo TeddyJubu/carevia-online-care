@@ -4,12 +4,12 @@
 // BASE_URL as in the walks; HOME_URL (default BASE_URL) for the homepage; ADMIN=0 skips /admin/.
 import { readFile, writeFile } from 'node:fs/promises'
 import { createRequire } from 'node:module'
-import { chromium } from 'playwright'
+import { launch } from './browser.mjs'
 const [out, ...widths] = process.argv.slice(2)
 const base = (process.env.BASE_URL ?? process.env.BASE ?? 'http://localhost:5180').replace(/\/(app\/?)?$/, '')
 const home = process.env.HOME_URL ?? base
 const axe = await readFile(createRequire(import.meta.url).resolve('axe-core/axe.min.js'), 'utf8')
-const b = await chromium.launch({ args: ['--use-fake-ui-for-media-stream', '--use-fake-device-for-media-stream'] })
+const b = await launch({ args: ['--use-fake-ui-for-media-stream', '--use-fake-device-for-media-stream'] })
 const wait = (ms) => new Promise((r) => setTimeout(r, ms))
 
 async function audit(p, name, width) {

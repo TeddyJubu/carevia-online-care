@@ -14,6 +14,8 @@ Plan and rules: `docs/patient-journey/PLAN.md`. Endpoints: `docs/patient-journey
 | `node scripts/walk-visit.mjs <dir> [width]` | Playwright: visit, waiting room (fake camera), call, after-visit and doctor screens. Against the real API it reads ids and moves today's demo visit into the join window; set `MOCK=1` for the mock. |
 | `node scripts/walk-reschedule.mjs <dir> [width]` | Playwright: change a visit's time; with `DROPPED_ID`, the dropped-call screen. |
 
+Every walk (and `a11y.mjs`, `shot.mjs`) runs local Chromium by default. With `BROWSERBASE=1` and `BROWSERBASE_API_KEY` set, it runs in a Browserbase cloud browser in Frankfurt instead and prints a replay link to share. Point it at production with `BASE_URL=https://carevia.claudemod.tech`. The fake-camera flags only apply locally. Example: `BROWSERBASE=1 BASE_URL=https://carevia.claudemod.tech node scripts/walk-edges.mjs out 390`.
+
 Against the real API: start it with `PUBLIC_APP_URL=http://localhost:5180` (see `apps/api/README.md`), run `npm run dev`, and open `http://localhost:5180/app/` (not 127.0.0.1: the API's origin check).
 
 Demo accounts (mock and demo API): `patient@example.com` / `demo-password`, `doctor@carevia.test` / `doctor-demo-password`.

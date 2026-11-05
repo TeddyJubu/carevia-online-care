@@ -3,11 +3,11 @@
 // Needs /app/, /admin/ and /api on one origin (BASE_URL, e.g. https://carevia.claudemod.tech).
 // HOME_URL (default BASE_URL) is the homepage to test; its /app links are followed on BASE_URL.
 // Prints "FAIL ..." for every broken expectation and exits 1 if there was one.
-import { chromium } from 'playwright'
+import { launch } from './browser.mjs'
 const [out, w = '1280'] = process.argv.slice(2)
 const width = Number(w)
 const base = (process.env.BASE_URL ?? process.env.BASE ?? 'http://localhost:5180').replace(/\/(app\/?)?$/, '')
-const b = await chromium.launch()
+const b = await launch()
 const ctx = await b.newContext({ viewport: { width, height: width < 600 ? 844 : 860 }, reducedMotion: 'reduce' })
 const p = await ctx.newPage()
 p.on('pageerror', (e) => console.log('PAGE ERROR', e.message))
