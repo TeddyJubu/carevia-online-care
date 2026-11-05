@@ -1,4 +1,4 @@
-import {services as originalServices} from './content.js?v=5685996efc';
+import {services as originalServices} from './content.js?v=78c1fd6251';
 
 // Design 04.2's service labels and summaries, supplied in the service reference.
 const copy={

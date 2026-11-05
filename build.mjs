@@ -123,8 +123,10 @@ const aboutStory=`<section class="about-h" id="about" aria-labelledby="about-tit
 const aboutStyles=`<style>
 .about-h{position:relative;height:calc(var(--travel,0px) + 100vh)}
 .ah-pin{position:sticky;top:0;height:100vh;overflow:hidden}
-/* Blur lives only in the left 20% of the screen: a fixed strip that panels slide under, strongest at the edge. */
-.ah-pin::after{content:'';position:absolute;inset:0 auto 0 0;width:20vw;z-index:2;pointer-events:none;backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);-webkit-mask-image:linear-gradient(90deg,#000 15%,transparent);mask-image:linear-gradient(90deg,#000 15%,transparent);opacity:0;transition:opacity .4s}.about-h.is-moving .ah-pin::after{opacity:1}
+/* Frosted glass over the left 10% of the screen: a fixed pane that panels slide under on their way out. Blur plus a lift
+   in saturation and brightness, a soft white tint, fine frost grain (inline SVG noise) and a lit edge, so it reads as a
+   sheet of glass rather than a soft-focus vignette. Shown only while the panels travel. */
+.ah-pin::after{content:'';position:absolute;inset:0 auto 0 0;width:10vw;z-index:2;pointer-events:none;background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='f'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 .16 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23f)'/%3E%3C/svg%3E"),linear-gradient(90deg,#ffffff5c,#ffffff26);backdrop-filter:blur(18px) saturate(1.5) brightness(1.08);-webkit-backdrop-filter:blur(18px) saturate(1.5) brightness(1.08);box-shadow:inset -1px 0 0 #ffffffb3,inset -12px 0 18px -14px #ffffff,1px 0 0 #102d5014,8px 0 24px -12px #102d5026;opacity:0;transition:opacity .6s ease}.about-h.is-moving .ah-pin::after{opacity:1}
 .ah-track{display:flex;height:100%;will-change:transform}
 .ah-panel{flex:none;height:100%;display:flex;flex-direction:column;justify-content:center;padding:0 6vw}
 .ah-title{width:100vw;align-items:flex-start;text-align:left}
@@ -140,13 +142,13 @@ const aboutStyles=`<style>
 /* People cards: gentle lift and a slow photo push-in on hover. Uses translate/scale so it doesn't fight the reveal animation's transform. */
 .person{transition:translate .5s cubic-bezier(.2,.7,.2,1),box-shadow .5s}.person img{transition:scale .9s cubic-bezier(.2,.7,.2,1)}@media(hover:hover){.person:hover{translate:0 -6px;box-shadow:0 22px 40px -24px #102d5059}.person:hover img{scale:1.035}}
 @media(max-width:600px){.ah-image,.ah-copy{width:88vw}.ah-image img{height:56vh}.about-h .ah-title .mono{font-size:18px!important}.ah-facts{width:100vw;flex-direction:column;justify-content:center;gap:40px}.ah-fact{flex:none;max-width:none;width:100%}.ah-fact strong{font-size:96px}.ah-fact-label{font-size:20px;margin-top:16px}.ah-fact p{font-size:15px}}
-/* The last panel fills the screen at every width, so the story rests on the facts alone rather than beside a sliver of cut-off copy (the blur strip is off at rest). The pair stays a centred block instead of spreading across wide screens. */
+/* The last panel fills the screen at every width, so the story rests on the facts alone rather than beside a sliver of cut-off copy (the frosted pane is off at rest). The pair stays a centred block instead of spreading across wide screens. */
 .ah-facts{width:100vw;gap:clamp(40px,5vw,96px)}
 @media(min-width:601px){.ah-fact{max-width:min(30vw,440px)}}
 /* Progress line: a quiet hairline that fills as the story travels, so scrolling down reads as moving sideways. --p comes from about-hscroll.js. */
 .ah-progress{position:absolute;left:6vw;bottom:calc(clamp(24px,5vh,48px) + env(safe-area-inset-bottom,0px));width:min(320px,calc(100vw - 12vw));height:2px;border-radius:2px;background:#102d501f;overflow:hidden;z-index:3;pointer-events:none}
 .ah-progress span{display:block;height:100%;background:#b54e14;transform-origin:0 50%;transform:scaleX(var(--p,0))}
-/* Reduced motion: no pin, no sideways travel, no blur, no progress line, just the panels stacked in normal flow. */
+/* Reduced motion: no pin, no sideways travel, no frosted pane, no progress line, just the panels stacked in normal flow. */
 @media(prefers-reduced-motion:reduce){.about-h{height:auto}.ah-pin{position:static;height:auto;overflow:visible}.ah-pin::after,.ah-progress{display:none}.ah-track{display:block;height:auto;transform:none!important;will-change:auto}.ah-panel{width:auto;height:auto;padding:clamp(40px,7vw,96px) 6vw}.ah-image img{height:auto;aspect-ratio:3/2;max-height:80vh}.ah-facts{justify-content:flex-start;padding-bottom:clamp(64px,10vw,140px)}}
 </style>`;
 const v45Story=v45
