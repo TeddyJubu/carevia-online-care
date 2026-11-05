@@ -24,7 +24,7 @@ if(section){
     const p=clamp(-section.getBoundingClientRect().top/Math.max(travel,1),0,1),x=-p*travel;
     track.style.transform=`translate3d(${x}px,0,0)`;
     section.style.setProperty('--p',p.toFixed(4));
-    section.classList.toggle('is-moving',x<-1&&x>1-travel); // blur strip only while panels travel: off at rest on the first and last panel
+    section.classList.toggle('is-moving',x<-2&&x>2-travel); // blur strip only while panels travel: off at rest on the first and last panel (2px slack for fractional scroll offsets)
   }
   addEventListener('scroll',()=>{raf||=requestAnimationFrame(paint)},{passive:true});
   addEventListener('resize',measure);
