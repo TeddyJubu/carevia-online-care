@@ -1,4 +1,5 @@
-const API_ORIGIN = 'http://localhost:4000'
+// Same origin: Vite proxies /api to the API, so Better Auth's cookie is first-party.
+const API_ORIGIN = ''
 
 export class ApiError extends Error {
   constructor(message, { status, code, unreachable = false } = {}) {
@@ -26,7 +27,7 @@ export async function request(path, { method = 'GET', body } = {}) {
       body: body !== undefined ? JSON.stringify(body) : undefined,
     })
   } catch {
-    throw new ApiError('The API at localhost:4000 did not respond.', { unreachable: true })
+    throw new ApiError('The API did not respond.', { unreachable: true })
   }
 
   const text = await response.text()
@@ -84,7 +85,7 @@ export function readUser(data) {
 
 export async function getSession() {
   try {
-    const data = await request('/api/auth/me')
+    const data = await request('/api/auth/get-session')
     const user = readUser(data)
     if (!user) return { user: null, forbidden: false, unreachable: false }
     return {
@@ -104,14 +105,14 @@ export async function getSession() {
 }
 
 export function login(email, password) {
-  return request('/api/auth/login', {
+  return request('/api/auth/sign-in/email', {
     method: 'POST',
     body: { email, password },
   })
 }
 
 export function logout() {
-  return request('/api/auth/logout', { method: 'POST' })
+  return request('/api/auth/sign-out', { method: 'POST', body: {} })
 }
 
 export function readDaily(data) {

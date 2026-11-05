@@ -9,6 +9,7 @@ datasource db {
 
 enum Role {
   patient
+  clinician
   admin
 }
 
@@ -21,29 +22,68 @@ enum Channel {
   audio
 }
 
+// Better Auth tables (user, session, account, verification). Field names follow Better Auth 1.7.
+// dateOfBirth is a calendar date kept as "YYYY-MM-DD" text, so no time zone can shift it.
 model User {
-  id           String        @id @default(cuid())
-  firstName    String
-  lastName     String
-  email        String        @unique
-  phone        String
-  dateOfBirth  DateTime      @db.Date
-  passwordHash String
-  role         Role          @default(patient)
-  createdAt    DateTime      @default(now())
-  sessions     Session[]
-  appointments Appointment[]
+  id            String        @id
+  name          String
+  email         String        @unique
+  emailVerified Boolean       @default(false)
+  image         String?
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+  firstName     String
+  lastName      String
+  phone         String
+  dateOfBirth   String
+  role          Role          @default(patient)
+  sessions      Session[]
+  accounts      Account[]
+  appointments  Appointment[]
 }
 
 model Session {
-  id        String   @id @default(cuid())
-  tokenHash String   @unique
+  id        String   @id
+  token     String   @unique
+  expiresAt DateTime
+  ipAddress String?
+  userAgent String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
   userId    String
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  expiresAt DateTime
-  createdAt DateTime @default(now())
 
   @@index([userId])
+}
+
+model Account {
+  id                    String    @id
+  accountId             String
+  providerId            String
+  userId                String
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  accessToken           String?
+  refreshToken          String?
+  idToken               String?
+  accessTokenExpiresAt  DateTime?
+  refreshTokenExpiresAt DateTime?
+  scope                 String?
+  password              String?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  @@index([userId])
+}
+
+model Verification {
+  id         String   @id
+  identifier String
+  value      String
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([identifier])
 }
 
 model ServiceGroup {

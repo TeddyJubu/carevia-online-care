@@ -1,18 +1,10 @@
-import bcrypt from 'bcryptjs'
 import Fastify from 'fastify'
 import fastifyCookie from '@fastify/cookie'
 import fastifyCors from '@fastify/cors'
 import { languageTokens } from './catalog.js'
 import { createMeetingToken, createPrivateRoom, dailyHint, tokenWindow } from './daily.js'
 import { prisma } from './prisma.js'
-import {
-  SESSION_COOKIE,
-  createSession,
-  destroySession,
-  sessionCookieOptions,
-  toPublicUser,
-  userFromRequest,
-} from './session.js'
+import { authRoutes, sessionUser as userFromRequest } from './auth.js'
 
 const ALLOWED_ORIGINS = ['http://localhost:5173', 'http://localhost:5174']
 
@@ -42,24 +34,6 @@ function toDoctor(doctor) {
   }
 }
 
-function parseDateOfBirth(value) {
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return null
-  const [year, month, day] = value.split('-').map(Number)
-  const date = new Date(Date.UTC(year, month - 1, day))
-  if (
-    date.getUTCFullYear() !== year
-    || date.getUTCMonth() !== month - 1
-    || date.getUTCDate() !== day
-  ) return null
-  if (date.getTime() > Date.now()) return null
-  return date
-}
-
-async function startSession(reply, user) {
-  const token = await createSession(user.id)
-  reply.setCookie(SESSION_COOKIE, token, sessionCookieOptions())
-}
-
 export async function buildApp() {
   const app = Fastify({
     logger: {
@@ -84,101 +58,7 @@ export async function buildApp() {
 
   app.get('/api/health', async () => ({ ok: true }))
 
-  app.post('/api/auth/register', {
-    schema: {
-      body: {
-        type: 'object',
-        additionalProperties: false,
-        required: ['firstName', 'lastName', 'email', 'phone', 'dateOfBirth', 'password'],
-        properties: {
-          firstName: { type: 'string', minLength: 1, maxLength: 80 },
-          lastName: { type: 'string', minLength: 1, maxLength: 80 },
-          email: { type: 'string', minLength: 3, maxLength: 200 },
-          phone: { type: 'string', minLength: 1, maxLength: 40 },
-          dateOfBirth: { type: 'string', minLength: 10, maxLength: 10 },
-          password: { type: 'string', minLength: 8, maxLength: 200 },
-        },
-      },
-    },
-  }, async (request, reply) => {
-    const firstName = request.body.firstName.trim()
-    const lastName = request.body.lastName.trim()
-    const email = request.body.email.trim().toLowerCase()
-    const phone = request.body.phone.trim()
-    const dateOfBirth = parseDateOfBirth(request.body.dateOfBirth)
-    if (!firstName || !lastName || !phone) {
-      return reply.code(400).send({ error: 'VALIDATION', message: 'Enter your name and phone number.' })
-    }
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      return reply.code(400).send({ error: 'VALIDATION', message: 'Enter a valid email address.' })
-    }
-    if (!dateOfBirth) {
-      return reply.code(400).send({ error: 'VALIDATION', message: 'Enter a valid date of birth.' })
-    }
-
-    const existing = await prisma.user.findUnique({ where: { email } })
-    if (existing) {
-      return reply.code(409).send({ error: 'EMAIL_IN_USE', message: 'An account with that email already exists.' })
-    }
-
-    const user = await prisma.user.create({
-      data: {
-        firstName,
-        lastName,
-        email,
-        phone,
-        dateOfBirth,
-        passwordHash: await bcrypt.hash(request.body.password, 10),
-        role: 'patient',
-      },
-    })
-    await startSession(reply, user)
-    return reply.code(201).send({ user: toPublicUser(user) })
-  })
-
-  async function login(request, reply, { requireAdmin = false } = {}) {
-    const email = String(request.body.email || '').trim().toLowerCase()
-    const password = String(request.body.password || '')
-    const user = await prisma.user.findUnique({ where: { email } })
-    const matches = user ? await bcrypt.compare(password, user.passwordHash) : false
-    if (!user || !matches) {
-      return reply.code(401).send({ error: 'INVALID_CREDENTIALS', message: 'The email or password is not correct.' })
-    }
-    if (requireAdmin && user.role !== 'admin') {
-      return reply.code(403).send({ error: 'FORBIDDEN', message: 'Admin access only.' })
-    }
-    await startSession(reply, user)
-    return { user: toPublicUser(user) }
-  }
-
-  const loginSchema = {
-    body: {
-      type: 'object',
-      additionalProperties: false,
-      required: ['email', 'password'],
-      properties: {
-        email: { type: 'string', minLength: 3 },
-        password: { type: 'string', minLength: 1 },
-      },
-    },
-  }
-
-  app.post('/api/auth/login', { schema: loginSchema }, (request, reply) => login(request, reply))
-  app.post('/api/admin/login', { schema: loginSchema }, (request, reply) => login(request, reply, { requireAdmin: true }))
-
-  app.post('/api/auth/logout', async (request, reply) => {
-    await destroySession(request)
-    reply.clearCookie(SESSION_COOKIE, { path: '/' })
-    return { ok: true }
-  })
-
-  app.get('/api/auth/me', async (request, reply) => {
-    const user = await userFromRequest(request)
-    if (!user) {
-      return reply.code(401).send({ error: 'UNAUTHENTICATED', message: 'Log in to continue.' })
-    }
-    return { user: toPublicUser(user) }
-  })
+  await app.register(authRoutes)
 
   app.get('/api/services', async () => {
     const groups = await prisma.serviceGroup.findMany({

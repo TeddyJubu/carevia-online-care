@@ -8,7 +8,7 @@ function record(name, pass, detail = '') {
 }
 
 async function request(path, { method = 'GET', body, cookie } = {}) {
-  const headers = {}
+  const headers = { origin: process.env.SMOKE_ORIGIN || 'http://localhost:5180' }
   if (body !== undefined) headers['content-type'] = 'application/json'
   if (cookie) headers.cookie = cookie
   const response = await fetch(`${base}${path}`, {
@@ -20,8 +20,8 @@ async function request(path, { method = 'GET', body, cookie } = {}) {
   let json = null
   try { json = text ? JSON.parse(text) : null } catch { json = { raw: text } }
   const setCookie = response.headers.get('set-cookie') || ''
-  const session = setCookie.match(/carevia_session=([^;]+)/)?.[1] || ''
-  return { status: response.status, json, text, cookie: session ? `carevia_session=${session}` : '' }
+  const session = setCookie.match(/carevia\.session_token=([^;]+)/)?.[1] || ''
+  return { status: response.status, json, text, cookie: session ? `carevia.session_token=${session}` : '' }
 }
 
 let patientCookie = ''
@@ -87,29 +87,30 @@ try {
   )
 
   const email = `smoke-${Date.now()}@example.com`
-  const registered = await request('/api/auth/register', {
+  const registered = await request('/api/auth/sign-up/email', {
     method: 'POST',
     body: {
+      name: 'Smoke Tester',
       firstName: 'Smoke',
       lastName: 'Tester',
       email,
-      phone: '+351 000 000 000',
+      phone: '+351 912 000 000',
       dateOfBirth: '1992-04-03',
-      password: 'smoke-password',
+      password: `smoke-${Date.now()}-Qx7!long`,
     },
   })
   record(
     'register',
-    registered.status === 201 && registered.json?.user?.role === 'patient' && registered.json.user.email === email && !registered.text.includes('passwordHash'),
+    registered.status === 200 && registered.json?.user?.role === 'patient' && registered.json.user.email === email && !registered.text.includes('passwordHash'),
     `status ${registered.status}`,
   )
-  const meAfterRegister = await request('/api/auth/me', { cookie: registered.cookie })
+  const meAfterRegister = await request('/api/auth/get-session', { cookie: registered.cookie })
   record('me after register', meAfterRegister.status === 200 && meAfterRegister.json?.user?.email === email, `status ${meAfterRegister.status}`)
-  const loggedOut = await request('/api/auth/logout', { method: 'POST', cookie: registered.cookie })
-  const meAfterLogout = await request('/api/auth/me', { cookie: registered.cookie })
-  record('logout', loggedOut.status === 200 && meAfterLogout.status === 401, `logout ${loggedOut.status}, me ${meAfterLogout.status}`)
+  const loggedOut = await request('/api/auth/sign-out', { method: 'POST', body: {}, cookie: registered.cookie })
+  const meAfterLogout = await request('/api/auth/get-session', { cookie: registered.cookie })
+  record('sign out', loggedOut.status === 200 && meAfterLogout.json === null, `sign-out ${loggedOut.status}, session ${meAfterLogout.text}`)
 
-  const login = await request('/api/auth/login', {
+  const login = await request('/api/auth/sign-in/email', {
     method: 'POST',
     body: { email: 'patient@example.com', password: 'demo-password' },
   })
@@ -119,7 +120,7 @@ try {
     login.status === 200 && login.json?.user?.role === 'patient' && login.json.user.firstName === 'Demo',
     `status ${login.status}`,
   )
-  const me = await request('/api/auth/me', { cookie: patientCookie })
+  const me = await request('/api/auth/get-session', { cookie: patientCookie })
   record('me', me.status === 200 && me.json?.user?.email === 'patient@example.com', `status ${me.status}`)
 
   const noCookie = await request('/api/appointments', {
@@ -176,7 +177,7 @@ try {
     `status ${blocked.status} ${blocked.json?.error}`,
   )
 
-  const adminLogin = await request('/api/admin/login', {
+  const adminLogin = await request('/api/auth/sign-in/email', {
     method: 'POST',
     body: { email: 'admin@carevia.test', password: 'admin-demo-password' },
   })

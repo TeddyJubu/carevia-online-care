@@ -35,7 +35,7 @@ export default function DailyScreen({ user, onSignOut, onDenied }) {
         setBanner({
           tone: 'error',
           text: error.unreachable
-            ? 'The API at localhost:4000 did not respond. You can review this screen. Saving needs the API.'
+            ? 'The API did not respond. You can review this screen. Saving needs the API.'
             : error.message,
         })
       })
@@ -75,7 +75,7 @@ export default function DailyScreen({ user, onSignOut, onDenied }) {
       setBanner({
         tone: 'error',
         text: error.unreachable
-          ? 'The API at localhost:4000 did not respond. The key was not saved.'
+          ? 'The API did not respond. The key was not saved.'
           : redact(error.message, apiKey),
       })
     } finally {
@@ -107,7 +107,7 @@ export default function DailyScreen({ user, onSignOut, onDenied }) {
       setBanner({
         tone: 'error',
         text: error.unreachable
-          ? 'The API at localhost:4000 did not respond. The key was not cleared.'
+          ? 'The API did not respond. The key was not cleared.'
           : error.message,
       })
     } finally {

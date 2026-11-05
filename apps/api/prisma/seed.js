@@ -1,10 +1,8 @@
-import bcrypt from 'bcryptjs'
 import { PrismaClient } from '@prisma/client'
 import { GROUPS, buildDoctors, slotsForDoctor } from '../src/catalog.js'
+import { DEMO_ACCOUNTS, upsertAccount } from '../src/demo-seed.js'
 
 const prisma = new PrismaClient()
-const PATIENT_EMAIL = 'patient@example.com'
-const ADMIN_EMAIL = 'admin@carevia.test'
 
 async function main() {
   const doctors = buildDoctors()
@@ -64,50 +62,7 @@ async function main() {
   await prisma.doctor.createMany({ data: doctorRows })
   await prisma.slot.createMany({ data: slots })
 
-  const patientPassword = await bcrypt.hash('demo-password', 10)
-  const adminPassword = await bcrypt.hash('admin-demo-password', 10)
-  const birth = new Date('1990-01-01T00:00:00.000Z')
-
-  await prisma.user.upsert({
-    where: { email: PATIENT_EMAIL },
-    update: {
-      firstName: 'Demo',
-      lastName: 'Patient',
-      phone: '+00 000 000 000',
-      dateOfBirth: birth,
-      passwordHash: patientPassword,
-      role: 'patient',
-    },
-    create: {
-      firstName: 'Demo',
-      lastName: 'Patient',
-      email: PATIENT_EMAIL,
-      phone: '+00 000 000 000',
-      dateOfBirth: birth,
-      passwordHash: patientPassword,
-      role: 'patient',
-    },
-  })
-  await prisma.user.upsert({
-    where: { email: ADMIN_EMAIL },
-    update: {
-      firstName: 'Carevia',
-      lastName: 'Admin',
-      phone: '+00 000 000 001',
-      dateOfBirth: birth,
-      passwordHash: adminPassword,
-      role: 'admin',
-    },
-    create: {
-      firstName: 'Carevia',
-      lastName: 'Admin',
-      email: ADMIN_EMAIL,
-      phone: '+00 000 000 001',
-      dateOfBirth: birth,
-      passwordHash: adminPassword,
-      role: 'admin',
-    },
-  })
+  for (const account of DEMO_ACCOUNTS) await upsertAccount(prisma, account)
   await prisma.dailySettings.upsert({
     where: { id: 1 },
     update: { apiKey: '' },

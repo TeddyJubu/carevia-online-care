@@ -22,7 +22,7 @@ export default function LoginScreen({ unreachable, onSession }) {
       onSession(session)
     } catch (err) {
       const message = err.unreachable
-        ? 'The API at localhost:4000 did not respond. Signing in needs the API.'
+        ? 'The API did not respond. Signing in needs the API.'
         : err.message
       setError(message)
     } finally {
@@ -49,7 +49,7 @@ export default function LoginScreen({ unreachable, onSession }) {
           <p className="lede">Use an admin account. Other accounts stay outside operations.</p>
           {unreachable ? (
             <p className="notice" role="status">
-              The API at localhost:4000 did not respond. This screen is ready. Signing in needs the API.
+              The API did not respond. This screen is ready. Signing in needs the API.
             </p>
           ) : null}
           {error ? (
