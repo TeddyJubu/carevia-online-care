@@ -50,9 +50,9 @@ export function BookingLayout() {
     if (!draft.appointmentId || appt?.id === draft.appointmentId) return
     if (!user) return // a hold before sign-in can't be read yet; the summary uses the draft until then
     api.appointment(draft.appointmentId).then(({ appointment }) => {
-      if (appointment.status === 'expired' || appointment.status === 'cancelled') { update({ appointmentId: undefined }); return }
+      if (appointment.status === 'expired' || appointment.status === 'cancelled') { update({ appointmentId: undefined, held: undefined }); return }
       setAppt(appointment)
-    }, () => {})
+    }, () => {}) // a 404 here is normal just after sign-in, before the claim lands; never drop the hold on it
   }, [draft.appointmentId, user, appt?.id, update])
 
   const groups = services.data?.groups ?? []
@@ -107,7 +107,7 @@ export function BookingLayout() {
         <button type="button" className="btn btn-primary mt-6" onClick={() => {
           setExpired(false)
           setAppt(undefined)
-          update({ appointmentId: undefined })
+          update({ appointmentId: undefined, held: undefined })
           navigate('/book/time')
         }}>Choose a time again</button>
       </Dialog>
@@ -229,7 +229,7 @@ export function BookService() {
                 </label>
               ))}
             </div>
-            <button type="button" className="link mt-4 inline-flex min-h-11 items-center text-sm" onClick={() => update({ groupSlug: undefined, serviceId: undefined, appointmentId: undefined })}>Choose a different area of care</button>
+            <button type="button" className="link mt-4 inline-flex min-h-11 items-center text-sm" onClick={() => update({ groupSlug: undefined, serviceId: undefined, appointmentId: undefined, held: undefined })}>Choose a different area of care</button>
           </fieldset>
 
           <fieldset className="mt-8">
@@ -268,7 +268,7 @@ export function BookWho() {
     setErrors(errs)
     if (!who || where !== 'yes') return
     // A hold is made for one person; changing who it's for means choosing the time again.
-    if (appt && appt.for && appt.for !== who) { void api.release(appt.id).catch(() => {}); setAppt(undefined); update({ appointmentId: undefined }) }
+    if (appt && appt.for && appt.for !== who) { void api.release(appt.id).catch(() => {}); setAppt(undefined); update({ appointmentId: undefined, held: undefined }) }
     update({ for: who, inMainland: true })
     navigate('/book/time')
   }
@@ -307,6 +307,20 @@ export function BookWho() {
       </div>
       <Actions back="/book"><button className="btn btn-primary" disabled={where === 'no'}>Continue</button></Actions>
     </form>
+  )
+}
+
+/** J4b to J6 without a hold, for example Back after paying: say so instead of loading for ever. */
+function NoBooking({ pending }: { pending: boolean }) {
+  if (pending) return <Spinner label="Loading your booking…" />
+  return (
+    <div>
+      <PageTitle lede="If you’ve just paid, your visit is in your account.">No booking in progress</PageTitle>
+      <div className="mt-8 flex flex-wrap gap-3">
+        <Link to="/account" className="btn btn-primary">Go to your visits</Link>
+        <Link to="/book" className="btn btn-secondary">Book a visit</Link>
+      </div>
+    </div>
   )
 }
 
@@ -472,7 +486,8 @@ export function BookTime() {
       <TimePicker groupSlug={group.slug} service={service} preferredDoctorId={draft.doctorId} back="/book/who" verb="Continue with" pendingLabel="Holding your time…"
         submit={async (picked) => {
           const { appointment } = await api.hold({ slotId: picked.id, serviceId: service.id, for: draft.for! })
-          update({ appointmentId: appointment.id })
+          const { id, startsAt, holdExpiresAt, fee, status, doctor } = appointment
+          update({ appointmentId: id, held: { id, startsAt, holdExpiresAt, fee, status, doctor: { name: doctor.name } } })
           setAppt(appointment)
           if (user?.role === 'patient') await continueSignedIn(appointment)
           else navigate('/book/account')
@@ -514,6 +529,7 @@ export function BookAccount() {
   const [error, setError] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
   const id = appt?.id ?? draft.appointmentId
+  const held = appt ?? (draft.held?.id === id ? draft.held : undefined)
 
   const go = useCallback(async () => {
     if (!id) return
@@ -540,8 +556,8 @@ export function BookAccount() {
   return (
     <div>
       <PageTitle eyebrow="Your details" lede="You’ll use this account to join the visit and see what happens next.">{mode === 'signup' ? 'Create your account' : 'Sign in'}</PageTitle>
-      {appt?.holdExpiresAt && (
-        <Notice className="mt-6"><span>We’re holding <strong className="font-medium">{when(appt.startsAt)}</strong> with {appt.doctor.name} for you. <HoldTimer expiresAt={appt.holdExpiresAt} onExpire={expire} /></span></Notice>
+      {held?.holdExpiresAt && (
+        <Notice className="mt-6"><span>We’re holding <strong className="font-medium">{when(held.startsAt)}</strong> with {held.doctor.name} for you. <HoldTimer expiresAt={held.holdExpiresAt} onExpire={expire} /></span></Notice>
       )}
       <div className="mt-8 grid gap-6 lg:grid-cols-[minmax(0,1fr)_260px]">
         <div className="card">{mode === 'signup' ? <SignUpForm onDone={() => {}} submitLabel="Create account and continue" /> : <SignInForm onDone={() => {}} submitLabel="Sign in and continue" />}</div>
@@ -578,7 +594,7 @@ export function BookFamily() {
   const members = (family.data?.members ?? []).filter((m) => m.relationship === kind)
   useEffect(() => { if (family.data && !choice) setChoice(members[0]?.id ?? 'new') }, [family.data]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  if (!appt) return <Spinner label="Loading your booking…" />
+  if (!appt) return <NoBooking pending={!!draft.appointmentId} />
   if (kind === 'self') return <div><PageTitle>This visit is for you</PageTitle><Link to="/book/consent" className="btn btn-primary mt-8">Continue</Link></div>
   const child = kind === 'child'
 
@@ -652,13 +668,13 @@ export function BookFamily() {
 
 // ---------- J5: consent ----------
 export function BookConsent() {
-  const { appt, setAppt, expire } = useBooking()
+  const { appt, draft, setAppt, expire } = useBooking()
   const navigate = useNavigate()
   const consent = useLoad(() => api.consent(), [])
   const [agreed, setAgreed] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [pending, setPending] = useState(false)
-  if (!appt) return <Spinner label="Loading your booking…" />
+  if (!appt) return <NoBooking pending={!!draft.appointmentId} />
   if (!appt.patient) return <div><PageTitle>Who is this visit for?</PageTitle><Link to={nextStep(appt, true)} className="btn btn-primary mt-8">Continue</Link></div>
 
   async function accept(e: FormEvent) {
@@ -705,11 +721,11 @@ export function BookConsent() {
 
 // ---------- J6: review and demo payment ----------
 export function BookPay() {
-  const { appt, clear, expire } = useBooking()
+  const { appt, draft, clear, expire } = useBooking()
   const navigate = useNavigate()
   const [error, setError] = useState<string | null>(null)
   const [pending, setPending] = useState(false)
-  if (!appt) return <Spinner label="Loading your booking…" />
+  if (!appt) return <NoBooking pending={!!draft.appointmentId} />
   if (!appt.consent || !appt.patient) return <div><PageTitle>A step is missing</PageTitle><Link to={nextStep(appt, true)} className="btn btn-primary mt-8">Continue</Link></div>
 
   async function pay() {

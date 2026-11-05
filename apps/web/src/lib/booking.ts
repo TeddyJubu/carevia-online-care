@@ -9,6 +9,8 @@ export type Draft = {
   inMainland?: boolean
   doctorId?: number // preferred doctor, e.g. "book a follow-up"
   appointmentId?: string
+  /** What J4 shows before sign-in (the API only lets the owner read a hold): time, doctor, fee and expiry. No patient data. */
+  held?: Pick<Appointment, 'id' | 'startsAt' | 'holdExpiresAt' | 'fee' | 'status'> & { doctor: Pick<Appointment['doctor'], 'name'> }
 }
 
 const KEY = 'carevia-booking'
