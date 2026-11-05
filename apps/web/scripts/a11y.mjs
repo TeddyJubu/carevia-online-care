@@ -98,7 +98,8 @@ for (const width of widths.length ? widths.map(Number) : [390, 1280]) {
     rows.at(-1).dialog = { focusStaysInside: inside.every((x) => x === true), trace: inside, focusReturnedTo: back }
     console.log(`${width} dialog: focus stays inside ${inside.map(String).join(',')}, returns to "${back}"`)
   }
-  await p.locator('[role=radiogroup] [role=radio]').first().click()
+  // A different time per width: one person can't have two visits at once (409 TIME_CLASH).
+  await p.locator('[role=radiogroup] [role=radio]').nth(width < 600 ? 0 : 3).click()
   await p.getByRole('button', { name: /^Continue with/ }).click(); await p.waitForURL(/book\/account/)
   rows.push(await audit(p, 'J4-account', width))
 
