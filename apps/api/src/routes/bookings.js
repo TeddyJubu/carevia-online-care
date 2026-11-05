@@ -11,6 +11,23 @@ export const HOLD_COOKIE = 'carevia_hold'
 
 const hash = (token) => createHash('sha256').update(token).digest('hex')
 
+/**
+ * The same person's other confirmed visit that overlaps [startsAt, endsAt), if any: one person can't be in two calls.
+ * "Person" is the account holder (familyMemberId null) or one family member, so a parent can still book themself
+ * and their child at the same time.
+ * ponytail: checked before the write, not locked; two payments in the same instant could both pass. A per-patient
+ * advisory lock in the pay transaction closes that if it ever matters.
+ */
+export function clashFor(appointment, startsAt = appointment.startsAt, endsAt = appointment.endsAt) {
+  return prisma.appointment.findFirst({
+    where: {
+      id: { not: appointment.id }, patientId: appointment.patientId, familyMemberId: appointment.familyMemberId ?? null,
+      status: 'confirmed', startsAt: { lt: endsAt }, endsAt: { gt: startsAt },
+    },
+    select: { id: true },
+  })
+}
+
 function holdCookieHash(request) {
   const token = request.cookies?.[HOLD_COOKIE]
   return token ? hash(token) : null
@@ -248,6 +265,9 @@ export async function bookingRoutes(app) {
     if (!appointment.patientSetAt) return sendError(reply, 409, 'PATIENT_REQUIRED', 'Choose who the consultation is for first.')
     if (appointment.consents[0]?.version !== currentConsent().version) {
       return sendError(reply, 409, 'CONSENT_REQUIRED', 'Read and accept the consent before paying.')
+    }
+    if (await clashFor(appointment)) {
+      return sendError(reply, 409, 'TIME_CLASH', 'There’s already a visit for this person at this time. Choose another time.')
     }
     const now = new Date()
     const confirmed = await prisma.$transaction(async (tx) => {

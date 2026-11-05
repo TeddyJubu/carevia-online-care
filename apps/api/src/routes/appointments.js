@@ -2,7 +2,7 @@ import { PUBLIC_APP_URL, requireRole } from '../auth.js'
 import { createMeetingToken, createPrivateRoom } from '../daily.js'
 import { prisma } from '../prisma.js'
 import { JOIN_CLOSES_MINUTES_AFTER, canReschedule, effectiveStatus, joinState, joinWindow } from '../rules.js'
-import { sendBookingConfirmation } from './bookings.js'
+import { clashFor, sendBookingConfirmation } from './bookings.js'
 import { APPOINTMENT_INCLUDE, sendError, toAppointment } from '../views.js'
 
 const idParams = { type: 'object', required: ['id'], properties: { id: { type: 'string', minLength: 1, maxLength: 64 } } }
@@ -106,6 +106,9 @@ export async function appointmentRoutes(app) {
     if (slot.id === appointment.slotId) return sendError(reply, 400, 'VALIDATION', 'Your visit is already at that time.')
     if (slot.doctorId !== appointment.doctorId && slot.doctor.groupId !== appointment.service.groupId) {
       return sendError(reply, 400, 'SERVICE_MISMATCH', 'Choose the same doctor, or another doctor in the same area of care.')
+    }
+    if (await clashFor(appointment, slot.startsAt, slot.endsAt)) {
+      return sendError(reply, 409, 'TIME_CLASH', 'There’s already a visit for this person at that time. Choose another time.')
     }
     try {
       // The fee already paid stands: moving a visit never costs extra in this build.

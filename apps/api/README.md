@@ -72,9 +72,9 @@ Errors are `{ "error": "CODE", "message": "…" }`. Better Auth's own endpoints 
 
 **Catalog (public):** `GET /api/services`, `GET /api/doctors` (`q`, `language`, `specialty`, `maxFee`, `availability`, `service`, `group`, `groupSlug`, `sort=first-available`), `GET /api/doctors/:id`, `GET /api/doctors/:id/slots?from=YYYY-MM-DD&days=7`, `GET /api/slots/first-available?groupSlug=&serviceId=&language=&limit=6`. Service ids are stable (1–55). The schedule covers working days over the next 21 days at 09:00, 10:30, 12:00, 14:30, 16:00, 17:30 and 19:00 Lisbon time, 30 minutes each, topped up on start-up and hourly.
 
-**Booking:** `POST /api/bookings` (hold for 10 minutes; `carevia_hold` cookie), `POST /api/bookings/:id/claim`, `PUT /api/bookings/:id/patient`, `GET /api/consent/current`, `POST /api/bookings/:id/consent`, `POST /api/bookings/:id/pay` (`{ method: "demo" }`; `501 PAYMENT_UNAVAILABLE` outside demo mode; sends a confirmation to the outbox with the Lisbon date and time, the doctor and the visit link), `DELETE /api/bookings/:id`. A signed-in patient's hold is theirs at once (claim is then a no-op). The database allows at most one held or confirmed appointment per slot (partial unique index `Appointment_active_slot_key`).
+**Booking:** `POST /api/bookings` (hold for 10 minutes; `carevia_hold` cookie), `POST /api/bookings/:id/claim`, `PUT /api/bookings/:id/patient`, `GET /api/consent/current`, `POST /api/bookings/:id/consent`, `POST /api/bookings/:id/pay` (`{ method: "demo" }`; `501 PAYMENT_UNAVAILABLE` outside demo mode; `409 TIME_CLASH` if the same person, the account holder or one family member, already has a confirmed visit that overlaps; sends a confirmation to the outbox with the Lisbon date and time, the doctor and the visit link), `DELETE /api/bookings/:id`. A signed-in patient's hold is theirs at once (claim is then a no-op). The database allows at most one held or confirmed appointment per slot (partial unique index `Appointment_active_slot_key`).
 
-**Appointments:** `GET /api/appointments?scope=upcoming|past`, `GET /api/appointments/:id`, `POST /api/appointments/:id/cancel`, `POST /api/appointments/:id/reschedule` (`{ slotId }`: moves the same appointment, never a second one; `409 CANNOT_RESCHEDULE`, `409 SLOT_TAKEN`, `400 SERVICE_MISMATCH`), `GET /api/appointments/:id/calendar.ics`, `POST /api/appointments/:id/pre-join`, `POST /api/appointments/:id/video-token` (`{ companion: true }` for the companion's token; `409 VIDEO_DISABLED`, `425 TOO_EARLY`, `410 WINDOW_CLOSED`, `409 PRE_JOIN_REQUIRED`), `POST /api/appointments/:id/call-events`, `GET /api/video/status`.
+**Appointments:** `GET /api/appointments?scope=upcoming|past`, `GET /api/appointments/:id`, `POST /api/appointments/:id/cancel`, `POST /api/appointments/:id/reschedule` (`{ slotId }`: moves the same appointment, never a second one; `409 CANNOT_RESCHEDULE`, `409 SLOT_TAKEN`, `409 TIME_CLASH`, `400 SERVICE_MISMATCH`), `GET /api/appointments/:id/calendar.ics`, `POST /api/appointments/:id/pre-join`, `POST /api/appointments/:id/video-token` (`{ companion: true }` for the companion's token; `409 VIDEO_DISABLED`, `425 TOO_EARLY`, `410 WINDOW_CLOSED`, `409 PRE_JOIN_REQUIRED`), `POST /api/appointments/:id/call-events`, `GET /api/video/status`.
 
 **Family and profile:** `GET`/`POST /api/family`, `PATCH`/`DELETE /api/family/:id` (deleting archives, so past visits keep the name; `409 HAS_UPCOMING`), `PATCH /api/me`.
 
@@ -95,7 +95,7 @@ npm test --prefix apps/api          # node --test: dates, DST, schedule, holds, 
 The smoke script drives the running API, starts a fake Daily on `127.0.0.1:4090`, and uses Prisma once to backdate a hold. Start the API for it like this, then run `npm run smoke --prefix apps/api`:
 
 ```sh
-# Demo mode (the full journey, 120 checks)
+# Demo mode (the full journey, 130 checks)
 DEMO_MODE=true NODE_ENV=development DAILY_API_URL=http://127.0.0.1:4090/v1 npm run start --prefix apps/api
 # Demo mode off (locks: 404 demo routes, 501 payment, two-factor required, CSRF in production; 27 checks)
 NODE_ENV=production DAILY_API_URL=http://127.0.0.1:4090/v1 npm run start --prefix apps/api
