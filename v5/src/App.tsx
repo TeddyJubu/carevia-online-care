@@ -4,6 +4,7 @@ import { services } from '../../src/services-04-2.mjs'
 import { Film } from '@/components/film'
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion'
 import { Button } from '@/components/ui/button'
+import { authClient } from '@/lib/auth-client'
 
 const CAREVIA = 'https://carevia.triple-labs-8416.chatgpt.site/'
 
@@ -42,6 +43,7 @@ function Logo() {
 }
 
 export default function App() {
+  const { data: session } = authClient.useSession()
   return (
     <>
       <a
@@ -69,9 +71,17 @@ export default function App() {
               </li>
             ))}
           </ul>
-          <Button asChild variant="glass" size="pill">
-            <a href="#care">Find your care</a>
-          </Button>
+          <div className="flex items-center gap-2">
+            <a
+              href={session ? '/account' : '/signin'}
+              className="px-3 py-3 text-sm text-muted-foreground text-shadow-film transition-colors hover:text-foreground"
+            >
+              {session ? 'Your account' : 'Sign in'}
+            </a>
+            <Button asChild variant="glass" size="pill">
+              <a href="#care">Find your care</a>
+            </Button>
+          </div>
         </nav>
 
         <div className="relative z-10 flex flex-1 flex-col items-center justify-center px-6 pt-32 pb-40 text-center text-shadow-film">
