@@ -6,7 +6,7 @@ const copy={
  mental:{name:'Mental health',short:'Psychology, psychiatry and ongoing support'},
  nutrition:{name:'Weight management',short:'Nutrition and weight-loss consultations'},
  specialist:{name:'Specialist care',short:'Find the right specialist for your needs'},
- certificates:{name:'Certificates & assessments',short:'Medical documents and fitness assessments'},
+ certificates:{name:'Certificates & assessments',short:'Fitness and health assessments with a doctor'},
  treatments:{name:'Treatments',short:'Clinical advice and treatment review'},
  renewals:{name:'Test requests & renewals',short:'Doctor consultations for test requests and treatment renewals'}
 };
