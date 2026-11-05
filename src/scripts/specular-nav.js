@@ -331,12 +331,6 @@ function attach(button, s) {
       wake();
     };
 
-    const onPointerEnd = event => {
-      if (event.pointerType === 'mouse') return;
-      pointer.known = false;
-      wake();
-    };
-
     const onPointerLeave = () => {
       pointer.known = false;
       wake();
@@ -352,10 +346,10 @@ function attach(button, s) {
       }
     });
     intersection.observe(button);
-    window.addEventListener('pointermove', onPointerMove, { passive: true });
-    window.addEventListener('pointerup', onPointerEnd, { passive: true });
-    window.addEventListener('pointercancel', onPointerEnd, { passive: true });
-    document.documentElement.addEventListener('pointerleave', onPointerLeave);
+    // Carevia: listen on the pill, not the window, so moving the mouse elsewhere on the page never wakes the loop.
+    // proximity is 1px and the canvas only shows on :hover, so nothing outside the pill was ever visible anyway.
+    button.addEventListener('pointermove', onPointerMove, { passive: true });
+    button.addEventListener('pointerleave', onPointerLeave);
     button.addEventListener('pointerdown', onPointerDown);
     measure();
 
@@ -363,4 +357,8 @@ function attach(button, s) {
 
 // Settings mirror SpecularButton's props; lineColor/baseColor are Carevia orange. Hover-only: no idle light, no reaction from outside the pill.
 const settings = { radius: 10, lineColor: '#ff9a4d', baseColor: '#8a4a1f', intensity: 1.15, idleIntensity: 0, shineSize: 12, shineFade: 40, thickness: 1.3, glow: 1.2, speed: 0.35, followMouse: true, proximity: 1, autoAnimate: false, disabled: false };
-for (const pill of document.querySelectorAll('.topbar .nav-pill')) attach(pill, { ...settings, radius: parseFloat(getComputedStyle(pill).borderTopLeftRadius) || 10 });
+const start = () => { for (const pill of document.querySelectorAll('.topbar .nav-pill')) attach(pill, { ...settings, radius: parseFloat(getComputedStyle(pill).borderTopLeftRadius) || 10 }); };
+// Touch-only devices never see the hover rim, so they get no WebGL contexts at all. A convertible that gains a mouse attaches then.
+const canHover = matchMedia('(hover: hover) and (pointer: fine)');
+if (canHover.matches) start();
+else canHover.addEventListener('change', start, { once: true });
