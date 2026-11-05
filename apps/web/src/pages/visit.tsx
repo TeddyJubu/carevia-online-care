@@ -1,6 +1,6 @@
 import { useEffect, useState, type FormEvent } from 'react'
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router'
-import { api, ApiError, MOCK } from '../lib/api'
+import { api, ApiError } from '../lib/api'
 import { content } from '../lib/content'
 import { useLoad, useNow } from '../lib/load'
 import { useQuestions } from '../lib/questions'
@@ -44,7 +44,7 @@ export function VisitCard({ a }: { a: Appointment }) {
 function CalendarLink({ a }: { a: Appointment }) {
   const [href, setHref] = useState(api.calendarUrl(a.id))
   useEffect(() => {
-    if (!MOCK) return
+    if (import.meta.env.VITE_API_MOCK !== '1') return
     let url = ''
     import('../lib/mock').then(({ mockIcs }) => {
       url = URL.createObjectURL(new Blob([mockIcs(a.id)], { type: 'text/calendar' }))

@@ -29,8 +29,8 @@ const AUTH_MESSAGES: Record<string, string> = {
 export async function request<T>(method: string, path: string, body?: unknown): Promise<T> {
   let status: number
   let data: any
-  if (MOCK) {
-    // Dynamic import: the mock never ships in a normal build.
+  // Inline env check (not MOCK) so the bundler drops the mock chunk, demo passwords included, from normal builds.
+  if (import.meta.env.VITE_API_MOCK === '1') {
     const { handle } = await import('./mock')
     ;({ status, data } = await handle(method, path, body))
   } else {

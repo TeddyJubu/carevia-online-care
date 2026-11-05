@@ -193,7 +193,7 @@ export function BookService() {
       if (!group || !draft.serviceId) return setError('Choose the care you need.')
       navigate('/book/who')
     }}>
-      <PageTitle eyebrow={group ? 'Book a visit' : 'Step 1'} lede={group ? group.blurb : 'Choose an area of care. You’ll see doctors, times and the price before you give any details.'}>
+      <PageTitle eyebrow="Book a visit" lede={group ? group.blurb : 'Choose an area of care. You’ll see doctors, times and the price before you give any details.'}>
         {group ? group.name : 'What do you need help with?'}
       </PageTitle>
       <div className="mt-6"><Emergency compact /></div>
