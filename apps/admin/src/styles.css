@@ -58,7 +58,8 @@ h1, h2, h3, p { margin: 0; }
 h1, h2, h3 { text-wrap: balance; }
 p { text-wrap: pretty; }
 h1, h2 { font-family: var(--serif); font-weight: 400; color: var(--ink); }
-h1 { font-size: clamp(44px, 6.2vw, 84px); line-height: 1; letter-spacing: -0.03em; }
+/* Titles are editorial but calmer than the homepage's: this is a tool people sit in all day. */
+h1 { font-size: clamp(40px, 5vw, 64px); line-height: 1.02; letter-spacing: -0.025em; }
 h2 { font-size: clamp(26px, 2.6vw, 32px); line-height: 1.1; letter-spacing: -0.015em; }
 h3 { font-size: 18px; line-height: 1.25; font-weight: 500; letter-spacing: -0.01em; }
 strong { font-weight: 500; }
@@ -147,7 +148,8 @@ strong { font-weight: 500; }
   transition: transform var(--exit) var(--ease-exit);
 }
 .button:hover:not(:disabled) { transform: translateY(-3px); transition: transform 0.4s var(--ease); }
-.button:active:not(:disabled) { transform: none; }
+/* Press: a quick squeeze, so a click feels physical. */
+.button:active:not(:disabled) { transform: scale(0.98); transition: transform 0.08s var(--ease-exit); }
 .button:disabled { opacity: 0.45; }
 .button-quiet { background: transparent; color: var(--ink); border-color: var(--edge); }
 .button-quiet:hover:not(:disabled) { border-color: var(--ink); }
@@ -402,11 +404,29 @@ button.nav-pill:hover { border-color: #d5eaff66; }
 .split-panels { display: grid; grid-template-columns: minmax(240px, 320px) minmax(0, 1fr); gap: 20px; align-items: start; }
 .stack { display: grid; gap: 20px; }
 
-/* Lists. Rows are numbered 01, 02… in orange serif as the homepage's care cards; the number is decorative
-   (alt text "" keeps it out of the accessibility tree). */
+/* Lists. Patients and doctors are hairline rows in one white panel (a card per row was 220 cards); service groups
+   stay as cards because the selected one lifts into navy. Rows are numbered 01, 02… in orange serif as the homepage's
+   care cards; the number is decorative (alt text "" keeps it out of the accessibility tree). */
 .roster, .choice-list, .plain-list, .booking-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
 .roster, .choice-list { counter-reset: row; }
-.roster a, .choice-list a {
+.roster { gap: 0; padding: 6px 0; border-radius: 10px; background: #fff; }
+.roster > li + li > a::after { border-top: 1px solid var(--hair); }
+.roster a {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(160px, 1fr) minmax(0, 1.5fr) 150px 112px;
+  align-items: center;
+  gap: 4px 20px;
+  min-height: 60px;
+  padding: 12px 24px 12px 68px;
+  color: inherit;
+  text-decoration: none;
+}
+/* Doctors carry a fifth column, the Shown or Hidden tag. */
+.roster a:has(.pill) { grid-template-columns: minmax(160px, 1fr) minmax(0, 1.5fr) 64px 150px 72px; }
+.roster a .roster-meta { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.roster a .pill { justify-self: end; }
+.choice-list a {
   position: relative;
   display: flex;
   flex-wrap: wrap;
@@ -425,13 +445,21 @@ button.nav-pill:hover { border-color: #d5eaff66; }
   content: counter(row, decimal-leading-zero) / "";
   position: absolute;
   left: 24px;
-  top: 18px;
+  top: 50%;
+  transform: translateY(-50%);
   font-family: var(--serif);
   font-size: 14px;
   color: var(--accent);
+  font-variant-numeric: tabular-nums;
 }
-/* The lift's shadow fades in on a layer, so only opacity and transform animate. */
-.roster a::after, .choice-list a::after {
+.choice-list a::before { top: 18px; transform: none; }
+/* Hairlines between rows sit on a layer inset to the panel's padding; hover is a quiet mist tint. */
+.roster a::after { content: ""; position: absolute; inset: 0 24px auto; pointer-events: none; }
+@media (hover: hover) {
+  .roster a:hover { background: linear-gradient(#f4f8fc, #f4f8fc) 12px 0 / calc(100% - 24px) 100% no-repeat; }
+}
+/* Group cards keep the homepage's lift: the shadow fades in on a layer, so only opacity and transform animate. */
+.choice-list a::after {
   content: "";
   position: absolute;
   inset: 0;
@@ -442,14 +470,55 @@ button.nav-pill:hover { border-color: #d5eaff66; }
   transition: opacity var(--exit) var(--ease-exit);
 }
 @media (hover: hover) {
-  .roster a:hover, .choice-list a:hover { transform: translateY(-3px); transition: transform 0.5s var(--ease); }
-  .roster a:hover::after, .choice-list a:hover::after { opacity: 1; transition: opacity 0.5s var(--ease); }
+  .choice-list a:hover { transform: translateY(-3px); transition: transform 0.5s var(--ease); }
+  .choice-list a:hover::after { opacity: 1; transition: opacity 0.5s var(--ease); }
 }
 .choice-list a[aria-current="true"] { background: var(--ink); color: #fff; }
 .choice-list a[aria-current="true"]::before { color: var(--accent-soft); }
 .choice-list a[aria-current="true"] .roster-meta { color: var(--on-navy); }
-.roster-title { flex: 1 1 200px; font-size: 18px; font-weight: 500; letter-spacing: -0.01em; }
+.roster-title { flex: 1 1 200px; font-size: 17px; font-weight: 500; letter-spacing: -0.01em; }
 .roster-count { margin-left: auto; font-size: 14px; color: var(--muted); }
+.roster a .roster-count { margin-left: 0; text-align: right; }
+
+/* Rows arrive in a short waterfall: the first ten cascade, the rest come with the tenth. */
+.roster > li, .choice-list > li { animation: rise 0.45s var(--ease) both; animation-delay: 0.3s; }
+.roster > li:nth-child(1), .choice-list > li:nth-child(1) { animation-delay: 0.03s; }
+.roster > li:nth-child(2), .choice-list > li:nth-child(2) { animation-delay: 0.06s; }
+.roster > li:nth-child(3), .choice-list > li:nth-child(3) { animation-delay: 0.09s; }
+.roster > li:nth-child(4), .choice-list > li:nth-child(4) { animation-delay: 0.12s; }
+.roster > li:nth-child(5), .choice-list > li:nth-child(5) { animation-delay: 0.15s; }
+.roster > li:nth-child(6), .choice-list > li:nth-child(6) { animation-delay: 0.18s; }
+.roster > li:nth-child(7), .choice-list > li:nth-child(7) { animation-delay: 0.21s; }
+.roster > li:nth-child(8), .choice-list > li:nth-child(8) { animation-delay: 0.24s; }
+.roster > li:nth-child(9), .choice-list > li:nth-child(9) { animation-delay: 0.27s; }
+
+/* Shared states for every screen: loading placeholders shaped like the content, and composed empty states. */
+.skeleton { position: relative; display: block; overflow: hidden; height: 16px; border-radius: 6px; background: #e9eef4; }
+.skeleton::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent, #ffffffa6, transparent);
+  transform: translateX(-100%);
+  animation: shimmer 1.4s var(--ease) infinite;
+}
+@keyframes shimmer { to { transform: translateX(100%); } }
+.skeleton-panel { display: grid; gap: 14px; padding: 24px; border-radius: 10px; background: #fff; }
+.skeleton-row { display: grid; grid-template-columns: 28px minmax(0, 1fr) minmax(0, 1.4fr) 96px; gap: 20px; align-items: center; min-height: 32px; }
+.skeleton-title { height: 28px; width: min(320px, 70%); }
+
+.empty-state {
+  display: grid;
+  justify-items: start;
+  gap: 12px;
+  padding: clamp(28px, 4vw, 48px);
+  border-radius: 10px;
+  background: #fff;
+}
+.empty-state .eyebrow { font-size: 15px; }
+.empty-state h2 { font-size: clamp(24px, 2.4vw, 30px); }
+.empty-state p { max-width: 52ch; color: var(--muted); }
+.empty-state .button { margin-top: 8px; }
 
 .service-row { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px 14px; padding: 16px 0; border-top: 1px solid var(--hair); }
 .plain-list li:first-child > .service-row { border-top: 0; padding-top: 0; }
@@ -470,7 +539,7 @@ button.nav-pill:hover { border-color: #d5eaff66; }
 /* Appointments: the title sits on the paper like the other pages, and the table is the white card. */
 .page > .card.wide { padding: 0; background: none; gap: 20px; }
 .page > .card.wide > .lede { max-width: none; margin-top: -6px; padding-bottom: 28px; border-bottom: 1px solid var(--hair); }
-.page > .card.wide > h1 { font-size: clamp(44px, 6.2vw, 84px); }
+.page > .card.wide > h1 { font-size: clamp(40px, 5vw, 64px); }
 .table-wrap { overflow-x: auto; padding: 8px 28px; border-radius: 10px; background: #fff; }
 table { width: 100%; border-collapse: collapse; font-size: 15px; }
 th, td { padding: 16px 14px 16px 0; text-align: left; border-bottom: 1px solid var(--hair); white-space: nowrap; }
@@ -580,8 +649,14 @@ tbody tr:last-child td { border-bottom: 0; }
   .form-grid, .split-panels { grid-template-columns: 1fr; }
   .panel, .page .card { padding: 22px; }
   .table-wrap { padding: 4px 18px; }
-  .roster a, .choice-list a { padding: 14px 18px 14px 56px; }
-  .roster a::before, .choice-list a::before { left: 18px; top: 16px; }
+  .roster a { display: flex; flex-wrap: wrap; gap: 2px 14px; padding: 14px 18px 14px 56px; }
+  .roster a .roster-title { flex: 1 1 100%; }
+  .roster a .roster-meta { white-space: normal; }
+  .roster a::before { left: 18px; top: 24px; transform: none; }
+  .choice-list a { padding: 14px 18px 14px 56px; }
+  .choice-list a::before { left: 18px; top: 16px; }
+  .skeleton-row { grid-template-columns: 24px minmax(0, 1fr); }
+  .skeleton-row > :nth-child(n + 3) { display: none; }
   .roster-count { margin-left: 0; }
   .service-row > div:first-child { flex: 1 1 100%; }
   form > .actions .button, .confirm .button { flex: 1 1 auto; }
