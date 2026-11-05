@@ -50,8 +50,10 @@ export function FormError({ error }: { error?: string | null }) {
 export function Emergency({ compact }: { compact?: boolean }) {
   return (
     <aside className="emergency" aria-label="Emergencies">
-      <span>{compact ? 'Not an emergency service.' : <><strong className="font-medium">Is this an emergency?</strong> Carevia is not an emergency service.</>}</span>
-      <span>In an emergency, <a href="tel:112">call 112</a>.</span>
+      <p>
+        {compact ? 'Not an emergency service. ' : <><strong className="font-medium">Is this an emergency?</strong> Carevia is not an emergency service. </>}
+        In an emergency, <a href="tel:112">call 112</a>.
+      </p>
     </aside>
   )
 }
@@ -132,20 +134,26 @@ export function HoldTimer({ expiresAt, onExpire }: { expiresAt: string; onExpire
   )
 }
 
-/** Very small Markdown for the content files: ## headings, paragraphs, - lists and **bold**. */
+/** Very small Markdown for the content files: # headings, paragraphs, - lists and **bold**. Line by line, so a heading can sit right above its text. */
 export function Markdown({ source, headingLevel = 3 }: { source: string; headingLevel?: 2 | 3 }) {
   const H = headingLevel === 2 ? 'h2' : 'h3'
   const inline = (t: string) => t.split(/(\*\*[^*]+\*\*)/g).map((p, i) => (p.startsWith('**') ? <strong key={i} className="font-medium">{p.slice(2, -2)}</strong> : p))
-  return (
-    <div className="prose">
-      {source.trim().split(/\n\s*\n/).map((block, i) => {
-        const b = block.trim()
-        if (/^#{1,6}\s/.test(b)) return <H key={i}>{inline(b.replace(/^#+\s*/, ''))}</H>
-        if (/^[-*]\s/.test(b)) return <ul key={i}>{b.split('\n').map((l, j) => <li key={j}>{inline(l.replace(/^[-*]\s*/, ''))}</li>)}</ul>
-        return <p key={i}>{inline(b.replace(/\n/g, ' '))}</p>
-      })}
-    </div>
-  )
+  const out: ReactNode[] = []
+  let para: string[] = [], list: string[] = []
+  const flush = () => {
+    if (para.length) out.push(<p key={out.length}>{inline(para.join(' '))}</p>)
+    if (list.length) out.push(<ul key={out.length}>{list.map((l, j) => <li key={j}>{inline(l)}</li>)}</ul>)
+    para = []; list = []
+  }
+  for (const raw of source.split(/\r?\n/)) {
+    const line = raw.trim()
+    if (!line) flush()
+    else if (/^#{1,6}\s/.test(line)) { flush(); out.push(<H key={out.length}>{inline(line.replace(/^#+\s*/, ''))}</H>) }
+    else if (/^[-*]\s/.test(line)) { if (para.length) flush(); list.push(line.replace(/^[-*]\s*/, '')) }
+    else { if (list.length) flush(); para.push(line) }
+  }
+  flush()
+  return <div className="prose">{out}</div>
 }
 
 export function DoctorAvatar({ doctor, size = 52 }: { doctor: { id: number; initials: string; name: string }; size?: number }) {
