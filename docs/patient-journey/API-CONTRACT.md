@@ -76,7 +76,8 @@ The `appointment` object, which every endpoint returns in this shape (with only 
   "doctor": { "id": 0, "name": "Dr Emma Laurent", "initials": "EL", "specialty": "General practitioner", "languages": "English · French", "cedula": "DEMO-CEDULA-…" },
   "patient": { "kind": "self | family", "displayName": "Ana Silva" },
   "consent": { "version": "…", "acceptedAt": "…" },
-  "payment": { "status": "paid", "method": "demo" },
+  "payment": { "status": "paid", "method": "demo", "amount": 45, "paidAt": "…" },
+  "reminders": { "email": true, "sms": false, "sentAt": "… | null" },
   "preJoin": { "confirmedAt": "… | null", "companion": false },
   "call": { "joinOpensAt": "…", "joinClosesAt": "…", "state": "not_started | in_progress | ended", "reconnects": 0 },
   "imed": { "status": "not_connected" }
@@ -84,6 +85,8 @@ The `appointment` object, which every endpoint returns in this shape (with only 
 ```
 
 `imed.status` is always `"not_connected"` in this build. The web app explains: "Your doctor records this visit in iMED, Carevia's clinical system. Your clinical summary and anything your doctor decides to issue are available through iMED, not in Carevia." No document data ever appears here.
+
+`payment` and `reminders` are in the patient's view only (an admin sees `payment.status` and `payment.method`; a clinician sees neither). `payment` is everything the web receipt shows: it is payment data only, never clinical. `payment.status` is `paid` in this build (`refunded` is reserved for a real provider); the web app shows a cancelled demo visit as "No charge", because no money was taken.
 
 The join window opens 10 minutes before `startsAt` and closes 60 minutes after `endsAt`.
 
@@ -93,6 +96,7 @@ The join window opens 10 minutes before `startsAt` and closes 60 minutes after `
 | `GET /api/appointments/:id` (patient owner, clinician of that doctor, admin) | `{ appointment }` |
 | `POST /api/appointments/:id/cancel` (patient) | Allowed until `startsAt`. Sets `cancelled` and releases the slot. Refund wording comes from `content/patient-journey/cancellation.md`. |
 | `POST /api/appointments/:id/reschedule` (patient) | `{ slotId }`. Moves the **same** appointment (same id, consent and payment; never a second appointment). Allowed while it is `confirmed` and either hasn't started, or ended with `ended_poor_quality` and the join window has closed; otherwise `409 CANNOT_RESCHEDULE`. The new slot must be the same doctor or a doctor in the same service group (`400 SERVICE_MISMATCH`), in the future, and free (`409 SLOT_TAKEN`, by the same no-double-booking index; `404 SLOT_NOT_FOUND`). The same person may not have another confirmed visit at the new time (`409 TIME_CLASH`). The old slot is freed. Pre-join is asked again and a new Daily room is made for the new time. The fee already paid stands. Sends a "new time" message to the outbox. Another patient's appointment is `404`. Returns `{ appointment }`. |
+| `PUT /api/appointments/:id/reminders` (patient) | `{ email: boolean, sms: boolean }`, both required, nothing else (`400 VALIDATION`). Stores the choice on this appointment (default email on, SMS off). `409 NOT_CONFIRMED` unless confirmed; `409 VISIT_STARTED` once it has started. Another patient's appointment is `404`. Returns `{ appointment }`. One reminder goes out about 24 hours before a confirmed visit that was paid for earlier than that (a visit booked inside 24 hours has just had its confirmation). A job every 5 minutes sends it and stores `reminders.sentAt` first, so it is sent once only, even across restarts. Content as the confirmation: Lisbon time, the doctor, the link to `/app/visits/:id` and the 112 line; no patient name and no reason. Email goes to the outbox; **SMS is not sent: there is no SMS provider yet.** In demo mode or development an SMS is written to the outbox with `channel: "sms"`, marked not sent. Moving a visit clears `sentAt`, so the new time gets its reminder. |
 | `GET /api/appointments/:id/calendar.ics` (patient) | Calendar file. Summary "Carevia video consultation" plus the doctor's name; no health details; links to `/app/visits/:id`. |
 | `POST /api/appointments/:id/pre-join` (patient) | `{ emailConfirmed: true, mobileConfirmed: true, companion: boolean }`. Both confirmations are required (Portuguese teleconsulta rule). Stores the time. |
 | `POST /api/appointments/:id/video-token` (patient, clinician) | Existing endpoint, extended. Requires `confirmed` status, the join window and (for patients) the pre-join step. Clinician gets `is_owner: true`, patient `false`. With `{ "companion": true }`, the patient gets a second, non-owner token. Returns `{ token, url, roomName, expiresAt }`. `409 VIDEO_DISABLED` without a Daily key; `425 TOO_EARLY` before the window; `410 WINDOW_CLOSED` after it. |
@@ -130,7 +134,7 @@ The join window opens 10 minutes before `startsAt` and closes 60 minutes after `
 
 - `GET /api/demo` returns `{ enabled: true, accounts: [{ role, email, password, label }] }`. Without demo mode, it's `404`.
 - `POST /api/demo/reset` (admin, demo mode only): reseeds everything.
-- `GET /api/dev/outbox` (demo mode or `NODE_ENV=development`): emails that would have been sent, newest first: `{ messages: [{ id, to, subject, text, links, sentAt }] }`.
+- `GET /api/dev/outbox` (demo mode or `NODE_ENV=development`): emails that would have been sent, newest first: `{ messages: [{ id, channel, to, subject, text, links, sentAt }] }`, where `channel` is `email` or `sms` (SMS rows were never delivered).
 
 ## Demo data (seed)
 
@@ -176,12 +180,13 @@ The API reads `consent.md` for `/api/consent/current`. The web app imports the o
 | `/app/book/family` | J4b: choose or add the family member (only for `child` or `adult`) |
 | `/app/book/consent` | J5: consent (new screen) |
 | `/app/book/pay` | J6: review and demo payment |
-| `/app/visits/:id` | J7: confirmation and preparation, calendar file, questions stored on the device |
+| `/app/visits/:id` | J7: confirmation and preparation, calendar file, questions stored on the device; reminder choices and the payment card |
 | `/app/visits/:id/join` | J8: confirm email and mobile, companion option (new screen) |
 | `/app/visits/:id/waiting` | J9: device check and waiting room |
 | `/app/visits/:id/call` | J10: Daily call (Prebuilt or call object, embedded) |
 | `/app/visits/:id/done` | J11: visit status and the iMED explanation, plus "book a follow-up" |
-| `/app/account`, `/app/account/family`, `/app/account/profile`, `/app/account/security` | J12 |
+| `/app/visits/:id/receipt` | Printable demo payment confirmation (not a tax invoice / fatura). Payment only. |
+| `/app/account`, `/app/account/family`, `/app/account/payments`, `/app/account/profile`, `/app/account/security` | J12. Payments lists paid visits and shows the refund terms from `cancellation.md`. |
 | `/app/signin`, `/app/signup`, `/app/forgot-password`, `/app/reset-password` | Auth |
 | `/app/doctor`, `/app/doctor/visits/:id` | J13: agenda; visit room as owner, plus outcome |
 | `/app/dev/outbox` | Demo or development only |

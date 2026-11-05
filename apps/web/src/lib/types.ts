@@ -71,7 +71,9 @@ export type Appointment = {
   doctor: DoctorBrief
   patient: { kind: 'self' | 'family'; displayName: string } | null
   consent: { version: string; acceptedAt: string } | null
-  payment: { status: 'paid'; method: 'demo' } | null
+  // Patient view only. Demo payments take no money; 'refunded' is reserved for a real provider (backlog).
+  payment: { status: 'paid' | 'refunded'; method: 'demo'; amount: number; paidAt: string } | null
+  reminders?: { email: boolean; sms: boolean; sentAt: string | null }
   preJoin: { confirmedAt: string | null; companion: boolean } | null
   call: { joinOpensAt: string; joinClosesAt: string; state: CallState; reconnects: number }
   imed: { status: 'not_connected' }
@@ -85,6 +87,6 @@ export type VideoToken = { token: string; url: string; roomName: string; expires
 
 export type DemoInfo = { enabled: true; accounts: { role: Role; email: string; password: string; label: string }[] }
 
-export type OutboxMessage = { id: string; to: string; subject: string; text: string; links: string[]; sentAt: string }
+export type OutboxMessage = { id: string; channel?: 'email' | 'sms'; to: string; subject: string; text: string; links: string[]; sentAt: string }
 
 export type CallEvent = 'joined' | 'left' | 'reconnect' | 'error'

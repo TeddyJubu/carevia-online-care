@@ -109,6 +109,7 @@ export const api = {
   appointment: (id: string) => get<A>(`/api/appointments/${id}`),
   cancel: (id: string) => post<A>(`/api/appointments/${id}/cancel`),
   reschedule: (id: string, slotId: SlotId) => post<A>(`/api/appointments/${id}/reschedule`, { slotId }),
+  setReminders: (id: string, email: boolean, sms: boolean) => request<A>('PUT', `/api/appointments/${id}/reminders`, { email, sms }),
   calendarUrl: (id: string) => `/api/appointments/${id}/calendar.ics`,
   preJoin: (id: string, companion: boolean) =>
     post<A>(`/api/appointments/${id}/pre-join`, { emailConfirmed: true, mobileConfirmed: true, companion }),

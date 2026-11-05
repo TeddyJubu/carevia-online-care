@@ -51,7 +51,7 @@ function OutboxList() {
                 <li key={m.id} className="card">
                   <article aria-labelledby={`mail-${m.id}`}>
                     <p className="fine">
-                      To {m.to} · <time dateTime={m.sentAt}>{fullDate(m.sentAt)}, {hhmm(m.sentAt)}</time>
+                      {m.channel === 'sms' ? 'SMS to' : 'To'} {m.to} · <time dateTime={m.sentAt}>{fullDate(m.sentAt)}, {hhmm(m.sentAt)}</time>
                     </p>
                     <h2 id={`mail-${m.id}`} className="mt-2 text-[22px]">{m.subject}</h2>
                     <p className="mt-3 whitespace-pre-line">{m.text}</p>

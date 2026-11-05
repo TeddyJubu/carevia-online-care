@@ -1,5 +1,6 @@
 import { useEffect, useId, useRef, type ComponentProps, type ReactNode } from 'react'
 import type { ApiError } from '../lib/api'
+import type { Appointment } from '../lib/types'
 import { useNow } from '../lib/load'
 import { countdown } from '../lib/time'
 
@@ -180,3 +181,12 @@ export function Still({ name, alt = '', className = '' }: { name: 'empty-no-visi
 }
 
 export const euro = (n: number) => `€${n}`
+/** €45.00, for the receipt. */
+export const euroCents = (n: number) => new Intl.NumberFormat('en-IE', { style: 'currency', currency: 'EUR' }).format(n)
+
+/** Paid, Refunded or No charge. A cancelled demo visit never took money, so it shows No charge, not a refund. */
+export function paymentStatus(a: Appointment): { label: 'Paid' | 'Refunded' | 'No charge'; tone: string } {
+  if (!a.payment || (a.status === 'cancelled' && a.payment.method === 'demo')) return { label: 'No charge', tone: '' }
+  if (a.payment.status === 'refunded') return { label: 'Refunded', tone: '' }
+  return { label: 'Paid', tone: 'badge-ok' }
+}

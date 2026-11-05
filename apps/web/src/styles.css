@@ -216,6 +216,17 @@
 
 }
 
+/* Printing a receipt: only the receipt, in black on white. */
+@media print {
+  .skip, .demo-bar, .app-header, .app-footer, .no-print { display: none !important; }
+  :root, body { background: #fff; }
+  main { min-height: 0 !important; }
+  .receipt-page { width: 100%; padding: 0; }
+  .receipt-sheet { border: 0; padding: 0; color: #000; }
+  .receipt-sheet .muted, .receipt-sheet .fine, .receipt-sheet h1 { color: #000; }
+  .receipt-sheet .badge, .receipt-sheet .notice { background: none; color: #000; border: 1px solid #000; }
+}
+
 @keyframes pop { from { opacity: 0; translate: 0 8px; } to { opacity: 1; translate: 0 0; } }
 @keyframes shimmer { to { background-position: -200% 0; } }
 @keyframes spin { to { transform: rotate(360deg); } }

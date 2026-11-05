@@ -98,8 +98,9 @@ for (const width of widths.length ? widths.map(Number) : [390, 1280]) {
     rows.at(-1).dialog = { focusStaysInside: inside.every((x) => x === true), trace: inside, focusReturnedTo: back }
     console.log(`${width} dialog: focus stays inside ${inside.map(String).join(',')}, returns to "${back}"`)
   }
-  // A different time per width: one person can't have two visits at once (409 TIME_CLASH).
-  await p.locator('[role=radiogroup] [role=radio]').nth(width < 600 ? 0 : 3).click()
+  // A different time per width: one person can't have two visits at once (409 TIME_CLASH). Not the first two: a
+  // demo reset books the patient a visit ~15 minutes from now, which the earliest free times can overlap (as in walk-edges).
+  await p.locator('[role=radiogroup] [role=radio]').nth(width < 600 ? 2 : 4).click()
   await p.getByRole('button', { name: /^Continue with/ }).click(); await p.waitForURL(/book\/account/)
   rows.push(await audit(p, 'J4-account', width))
 
@@ -121,7 +122,22 @@ for (const width of widths.length ? widths.map(Number) : [390, 1280]) {
     [`/app/visits/${today.id}`, 'J7-prepare'], [`/app/visits/${today.id}/join`, 'J8-prejoin'], [`/app/visits/${today.id}/waiting`, 'J9-waiting'],
     [`/app/visits/${today.id}/call`, 'J10-call'], [`/app/visits/${child.id}/reschedule`, 'reschedule'],
     [`/app/visits/${past.find((a) => a.outcome === 'completed')?.id}/done`, 'J11-done'], ['/app/dev/outbox', 'outbox'],
+    [`/app/visits/${child.id}`, 'J7-upcoming'], [`/app/visits/${past.find((a) => a.status === 'cancelled')?.id}`, 'J7-cancelled'],
+    [`/app/visits/${child.id}/receipt`, 'receipt'], ['/app/account/payments', 'account-payments'],
   ]) await go(path, name)
+  // Reminders: save a change, audit the saved state, then put the default back.
+  // A busy run can meet the 100-requests-a-minute limit on the session check, which sends the page to sign-in;
+  // wait it out once and open the visit again (the session cookie is still good).
+  await p.goto(`${base}/app/visits/${child.id}`)
+  await p.getByLabel(/^SMS reminder/).waitFor({ timeout: 10000 }).catch(async () => { await wait(60000); await p.goto(`${base}/app/visits/${child.id}`) })
+  await p.getByLabel(/^SMS reminder/).check(); await p.getByRole('button', { name: 'Save reminders' }).click()
+  await p.getByText('Reminders saved.').waitFor()
+  rows.push(await audit(p, 'J7-reminders-saved', width))
+  await p.getByLabel(/^SMS reminder/).uncheck(); await p.getByRole('button', { name: 'Save reminders' }).click(); await p.getByText('Reminders saved.').waitFor()
+  // The receipt as printed.
+  await p.emulateMedia({ media: 'print' }); await p.goto(`${base}/app/visits/${child.id}/receipt`)
+  rows.push(await audit(p, 'receipt-print', width))
+  await p.emulateMedia({ media: 'screen' })
   await p.goto(base + '/app/account/profile'); await p.getByRole('button', { name: 'Sign out' }).click(); await p.waitForURL(/signin/)
 
   // Doctor.

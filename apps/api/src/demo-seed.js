@@ -137,7 +137,9 @@ export async function seedDemo(prisma, { now = new Date(), startsInMinutes = 15 
         callState: status === 'completed' ? 'ended' : 'not_started',
         cancelledAt: status === 'cancelled' ? new Date(slot.startsAt.getTime() - 24 * 60 * 60_000) : null,
         consents: { create: { userId: patient.id, version: consentVersion, acceptedAt: bookedAt } },
-        payment: { create: { method: 'demo', status: 'paid', amount: doctor.fee } },
+        // Past visits were paid when booked, so receipts show a date before the visit. Upcoming ones count as paid
+        // now: booked inside 24 hours, so a reset never triggers a reminder for today's visit.
+        payment: { create: { method: 'demo', status: 'paid', amount: doctor.fee, createdAt: slot.startsAt < now ? bookedAt : now } },
       },
     })
   }

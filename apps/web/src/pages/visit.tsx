@@ -2,13 +2,14 @@ import { useEffect, useState, type FormEvent } from 'react'
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router'
 import { api, ApiError } from '../lib/api'
 import { content } from '../lib/content'
+import { DEMO_BUILD, useDemo } from '../lib/demo'
 import { useLoad, useNow } from '../lib/load'
 import { useQuestions } from '../lib/questions'
 import { useSession } from '../lib/session'
 import { countdown, fullDate, hhmm, minutes, when } from '../lib/time'
 import type { Appointment } from '../lib/types'
 import { TimePicker } from './book'
-import { Dialog, DoctorAvatar, Emergency, ErrorState, euro, FormError, Loading, Markdown, PageTitle } from '../ui/kit'
+import { Dialog, DoctorAvatar, Emergency, ErrorState, euro, euroCents, FormError, Loading, Markdown, Notice, PageTitle, paymentStatus } from '../ui/kit'
 
 export function useAppointment() {
   const { id = '' } = useParams()
@@ -73,12 +74,14 @@ function CalendarLink({ a }: { a: Appointment }) {
 const PREP = ['Write down what you’d like to discuss', 'Have a list of any medicines you take nearby', 'Find a quiet, private place with good light', 'Charge your device and check your internet']
 
 // ---------- J7: booked, and how to prepare ----------
+// Two columns on desktop: the visit and what to do with it on the left; reminders and payment on the right.
 export function Prepare() {
   const load = useAppointment()
   const [params] = useSearchParams()
   const booked = params.get('booked') === '1'
   const moved = params.get('moved') === '1'
   const navigate = useNavigate()
+  const demo = useDemo()
   const now = useNow(15000)
   const [cancelling, setCancelling] = useState(false)
   const [cancelError, setCancelError] = useState<string | null>(null)
@@ -88,37 +91,65 @@ export function Prepare() {
     <VisitGate load={load}>{(a) => {
       const phase = phaseOf(a, now)
       if (a.status === 'completed' || (a.status === 'confirmed' && phase === 'closed')) return <RedirectTo to={`/visits/${a.id}/done`} />
+      // Pre-join (confirm email and mobile) is allowed any time before the window closes; the waiting room's device
+      // check works any time too. Only joining the call waits for the window.
       const joinTo = a.preJoin?.confirmedAt ? `/visits/${a.id}/waiting` : `/visits/${a.id}/join`
+      const opensIn = countdown(a.call.joinOpensAt, now)
+      const allLink = <Link to="/account" className="link inline-flex min-h-11 items-center text-sm">All appointments</Link>
       return (
         <div className="page">
-          <div className="grid gap-10 min-[1025px]:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
-            <section>
+          <div className="grid gap-10 min-[1025px]:grid-cols-[minmax(0,1fr)_360px]">
+            <section className="min-w-0">
               {booked && <span className="mb-6 grid size-14 place-items-center rounded-full border border-ink" aria-hidden="true"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="m5 12.5 4.5 4.5L19 7.5" /></svg></span>}
               <PageTitle eyebrow={a.status === 'cancelled' ? 'Cancelled' : booked ? 'Payment received (demo)' : 'Your visit'} title={booked ? 'You’re booked' : 'Your visit'}>
                 {a.status === 'cancelled' ? 'This visit was cancelled' : booked ? 'You’re booked' : 'Your visit'}
               </PageTitle>
               {moved && <p role="status" className="notice notice-ok mt-6">Your visit has a new time. We’ve emailed you the details.</p>}
+              {booked && a.status === 'confirmed' && (
+                <Notice tone="ok" className="mt-6 flex-wrap items-center gap-x-4 gap-y-0">
+                  <span role="status">We’ve emailed your confirmation.</span>
+                  {DEMO_BUILD && demo && <Link to="/dev/outbox" className="link inline-flex min-h-11 items-center">See it in the demo outbox</Link>}
+                </Notice>
+              )}
               <div className="mt-8"><VisitCard a={a} /></div>
               {a.status === 'confirmed' && (
                 <>
                   <div className="mt-6 flex flex-wrap items-center gap-3">
                     {phase === 'open'
-                      ? <Link to={joinTo} className="btn btn-primary">Get ready to join</Link>
-                      : phase === 'before' && <span className="fine">You can join from {hhmm(a.call.joinOpensAt)}, 10 minutes before.{countdown(a.call.joinOpensAt, now) && Date.parse(a.call.joinOpensAt) - now < 864e5 ? ` That’s in ${countdown(a.call.joinOpensAt, now)!.replace(/:\d\d$/, ' min')}.` : ''}</span>}
+                      ? <Link to={joinTo} className="btn btn-primary">Open waiting room</Link>
+                      : <Link to={joinTo} className="btn btn-primary" aria-describedby="prep-hint">Prepare for consultation</Link>}
                     <CalendarLink a={a} />
                   </div>
-                  <p className="fine mt-4">{booked ? 'We’ve emailed your confirmation. ' : ''}Paid {euro(a.fee)} (demo).</p>
-                  {canReschedule(a, now) && (
-                    <div className="mt-8 flex flex-wrap gap-x-6">
-                      <Link to={`/visits/${a.id}/reschedule`} className="link inline-flex min-h-11 items-center text-sm">Change the time</Link>
-                      <button type="button" className="link inline-flex min-h-11 items-center text-sm" onClick={() => setCancelling(true)}>Cancel this visit</button>
-                    </div>
+                  {phase === 'before' && (
+                    <p id="prep-hint" className="fine mt-3 max-w-[60ch]">
+                      Check your camera, microphone and connection, and confirm your details, any time before.
+                      {' '}The waiting room opens at {hhmm(a.call.joinOpensAt)}, 10 minutes before.
+                      {opensIn && Date.parse(a.call.joinOpensAt) - now < 864e5 ? ` That’s in ${opensIn.replace(/:\d\d$/, ' min')}.` : ''}
+                    </p>
                   )}
+                  <div className="mt-6 flex flex-wrap gap-x-6">
+                    {canReschedule(a, now) && (
+                      <>
+                        <Link to={`/visits/${a.id}/reschedule`} className="link inline-flex min-h-11 items-center text-sm">Change the time</Link>
+                        <button type="button" className="link inline-flex min-h-11 items-center text-sm" onClick={() => setCancelling(true)}>Cancel this visit</button>
+                      </>
+                    )}
+                    {allLink}
+                  </div>
+                  <div className="mt-10"><Preparation a={a} /></div>
                 </>
               )}
-              {a.status === 'cancelled' && <Link to={`/book?service=${a.service.groupSlug}`} className="btn btn-primary mt-6">Book another time</Link>}
+              {a.status === 'cancelled' && (
+                <div className="mt-6 flex flex-wrap items-center gap-x-6 gap-y-3">
+                  <Link to={`/book?service=${a.service.groupSlug}`} className="btn btn-primary">Book another time</Link>
+                  {allLink}
+                </div>
+              )}
             </section>
-            {a.status === 'confirmed' && <Preparation a={a} />}
+            <aside className="grid content-start gap-4" aria-label="Reminders and payment">
+              {a.status === 'confirmed' && <Reminders a={a} onSaved={load.set} />}
+              <PaymentCard a={a} />
+            </aside>
           </div>
           <Dialog open={cancelling} onClose={() => setCancelling(false)} title="Cancel this visit?">
             <p>{when(a.startsAt)} with {a.doctor.name}.</p>
@@ -133,6 +164,128 @@ export function Prepare() {
               <button type="button" className="btn btn-secondary" onClick={() => setCancelling(false)}>Keep my visit</button>
             </div>
           </Dialog>
+        </div>
+      )
+    }}</VisitGate>
+  )
+}
+
+/** Email and SMS reminder choices. The API sends one reminder about 24 hours before (apps/api/src/reminders.js). */
+function Reminders({ a, onSaved }: { a: Appointment; onSaved: (a: Appointment) => void }) {
+  const { user } = useSession()
+  const saved = a.reminders ?? { email: true, sms: false, sentAt: null }
+  const [email, setEmail] = useState(saved.email)
+  const [sms, setSms] = useState(saved.sms)
+  const [pending, setPending] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [done, setDone] = useState(false)
+  const dirty = email !== saved.email || sms !== saved.sms
+  // Mirrors the API's reminderDue: a visit paid for inside the last 24 hours gets no separate reminder.
+  const bookedLate = !!a.payment && Date.parse(a.payment.paidAt) >= Date.parse(a.startsAt) - 864e5
+  const timing = saved.sentAt ? `Reminder sent on ${fullDate(saved.sentAt)} at ${hhmm(saved.sentAt)}.`
+    : bookedLate ? 'You booked less than 24 hours ahead, so your confirmation email is your reminder.'
+    : 'We’ll remind you 24 hours before the visit.'
+  async function save(e: FormEvent) {
+    e.preventDefault()
+    setPending(true); setError(null); setDone(false)
+    try { onSaved((await api.setReminders(a.id, email, sms)).appointment); setDone(true) } catch (err) { setError((err as ApiError).message) } finally { setPending(false) }
+  }
+  const change = (set: (v: boolean) => void) => (e: React.ChangeEvent<HTMLInputElement>) => { set(e.target.checked); setDone(false) }
+  return (
+    <section className="card" aria-labelledby="rem-title">
+      <h2 id="rem-title" className="text-[22px]">Appointment reminders</h2>
+      <p id="rem-when" className="fine mt-1">{timing}</p>
+      <form className="mt-2" onSubmit={save}>
+        <fieldset aria-describedby="rem-when">
+          <legend className="sr-only">Remind me by</legend>
+          <label className="check">
+            <input type="checkbox" checked={email} onChange={change(setEmail)} />
+            <span>Email reminder{user?.email && <span className="fine block break-all">To {user.email}</span>}</span>
+          </label>
+          <label className="check">
+            <input type="checkbox" checked={sms} onChange={change(setSms)} aria-describedby="sms-note" />
+            <span>SMS reminder<span id="sms-note" className="fine block">SMS reminders are not sent yet. We’ll keep your choice for when they are.</span></span>
+          </label>
+        </fieldset>
+        <FormError error={error} />
+        <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2">
+          <button className="btn btn-secondary btn-sm" disabled={pending}>{pending ? 'Saving…' : 'Save reminders'}</button>
+          <p role="status" className="fine">{done && !dirty && <span className="inline-block [animation:pop_0.35s_var(--ease)]">Reminders saved.</span>}</p>
+        </div>
+      </form>
+    </section>
+  )
+}
+
+function PaymentCard({ a }: { a: Appointment }) {
+  const s = paymentStatus(a)
+  return (
+    <section className="card" aria-labelledby="pay-title">
+      <h2 id="pay-title" className="text-[22px]">Payment &amp; receipt</h2>
+      <p className="mt-3 flex flex-wrap items-center gap-3">
+        <span className="text-[28px] font-medium leading-none tabular-nums">{euro(a.payment?.amount ?? a.fee)}</span>
+        <span className={`badge ${s.tone}`}>{s.label}</span>
+      </p>
+      {a.payment && <p className="fine mt-2">Demo payment on {fullDate(a.payment.paidAt)}</p>}
+      {a.status === 'cancelled' && <p className="mt-3 text-[15px]">This visit was cancelled. No money was taken in this demo.</p>}
+      <div className="mt-4 flex flex-wrap items-center gap-x-5 gap-y-2">
+        {a.payment && <Link to={`/visits/${a.id}/receipt`} className="btn btn-secondary btn-sm">Download receipt</Link>}
+        <Link to="/account/payments" className="link inline-flex min-h-11 items-center text-sm">Payments &amp; refunds</Link>
+      </div>
+    </section>
+  )
+}
+
+// ---------- Receipt: a printable payment confirmation. Payment only: nothing clinical, and not a tax invoice. ----------
+export function Receipt() {
+  const load = useAppointment()
+  return (
+    <VisitGate load={load}>{(a) => {
+      if (!a.payment) return (
+        <div className="page-narrow">
+          <PageTitle lede="Nothing was paid for this visit.">There’s no receipt for this visit</PageTitle>
+          <Link to={`/visits/${a.id}`} className="btn btn-primary mt-8">Back to your visit</Link>
+        </div>
+      )
+      const s = paymentStatus(a)
+      const rows: [string, string][] = [
+        ['Amount', euroCents(a.payment.amount)],
+        ['Status', s.label],
+        ['Date paid', `${fullDate(a.payment.paidAt)}, ${hhmm(a.payment.paidAt)}`],
+        ['Payment method', 'Demo payment'],
+        ['Service', `Video consultation · ${a.service.groupName}`],
+        ['Visit date', `${fullDate(a.startsAt)}, ${hhmm(a.startsAt)} (Lisbon time)`],
+        ['Reference', a.id],
+      ]
+      return (
+        <div className="page-narrow receipt-page">
+          <div className="no-print mb-6 flex flex-wrap gap-3">
+            <button type="button" className="btn btn-primary" onClick={() => window.print()}>Print or save as PDF</button>
+            <Link to={`/visits/${a.id}`} className="btn btn-secondary">Back to your visit</Link>
+          </div>
+          <article className="card receipt-sheet" aria-labelledby="receipt-h">
+            <div className="flex flex-wrap items-start justify-between gap-4">
+              <div>
+                <p className="text-[22px] font-semibold tracking-[-0.04em]">Carevia</p>
+                <p className="fine">Provided by [legal entity name]</p>
+              </div>
+              <span className={`badge ${s.tone}`}>{s.label}</span>
+            </div>
+            <div id="receipt-h" className="mt-6 [&_h1]:text-[34px]"><PageTitle title="Payment confirmation">Payment confirmation</PageTitle></div>
+            <p className="notice notice-warn mt-4">
+              <span><strong className="font-medium">This is a demo payment confirmation, not a tax invoice (fatura).</strong>{' '}
+              No money was taken. In Portugal, invoices are issued by invoicing software certified by the tax authority (AT), which this demo does not use.</span>
+            </p>
+            <dl className="rows mt-6">
+              {rows.map(([k, v]) => (
+                <div key={k} className="flex flex-wrap justify-between gap-x-6 gap-y-1 py-3">
+                  <dt className="muted">{k}</dt>
+                  <dd className="m-0 text-right font-medium break-all">{v}</dd>
+                </div>
+              ))}
+            </dl>
+            <p className="fine mt-6">This confirmation covers the payment only.</p>
+          </article>
         </div>
       )
     }}</VisitGate>
@@ -183,7 +336,6 @@ function Preparation({ a }: { a: Appointment }) {
         <input id="q-new" className="input" value={draft} onChange={(e) => setDraft(e.target.value)} placeholder="Add a question (optional)" aria-describedby="q-note" maxLength={300} />
         <button className="btn btn-secondary shrink-0">Add</button>
       </form>
-      <Link to={`/visits/${a.id}/waiting`} className="btn btn-primary btn-block mt-6">Test camera and microphone</Link>
     </section>
   )
 }

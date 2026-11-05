@@ -69,6 +69,7 @@ const router = createBrowserRouter(
         { path: 'visits/:id/waiting', ...page('waiting', 'Waiting', patient) },
         { path: 'visits/:id/call', ...page('call', 'CallPage', patient) },
         { path: 'visits/:id/done', ...page('visit', 'Done', patient) },
+        { path: 'visits/:id/receipt', ...page('visit', 'Receipt', patient) },
         {
           path: 'account',
           ...page('account', 'AccountLayout', patient),
@@ -77,6 +78,7 @@ const router = createBrowserRouter(
             { path: 'family', ...page('account', 'FamilyPage') },
             { path: 'profile', ...page('account', 'ProfilePage') },
             { path: 'security', ...page('account', 'SecurityPage') },
+            { path: 'payments', ...page('account', 'PaymentsPage') },
           ],
         },
         { path: 'signin', ...page('auth', 'SignIn') },

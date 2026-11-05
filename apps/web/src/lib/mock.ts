@@ -76,14 +76,15 @@ type Rec = {
   id: string; status: Status; outcome: Outcome | null; holdExpiresAt: string | null; holdOwner: string | null
   startsAt: string; endsAt: string; fee: number; serviceId: number; doctorId: number; for: For
   userId: string | null; familyMemberId: string | null; patientSet: boolean
-  consent: { version: string; acceptedAt: string } | null; paid: boolean
+  consent: { version: string; acceptedAt: string } | null; paidAt: string | null
+  remind: { email: boolean; sms: boolean }
   preJoin: { confirmedAt: string | null; companion: boolean } | null
   callState: 'not_started' | 'in_progress' | 'ended'; reconnects: number
 }
 type Mail = { id: string; to: string; subject: string; text: string; links: string[]; sentAt: string }
 type DB = { users: U[]; family: Fam[]; appts: Rec[]; outbox: Mail[]; sessionUser: string | null; pending2fa: string | null; enabling2fa: boolean; resetTokens: Record<string, string> }
 
-const KEY = 'carevia-mock-v1'
+const KEY = 'carevia-mock-v2' // v2: payment amount and date, reminder choices
 const BROWSER = 'this-browser'
 let state: DB | null = null
 const rid = () => Math.random().toString(36).slice(2, 12)
@@ -92,7 +93,7 @@ function seed(): DB {
   const now = Date.now()
   const at = (ms: number) => new Date(Math.ceil((now + ms) / 60000) * 60000).toISOString()
   const plus = (iso: string, min: number) => new Date(Date.parse(iso) + min * 60000).toISOString()
-  const base = { outcome: null, holdExpiresAt: null, holdOwner: null, fee: 45, doctorId: 0, userId: 'u-patient', patientSet: true, paid: true, callState: 'not_started' as const, reconnects: 0, preJoin: null }
+  const base = { outcome: null, holdExpiresAt: null, holdOwner: null, fee: 45, doctorId: 0, userId: 'u-patient', patientSet: true, paidAt: new Date(now - 2 * 86400000).toISOString(), remind: { email: true, sms: false }, callState: 'not_started' as const, reconnects: 0, preJoin: null }
   const consent = { version: content('consent').version, acceptedAt: at(-86400000) }
   // ponytail: 8 minutes (the contract's seed uses 15) so the mock's join window is already open for demos and screenshots.
   const soon = at(8 * 60000)
@@ -151,7 +152,8 @@ function view(a: Rec): Appointment {
     service: { id: svc.id, name: svc.name, groupSlug: g.slug, groupName: g.name },
     doctor: { id: d.id, name: d.name, initials: d.initials, specialty: d.specialty, languages: d.languages, cedula: d.cedula },
     patient: !a.patientSet ? null : fam ? { kind: 'family', displayName: `${fam.firstName} ${fam.lastName}` } : owner ? { kind: 'self', displayName: `${owner.firstName} ${owner.lastName}` } : null,
-    consent: a.consent, payment: a.paid ? { status: 'paid', method: 'demo' } : null, preJoin: a.preJoin,
+    consent: a.consent, payment: a.paidAt ? { status: 'paid', method: 'demo', amount: a.fee, paidAt: a.paidAt } : null,
+    reminders: { ...a.remind, sentAt: null }, preJoin: a.preJoin,
     call: { joinOpensAt: new Date(w.opens).toISOString(), joinClosesAt: new Date(w.closes).toISOString(), state: a.callState, reconnects: a.reconnects },
     imed: { status: 'not_connected' },
   }
@@ -302,7 +304,7 @@ on('POST', '/api/bookings', (_, b) => {
   const a: Rec = {
     id: 'ck' + rid(), status: 'held', outcome: null, holdExpiresAt: new Date(Date.now() + 10 * 60000).toISOString(), holdOwner: BROWSER,
     startsAt, endsAt: new Date(Date.parse(startsAt) + SLOT_MIN * 60000).toISOString(), fee: d.fee, serviceId: svc.id, doctorId: d.id, for: b.for ?? 'self',
-    userId: u?.role === 'patient' ? u.id : null, familyMemberId: null, patientSet: false, consent: null, paid: false, preJoin: null, callState: 'not_started', reconnects: 0,
+    userId: u?.role === 'patient' ? u.id : null, familyMemberId: null, patientSet: false, consent: null, paidAt: null, remind: { email: true, sms: false }, preJoin: null, callState: 'not_started', reconnects: 0,
   }
   db().appts.push(a)
   return ok({ appointment: view(a) }, 201)
@@ -349,7 +351,7 @@ on('POST', '/api/bookings/([^/]+)/pay', (m) => {
   if (a.status !== 'held') return err(410, 'HOLD_EXPIRED', 'Your 10-minute hold has ended, so the time was released. Please choose a time again.')
   if (!a.patientSet) return err(400, 'PATIENT_REQUIRED', 'Choose who this visit is for first.')
   if (!a.consent) return err(400, 'CONSENT_REQUIRED', 'Please read and accept the consultation terms first.')
-  a.status = 'confirmed'; a.paid = true; a.holdExpiresAt = null; a.holdOwner = null
+  a.status = 'confirmed'; a.paidAt = new Date().toISOString(); a.holdExpiresAt = null; a.holdOwner = null
   mail(u.email, 'Your Carevia visit is booked', 'Your video visit is confirmed. You can join from your account 10 minutes before it starts.', [`/app/visits/${a.id}`])
   return ok({ appointment: view(a) })
 })
@@ -394,6 +396,14 @@ on('POST', '/api/appointments/([^/]+)/reschedule', (m, b) => {
   if (!slotsFor(d, lisbonDay(startsAt), 1).some((s) => s.startsAt === startsAt)) return err(409, 'SLOT_TAKEN', 'That time was just booked. Choose another time.')
   Object.assign(a, { doctorId: d.id, startsAt, endsAt: new Date(Date.parse(startsAt) + SLOT_MIN * 60000).toISOString(), outcome: null, callState: 'not_started', reconnects: 0, preJoin: null })
   mail(u.email, 'Your Carevia visit has a new time', `Your video consultation with ${d.name} has a new time.`, [`/app/visits/${a.id}`])
+  return ok({ appointment: view(a) })
+})
+on('PUT', '/api/appointments/([^/]+)/reminders', (m, b) => {
+  const u = needRole('patient'); if (isRes(u)) return u
+  const a = ownAppt(u, m[1]); if (isRes(a)) return a
+  if (typeof b?.email !== 'boolean' || typeof b?.sms !== 'boolean') return err(400, 'VALIDATION', 'Check the submitted fields.')
+  if (a.status !== 'confirmed') return err(409, 'NOT_CONFIRMED', 'Only a confirmed visit has reminders.')
+  a.remind = { email: b.email, sms: b.sms }
   return ok({ appointment: view(a) })
 })
 on('POST', '/api/appointments/([^/]+)/pre-join', (m, b) => {

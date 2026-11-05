@@ -1,11 +1,12 @@
 import { useState, type FormEvent, type ReactNode } from 'react'
 import { Link, NavLink, Outlet, useNavigate, useSearchParams } from 'react-router'
 import { api, ApiError } from '../lib/api'
+import { content } from '../lib/content'
 import { useLoad, useNow } from '../lib/load'
 import { useSession } from '../lib/session'
-import { age, birthDate, fullDate, lisbonDay, when } from '../lib/time'
+import { age, birthDate, fullDate, lisbonDay, shortDate, when } from '../lib/time'
 import type { Appointment, FamilyMember } from '../lib/types'
-import { Dialog, Empty, ErrorState, Field, FormError, Loading, Notice, PageTitle, Still } from '../ui/kit'
+import { Dialog, Empty, ErrorState, euro, Field, FormError, Loading, Markdown, Notice, PageTitle, paymentStatus, Still } from '../ui/kit'
 import { toE164 } from './auth'
 
 type Errors = Record<string, string>
@@ -15,6 +16,7 @@ const errMsg = (e: unknown) => (e instanceof ApiError ? e.message : 'Something w
 const NAV = [
   { to: '/account', label: 'Home', end: true },
   { to: '/account/family', label: 'Family' },
+  { to: '/account/payments', label: 'Payments' },
   { to: '/account/profile', label: 'Profile' },
   { to: '/account/security', label: 'Security' },
 ]
@@ -24,7 +26,7 @@ export function AccountLayout() {
   return (
     <div className="page">
       <div className="grid gap-6 lg:grid-cols-[200px_minmax(0,1fr)] lg:gap-12">
-        <nav aria-label="Your account" className="side-nav">
+        <nav aria-label="Your account" className="side-nav min-w-0">
           <ul className="-mx-4 flex gap-1 overflow-x-auto px-4 pb-1 lg:mx-0 lg:grid lg:overflow-visible lg:px-0 lg:sticky lg:top-[calc(var(--header-h)+24px)]">
             {NAV.map((n) => (
               <li key={n.to} className="flex-none">
@@ -567,6 +569,56 @@ export function SecurityPage() {
       <PageTitle title="Security" lede="Keep your account, and your family’s visits, safe.">Security</PageTitle>
       <ChangePassword />
       <TwoFactor />
+    </>
+  )
+}
+
+// ---------- Payments and refunds: every paid visit, and the refund terms from content/patient-journey/cancellation.md ----------
+export function PaymentsPage() {
+  const upcoming = useLoad(() => api.appointments('upcoming'), [])
+  const past = useLoad(() => api.appointments('past'), [])
+  const error = upcoming.error ?? past.error
+  const loading = !upcoming.data || !past.data
+  // ponytail: built from the two appointment lists (only paid visits have a payment); a /api/payments list can
+  // replace this if a patient ever has hundreds of visits.
+  const paid = [...(upcoming.data?.appointments ?? []), ...(past.data?.appointments ?? [])]
+    .filter((a) => a.payment)
+    .sort((x, y) => y.payment!.paidAt.localeCompare(x.payment!.paidAt))
+  return (
+    <>
+      <PageTitle title="Payments & refunds" lede="Every visit you’ve paid for. In this demo no money is taken, so there is nothing to refund.">Payments &amp; refunds</PageTitle>
+      <section aria-labelledby="payments-title" className="mt-8">
+        <h2 id="payments-title" className="sr-only">Your payments</h2>
+        {error ? <ErrorState error={error} onRetry={() => { upcoming.reload(); past.reload() }} title="We couldn’t load your payments" />
+          : loading ? <Loading label="Loading your payments" lines={3} />
+          : paid.length === 0 ? <Empty title="No payments yet" action={<Link to="/book" className="btn btn-primary btn-sm">Book new care</Link>}>When you pay for a visit, it appears here with its receipt.</Empty>
+          : (
+            <ul className="card card-tight rows">
+              {paid.map((a) => {
+                const s = paymentStatus(a)
+                return (
+                  <li key={a.id} className="grid items-center gap-x-6 gap-y-1 py-3 sm:grid-cols-[minmax(0,1fr)_auto_auto]">
+                    <div className="min-w-0">
+                      <Link to={`/visits/${a.id}`} className="link inline-flex min-h-11 items-center font-medium">Visit on {fullDate(a.startsAt)}</Link>
+                      <p className="fine">{a.service.groupName} · {a.doctor.name}{a.patient?.kind === 'family' ? ` · for ${a.patient.displayName}` : ''}</p>
+                      {a.status === 'cancelled' && <p className="fine">Cancelled. No money was taken in this demo.</p>}
+                    </div>
+                    <p className="flex flex-wrap items-center gap-x-3 gap-y-1">
+                      <span className="font-medium tabular-nums">{euro(a.payment!.amount)}</span>
+                      <span className={`badge ${s.tone}`}>{s.label}</span>
+                      <span className="fine">Paid {shortDate(a.payment!.paidAt)}</span>
+                    </p>
+                    <Link to={`/visits/${a.id}/receipt`} className="btn btn-quiet btn-sm justify-self-start">Receipt<span className="sr-only"> for the visit on {fullDate(a.startsAt)}</span></Link>
+                  </li>
+                )
+              })}
+            </ul>
+          )}
+      </section>
+      <section aria-labelledby="refund-title" className="mt-10">
+        <h2 id="refund-title">{content('cancellation').title}</h2>
+        <div className="card mt-4"><Markdown source={content('cancellation').body} /></div>
+      </section>
     </>
   )
 }

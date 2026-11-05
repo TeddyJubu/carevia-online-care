@@ -12,6 +12,7 @@ Plan and rules: `docs/patient-journey/PLAN.md`. Endpoints: `docs/patient-journey
 | `node scripts/check-time.ts` | Self-check for Lisbon time, DST and age rules. |
 | `node scripts/walk-booking.mjs <dir> [width]` | Playwright: books a visit for a child, screenshotting each step. `SIGNUP=1` signs up a new account and adds a new child. |
 | `node scripts/walk-visit.mjs <dir> [width]` | Playwright: visit, waiting room (fake camera), call, after-visit and doctor screens. Against the real API it reads ids and moves today's demo visit into the join window; set `MOCK=1` for the mock. |
+| `node scripts/a11y.mjs <dir> [width...]` | axe, overflow, focus and reduced motion on every screen, including the receipt (screen and print) and payments. Run it after a demo reset: it books visits for the demo patient. `ADMIN=0` skips `/admin/`. |
 | `node scripts/walk-reschedule.mjs <dir> [width]` | Playwright: change a visit's time; with `DROPPED_ID`, the dropped-call screen. |
 
 Every walk (and `a11y.mjs`, `shot.mjs`) runs local Chromium by default. With `BROWSERBASE=1` and `BROWSERBASE_API_KEY` set, it runs in a Browserbase cloud browser in Frankfurt instead and prints a replay link to share. Point it at production with `BASE_URL=https://carevia.triplelabs.dev`. The fake-camera flags only apply locally. Example: `BROWSERBASE=1 BASE_URL=https://carevia.triplelabs.dev node scripts/walk-edges.mjs out 390`.
@@ -23,5 +24,6 @@ Demo accounts (mock and demo API): `patient@example.com` / `demo-password`, `doc
 Rules the code relies on:
 - The patient's questions live in `localStorage` (`carevia-questions-<id>`) and are never sent to the API.
 - After a visit Carevia shows an iMED status, never a document.
+- The receipt (`/visits/:id/receipt`) is a demo payment confirmation, never a tax invoice (fatura), and has no clinical content. Refund terms on `/account/payments` come from `cancellation.md` as written.
 - Demo mode is locked twice: `VITE_DEMO=1` at build time and `GET /api/demo` at run time.
 - Content comes from `content/patient-journey/*.md` at build time; draft notes show in development only.
