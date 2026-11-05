@@ -1,7 +1,11 @@
-import { useState } from 'react'
-import { getSession, login } from './api.js'
+import { useEffect, useState } from 'react'
+import { getDemoAdmin, login } from './api.js'
 
-export default function LoginScreen({ unreachable, onSession }) {
+export default function LoginScreen({ unreachable, onSignedIn, onTwoFactor }) {
+  const [demo, setDemo] = useState(null)
+  useEffect(() => {
+    getDemoAdmin().then(setDemo)
+  }, [])
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
@@ -12,17 +16,13 @@ export default function LoginScreen({ unreachable, onSession }) {
     setError('')
     setPending(true)
     try {
-      await login(email.trim(), password)
-      const session = await getSession()
+      const data = await login(email.trim(), password)
       setPassword('')
-      if (!session.user && !session.forbidden) {
-        setError('The server did not keep the session. Check that the API allows this site to use cookies.')
-        return
-      }
-      onSession(session)
+      if (data?.twoFactorRedirect) onTwoFactor()
+      else onSignedIn()
     } catch (err) {
       const message = err.unreachable
-        ? 'The API at localhost:4000 did not respond. Signing in needs the API.'
+        ? 'The API did not respond. Signing in needs the API.'
         : err.message
       setError(message)
     } finally {
@@ -49,7 +49,7 @@ export default function LoginScreen({ unreachable, onSession }) {
           <p className="lede">Use an admin account. Other accounts stay outside operations.</p>
           {unreachable ? (
             <p className="notice" role="status">
-              The API at localhost:4000 did not respond. This screen is ready. Signing in needs the API.
+              The API did not respond. This screen is ready. Signing in needs the API.
             </p>
           ) : null}
           {error ? (
@@ -85,19 +85,21 @@ export default function LoginScreen({ unreachable, onSession }) {
           <button className="button" type="submit" disabled={pending}>
             {pending ? 'Signing in…' : 'Sign in'}
           </button>
-          <div className="demo">
-            <p>Seeded demo account</p>
-            <dl>
-              <div>
-                <dt>Email</dt>
-                <dd>admin@carevia.test</dd>
-              </div>
-              <div>
-                <dt>Password</dt>
-                <dd>admin-demo-password</dd>
-              </div>
-            </dl>
-          </div>
+          {demo ? (
+            <div className="demo">
+              <p>Demo account (demo mode only)</p>
+              <dl>
+                <div>
+                  <dt>Email</dt>
+                  <dd>{demo.email}</dd>
+                </div>
+                <div>
+                  <dt>Password</dt>
+                  <dd>{demo.password}</dd>
+                </div>
+              </dl>
+            </div>
+          ) : null}
         </form>
       </main>
     </div>

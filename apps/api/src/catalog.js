@@ -1,10 +1,8 @@
 // Catalog copied from the patient-booking wireframe.
 // Men’s health uses U+2019, the same apostrophe as that file.
-// Schedule times are the three buttons on the wireframe schedule screen.
+// The slot schedule is generated in src/schedule.js.
 
-export const DEMO_DAYS = ['30 October 2026', '2 November 2026', '5 November 2026']
-export const SLOT_TIMES = ['09:00', '11:30', '15:00']
-export const SLOT_JOINER = ' \u00b7 '
+const LANGUAGE_JOINER = ' \u00b7 '
 
 const FIRST_NAMES = ['Emma', 'Lucas', 'Sofia', 'Noah', 'Amelia', 'Hugo', 'Clara', 'Leo', 'Ines', 'Oscar', 'Maya', 'Felix', 'Elena', 'Adam', 'Nora', 'Louis', 'Alice', 'Milan', 'Sara', 'Theo']
 const LAST_NAMES = ['Laurent', 'Meyer', 'Martins', 'Rossi', 'Dubois', 'Silva', 'Weber', 'Costa', 'Moreau', 'Fischer', 'Romano', 'Pereira', 'Bernard', 'Schmidt', 'Almeida', 'Fontana', 'Petit', 'Andersson', 'Novak', 'Lindberg']
@@ -16,23 +14,9 @@ const APPROACHES = [
   'A supportive conversation focused on your next steps.',
 ]
 const FEES = [45, 65, 85, 110]
-const MONTHS = {
-  January: 0,
-  February: 1,
-  March: 2,
-  April: 3,
-  May: 4,
-  June: 5,
-  July: 6,
-  August: 7,
-  September: 8,
-  October: 9,
-  November: 10,
-  December: 11,
-}
-
 export const GROUPS = [
   {
+    slug: 'general',
     name: 'General & urgent care',
     blurb: 'General medicine, child care and common conditions',
     icon: 'stethoscope',
@@ -54,6 +38,7 @@ export const GROUPS = [
     ],
   },
   {
+    slug: 'mental',
     name: 'Mental health',
     blurb: 'Psychology, psychiatry and ongoing support',
     icon: 'brain',
@@ -73,12 +58,14 @@ export const GROUPS = [
     ],
   },
   {
+    slug: 'nutrition',
     name: 'Weight management',
     blurb: 'Nutrition and weight-loss consultations',
     icon: 'heart',
     services: ['Nutrition', 'Weight-loss consultation'],
   },
   {
+    slug: 'specialist',
     name: 'Specialist care',
     blurb: 'Find the right specialist for your needs',
     icon: 'activity',
@@ -95,6 +82,7 @@ export const GROUPS = [
     ],
   },
   {
+    slug: 'certificates',
     name: 'Certificates & assessments',
     blurb: 'Medical documents and fitness assessments',
     icon: 'file-check',
@@ -112,6 +100,7 @@ export const GROUPS = [
     ],
   },
   {
+    slug: 'treatments',
     name: 'Treatments',
     blurb: 'Clinical advice and treatment review',
     icon: 'heart-pulse',
@@ -125,6 +114,7 @@ export const GROUPS = [
     ],
   },
   {
+    slug: 'renewals',
     name: 'Test requests & renewals',
     blurb: 'Doctor consultations for test requests and treatment renewals',
     icon: 'clipboard-list',
@@ -167,16 +157,6 @@ export function serviceSpecialty(group, service, variant) {
   return variant % 2 ? 'Family medicine' : 'General practitioner'
 }
 
-export function slotLabel(day, time) {
-  return `${day}${SLOT_JOINER}${time}`
-}
-
-export function slotStartsAt(day, time) {
-  const [dateText, monthName, yearText] = day.split(' ')
-  const [hours, minutes] = time.split(':').map(Number)
-  return new Date(Date.UTC(Number(yearText), MONTHS[monthName], Number(dateText), hours, minutes))
-}
-
 export function buildDoctors() {
   const doctors = []
   let earlier = 0
@@ -210,17 +190,6 @@ export function buildDoctors() {
   return doctors
 }
 
-export function slotsForDoctor(doctor) {
-  return DEMO_DAYS.slice(doctor.availabilityIndex).flatMap((day) =>
-    SLOT_TIMES.map((time) => ({
-      day,
-      time,
-      label: slotLabel(day, time),
-      startsAt: slotStartsAt(day, time),
-    })),
-  )
-}
-
 export function languageTokens(languages) {
-  return languages.split(SLOT_JOINER)
+  return languages.split(LANGUAGE_JOINER)
 }

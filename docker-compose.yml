@@ -1,5 +1,5 @@
 # Alternative to `npm run db` when Docker is installed.
-# Do not run this and embedded Postgres together: both listen on port 5432.
+# Do not run this and embedded Postgres on the same port. PGPORT (default 5432) picks the host port.
 services:
   postgres:
     image: postgres:16-alpine
@@ -9,7 +9,7 @@ services:
       POSTGRES_PASSWORD: carevia
       POSTGRES_DB: carevia
     ports:
-      - "5432:5432"
+      - "${PGPORT:-5432}:5432"
     volumes:
       - carevia-postgres:/var/lib/postgresql/data
     healthcheck:

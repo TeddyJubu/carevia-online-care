@@ -7,6 +7,7 @@ export default defineConfig({
     host: 'localhost',
     port: 5174,
     strictPort: true,
+    proxy: { '/api': process.env.API_URL || 'http://127.0.0.1:4000' },
   },
   preview: {
     host: 'localhost',

@@ -9,11 +9,47 @@ datasource db {
 
 enum Role {
   patient
+  clinician
   admin
 }
 
 enum AppointmentStatus {
+  held
   confirmed
+  completed
+  cancelled
+  expired
+}
+
+enum Outcome {
+  completed
+  ended_poor_quality
+  needs_in_person
+  no_show
+}
+
+enum BookingFor {
+  self
+  child
+  adult
+}
+
+enum Relationship {
+  child
+  adult
+}
+
+enum CallState {
+  not_started
+  in_progress
+  ended
+}
+
+enum CallEventType {
+  joined
+  left
+  reconnect
+  error
 }
 
 enum Channel {
@@ -21,33 +57,103 @@ enum Channel {
   audio
 }
 
+// Better Auth tables (user, session, account, verification). Field names follow Better Auth 1.7.
+// dateOfBirth is a calendar date kept as "YYYY-MM-DD" text, so no time zone can shift it.
 model User {
-  id           String        @id @default(cuid())
-  firstName    String
-  lastName     String
-  email        String        @unique
-  phone        String
-  dateOfBirth  DateTime      @db.Date
-  passwordHash String
-  role         Role          @default(patient)
-  createdAt    DateTime      @default(now())
-  sessions     Session[]
-  appointments Appointment[]
+  id               String          @id
+  name             String
+  email            String          @unique
+  emailVerified    Boolean         @default(false)
+  image            String?
+  createdAt        DateTime        @default(now())
+  updatedAt        DateTime        @updatedAt
+  firstName        String
+  lastName         String
+  phone            String
+  dateOfBirth      String
+  role             Role            @default(patient)
+  twoFactorEnabled Boolean?        @default(false)
+  twoFactors       TwoFactor[]
+  sessions         Session[]
+  accounts         Account[]
+  appointments     Appointment[]
+  doctor           Doctor?
+  consentRecords   ConsentRecord[]
+  familyMembers    FamilyMember[]
 }
 
 model Session {
-  id        String   @id @default(cuid())
-  tokenHash String   @unique
+  id        String   @id
+  token     String   @unique
+  expiresAt DateTime
+  ipAddress String?
+  userAgent String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
   userId    String
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  expiresAt DateTime
-  createdAt DateTime @default(now())
 
   @@index([userId])
 }
 
+model Account {
+  id                    String    @id
+  accountId             String
+  providerId            String
+  userId                String
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  accessToken           String?
+  refreshToken          String?
+  idToken               String?
+  accessTokenExpiresAt  DateTime?
+  refreshTokenExpiresAt DateTime?
+  scope                 String?
+  password              String?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  @@index([userId])
+}
+
+model Verification {
+  id         String   @id
+  identifier String
+  value      String
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([identifier])
+}
+
+// Better Auth two-factor plugin.
+model TwoFactor {
+  id                      String    @id
+  secret                  String
+  backupCodes             String
+  userId                  String
+  user                    User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  verified                Boolean?  @default(true)
+  failedVerificationCount Int?      @default(0)
+  lockedUntil             DateTime?
+
+  @@index([secret])
+  @@index([userId])
+}
+
+// Emails that would have been sent. Written only in demo mode or development (GET /api/dev/outbox).
+model OutboxMessage {
+  id      String   @id @default(cuid())
+  to      String
+  subject String
+  text    String
+  links   String[]
+  sentAt  DateTime @default(now())
+}
+
 model ServiceGroup {
   id        Int       @id
+  slug      String    @unique
   name      String
   blurb     String
   icon      String
@@ -57,12 +163,13 @@ model ServiceGroup {
 }
 
 model Service {
-  id        Int          @id @default(autoincrement())
-  groupId   Int
-  group     ServiceGroup @relation(fields: [groupId], references: [id], onDelete: Cascade)
-  name      String
-  sortOrder Int
-  doctors   Doctor[]
+  id           Int           @id @default(autoincrement())
+  groupId      Int
+  group        ServiceGroup  @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  name         String
+  sortOrder    Int
+  doctors      Doctor[]
+  appointments Appointment[]
 
   @@unique([groupId, name])
 }
@@ -83,6 +190,9 @@ model Doctor {
   group             ServiceGroup  @relation(fields: [groupId], references: [id])
   serviceId         Int
   service           Service       @relation(fields: [serviceId], references: [id])
+  // The clinician login for this doctor profile, if any.
+  clinicianUserId   String?       @unique
+  clinician         User?         @relation(fields: [clinicianUserId], references: [id], onDelete: SetNull)
   slots             Slot[]
   appointments      Appointment[]
 
@@ -92,37 +202,127 @@ model Doctor {
   @@index([groupId])
 }
 
+// Rolling schedule: generated in Europe/Lisbon wall-clock time, stored in UTC.
 model Slot {
-  id        Int      @id @default(autoincrement())
-  doctorId  Int
-  doctor    Doctor   @relation(fields: [doctorId], references: [id], onDelete: Cascade)
-  label     String
-  day       String
-  time      String
-  startsAt  DateTime
+  id           Int           @id @default(autoincrement())
+  doctorId     Int
+  doctor       Doctor        @relation(fields: [doctorId], references: [id], onDelete: Cascade)
+  startsAt     DateTime
+  endsAt       DateTime
+  appointments Appointment[]
 
-  @@unique([doctorId, label])
-  @@index([doctorId, startsAt])
+  @@unique([doctorId, startsAt])
+  @@index([startsAt])
 }
 
+// Operational data only. No symptoms, reasons, notes or documents: those live in iMED.
+// At most one held or confirmed appointment per slot: partial unique index "Appointment_active_slot_key" (raw SQL in the migration).
 model Appointment {
-  id            String            @id @default(cuid())
-  patientId     String
-  patient       User              @relation(fields: [patientId], references: [id], onDelete: Cascade)
-  doctorId      Int
-  doctor        Doctor            @relation(fields: [doctorId], references: [id])
-  service       String
-  slot          String
-  channel       Channel
-  status        AppointmentStatus @default(confirmed)
-  fee           Int
-  dailyRoomName String?
-  dailyRoomUrl  String?
-  createdAt     DateTime          @default(now())
+  id                 String            @id @default(cuid())
+  status             AppointmentStatus @default(held)
+  outcome            Outcome?
+  forWhom            BookingFor
+  // Null while a hold belongs only to a browser (the carevia_hold cookie).
+  patientId          String?
+  patient            User?             @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  familyMemberId     String?
+  familyMember       FamilyMember?     @relation(fields: [familyMemberId], references: [id], onDelete: Restrict)
+  patientSetAt       DateTime?
+  holdTokenHash      String?
+  holdExpiresAt      DateTime?
+  doctorId           Int
+  doctor             Doctor            @relation(fields: [doctorId], references: [id])
+  serviceId          Int
+  service            Service           @relation(fields: [serviceId], references: [id])
+  slotId             Int
+  slot               Slot              @relation(fields: [slotId], references: [id])
+  startsAt           DateTime
+  endsAt             DateTime
+  channel            Channel
+  fee                Int
+  inMainlandPortugal Boolean
+  preJoinConfirmedAt DateTime?
+  companion          Boolean           @default(false)
+  callState          CallState         @default(not_started)
+  reconnects         Int               @default(0)
+  dailyRoomName      String?
+  dailyRoomUrl       String?
+  cancelledAt        DateTime?
+  createdAt          DateTime          @default(now())
+  updatedAt          DateTime          @updatedAt
+  consents           ConsentRecord[]
+  payment            Payment?
+  callEvents         CallEvent[]
+  accessLogs         AccessLog[]
 
-  @@unique([doctorId, slot])
-  @@index([patientId])
-  @@index([doctorId])
+  @@index([patientId, startsAt])
+  @@index([doctorId, startsAt])
+  @@index([holdTokenHash])
+  @@index([slotId])
+}
+
+model ConsentRecord {
+  id            String      @id @default(cuid())
+  appointmentId String
+  appointment   Appointment @relation(fields: [appointmentId], references: [id], onDelete: Cascade)
+  userId        String
+  user          User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  version       String
+  acceptedAt    DateTime    @default(now())
+
+  @@index([appointmentId])
+}
+
+// Demo payments only (method "demo"). A real provider is backlog.
+model Payment {
+  id            String      @id @default(cuid())
+  appointmentId String      @unique
+  appointment   Appointment @relation(fields: [appointmentId], references: [id], onDelete: Cascade)
+  method        String
+  status        String
+  amount        Int
+  createdAt     DateTime    @default(now())
+}
+
+model FamilyMember {
+  id           String        @id @default(cuid())
+  userId       String
+  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  firstName    String
+  lastName     String
+  dateOfBirth  String
+  relationship Relationship
+  // Deleting a member archives them, so past visits keep their name.
+  archivedAt   DateTime?
+  createdAt    DateTime      @default(now())
+  appointments Appointment[]
+
+  @@index([userId])
+}
+
+model CallEvent {
+  id            String        @id @default(cuid())
+  appointmentId String
+  appointment   Appointment   @relation(fields: [appointmentId], references: [id], onDelete: Cascade)
+  actorRole     String
+  type          CallEventType
+  createdAt     DateTime      @default(now())
+
+  @@index([appointmentId])
+}
+
+// Every admin or clinician read of an appointment.
+model AccessLog {
+  id            String      @id @default(cuid())
+  actorUserId   String
+  actorRole     String
+  appointmentId String
+  appointment   Appointment @relation(fields: [appointmentId], references: [id], onDelete: Cascade)
+  endpoint      String
+  createdAt     DateTime    @default(now())
+
+  @@index([appointmentId])
+  @@index([createdAt])
 }
 
 model DailySettings {
