@@ -7,7 +7,7 @@ import pg from 'pg'
 
 const apiRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
 const databaseDir = path.join(apiRoot, 'data', 'pg')
-const port = 5432
+const port = Number(process.env.PGPORT) || 5432
 
 function portOpen(targetPort) {
   return new Promise((resolve) => {
@@ -45,7 +45,7 @@ async function ensureDatabase() {
 async function main() {
   if (await portOpen(port)) {
     await ensureDatabase()
-    console.log('Postgres is already listening on 127.0.0.1:5432. Leave that process running.')
+    console.log(`Postgres is already listening on 127.0.0.1:${port}. Leave that process running.`)
     return
   }
 
@@ -75,7 +75,7 @@ async function main() {
 
   await postgres.start()
   await ensureDatabase()
-  console.log('Embedded Postgres is listening on 127.0.0.1:5432 (database carevia). Leave this process running.')
+  console.log(`Embedded Postgres is listening on 127.0.0.1:${port} (database carevia). Leave this process running.`)
   await new Promise(() => {})
 }
 
