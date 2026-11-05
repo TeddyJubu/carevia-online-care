@@ -9,6 +9,7 @@ import { Empty, ErrorState, Loading, PageTitle } from '../ui/kit'
 export function Outbox() {
   const demo = useDemo()
   const allowed = (DEMO_BUILD && !!demo) || import.meta.env.DEV
+  if (DEMO_BUILD && demo === undefined && !allowed) return <div className="page-narrow"><Loading /></div>
   if (!allowed) {
     return (
       <div className="page-narrow">
