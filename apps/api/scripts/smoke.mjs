@@ -61,8 +61,9 @@ class Browser {
     }
   }
 
-  async once(path, { method = 'GET', body } = {}) {
-    const headers = { origin }
+  // `origin: null` sends no Origin header; `headers` adds extra ones (e.g. Sec-Fetch-Site).
+  async once(path, { method = 'GET', body, origin: from = origin, headers: extra = {} } = {}) {
+    const headers = { ...(from ? { origin: from } : {}), ...extra }
     if (body !== undefined) headers['content-type'] = 'application/json'
     const cookie = this.cookieHeader()
     if (cookie) headers.cookie = cookie
@@ -465,6 +466,22 @@ async function staffChecks(patient, doctor, admin, { today, childVisit }) {
     [...endpoints].join(' | '))
 }
 
+// CSRF: a cookie-carrying change from a sibling subdomain is refused; the same request from Carevia works.
+async function originChecks(patient, production) {
+  const body = { firstName: 'Demo' }
+  const foreign = await patient.request('/api/me', { method: 'PATCH', body, origin: 'https://evil.claudemod.tech' })
+  const trusted = await patient.request('/api/me', { method: 'PATCH', body })
+  record('a change from a foreign Origin is 403 FORBIDDEN_ORIGIN; the same change from the trusted origin works',
+    is(foreign, 403, 'FORBIDDEN_ORIGIN') && trusted.status === 200, `${show(foreign)} / ${show(trusted)}`)
+  const crossSite = await patient.request('/api/me', { method: 'PATCH', body, origin: null, headers: { 'sec-fetch-site': 'same-site' } })
+  const sameOrigin = await patient.request('/api/me', { method: 'PATCH', body, origin: null, headers: { 'sec-fetch-site': 'same-origin' } })
+  record('without Origin: Sec-Fetch-Site same-site is refused, same-origin works', is(crossSite, 403, 'FORBIDDEN_ORIGIN') && sameOrigin.status === 200,
+    `${show(crossSite)} / ${show(sameOrigin)}`)
+  const bare = await patient.request('/api/me', { method: 'PATCH', body, origin: null })
+  record(`without Origin or Sec-Fetch-Site: ${production ? 'refused in production' : 'allowed outside production'}`,
+    production ? is(bare, 403, 'FORBIDDEN_ORIGIN') : bare.status === 200, show(bare))
+}
+
 async function rateLimitCheck() {
   const browser = new Browser()
   const statuses = []
@@ -503,6 +520,7 @@ try {
     await familyAndProfileChecks(patient, extra)
     const visits = await visitChecks(patient, doctor, admin)
     await staffChecks(patient, doctor, admin, visits)
+    await originChecks(patient, false)
     const outbox = await anon.get('/api/dev/outbox')
     record('dev outbox lists messages newest first', outbox.status === 200 && outbox.json.messages.every((m, i, all) => i === 0 || all[i - 1].sentAt >= m.sentAt))
     await rateLimitCheck()
@@ -528,6 +546,7 @@ try {
     await patient.post(`/api/bookings/${id}/consent`, { version: consent.json.version })
     expectError('payment outside demo mode is 501 PAYMENT_UNAVAILABLE', await patient.post(`/api/bookings/${id}/pay`, { method: 'demo' }), 501, 'PAYMENT_UNAVAILABLE')
     await patient.del(`/api/bookings/${id}`)
+    await originChecks(patient, true)
     const outbox = await anon.get('/api/dev/outbox')
     record(`dev outbox: ${outbox.status === 404 ? 'hidden' : 'shown'} (shown only with NODE_ENV=development)`, [200, 404].includes(outbox.status), String(outbox.status))
     await rateLimitCheck()

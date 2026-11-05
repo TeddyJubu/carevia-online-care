@@ -13,6 +13,8 @@ import { isAdult, normalizePhone } from './rules.js'
 // With an https PUBLIC_APP_URL, Better Auth sets Secure cookies (session cookie "__Secure-carevia.session_token").
 export const PUBLIC_APP_URL = (process.env.PUBLIC_APP_URL || 'http://localhost:5180').replace(/\/$/, '')
 const ADMIN_APP_URL = (process.env.ADMIN_APP_URL || 'http://localhost:5174').replace(/\/$/, '')
+// One list for Better Auth and for the origin check on every other changing route (src/origin.js).
+export const TRUSTED_ORIGINS = [PUBLIC_APP_URL, ADMIN_APP_URL]
 
 function reject(code, message) {
   // Better Auth sends { code, message }. `error` is added so the body also matches the contract's error shape.
@@ -37,7 +39,7 @@ export const auth = betterAuth({
   baseURL: PUBLIC_APP_URL,
   basePath: '/api/auth',
   secret: process.env.BETTER_AUTH_SECRET,
-  trustedOrigins: [PUBLIC_APP_URL, ADMIN_APP_URL],
+  trustedOrigins: TRUSTED_ORIGINS,
   database: prismaAdapter(prisma, { provider: 'postgresql' }),
   emailAndPassword: {
     enabled: true,

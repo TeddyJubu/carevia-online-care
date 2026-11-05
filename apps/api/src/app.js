@@ -1,7 +1,8 @@
 import Fastify from 'fastify'
 import fastifyCookie from '@fastify/cookie'
-import { authRoutes } from './auth.js'
+import { TRUSTED_ORIGINS, authRoutes } from './auth.js'
 import { OUTBOX_ENABLED } from './config.js'
+import { originProblem } from './origin.js'
 import { prisma } from './prisma.js'
 import { appointmentRoutes } from './routes/appointments.js'
 import { bookingRoutes } from './routes/bookings.js'
@@ -61,6 +62,23 @@ export async function buildApp({ timers = true } = {}) {
     const prismaError = String(error?.name || '').startsWith('PrismaClient')
     request.log.error({ errName: error?.name, errCode: error?.code, ...(prismaError ? {} : { errMessage: error?.message }) }, 'request failed')
     return reply.code(500).send({ error: 'INTERNAL', message: 'Something went wrong.' })
+  })
+
+  // CSRF: data-changing requests must come from a trusted origin (see src/origin.js).
+  const production = process.env.NODE_ENV === 'production'
+  app.addHook('onRequest', async (request, reply) => {
+    const problem = originProblem({
+      method: request.method,
+      path: request.url.split('?')[0],
+      origin: request.headers.origin,
+      secFetchSite: request.headers['sec-fetch-site'],
+      production,
+      trusted: TRUSTED_ORIGINS,
+    })
+    if (problem) {
+      request.log.warn({ problem }, 'request refused by the origin check')
+      return reply.code(403).send({ error: 'FORBIDDEN_ORIGIN', message: 'This request did not come from Carevia.' })
+    }
   })
 
   app.setNotFoundHandler((_request, reply) => reply.code(404).send({ error: 'NOT_FOUND', message: 'Not found.' }))
