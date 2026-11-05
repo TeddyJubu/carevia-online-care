@@ -29,10 +29,10 @@ async function main() {
       sortOrder: id,
     })),
   })
+  // Stable ids 1-55 in catalog order, so links to a service survive a reseed.
   await prisma.service.createMany({
-    data: GROUPS.flatMap((group, groupId) =>
-      group.services.map((name, sortOrder) => ({ groupId, name, sortOrder })),
-    ),
+    data: GROUPS.flatMap((group, groupId) => group.services.map((name, sortOrder) => ({ groupId, name, sortOrder })))
+      .map((service, index) => ({ id: index + 1, ...service })),
   })
 
   const services = await prisma.service.findMany()

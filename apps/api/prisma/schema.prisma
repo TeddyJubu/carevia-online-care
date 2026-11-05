@@ -292,6 +292,8 @@ model FamilyMember {
   lastName     String
   dateOfBirth  String
   relationship Relationship
+  // Deleting a member archives them, so past visits keep their name.
+  archivedAt   DateTime?
   createdAt    DateTime      @default(now())
   appointments Appointment[]
 

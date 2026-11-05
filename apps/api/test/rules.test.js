@@ -52,3 +52,10 @@ test('normalizePhone accepts E.164 with spacing and rejects the rest', () => {
     assert.equal(normalizePhone(value), null, String(value))
   }
 })
+
+test('parseFrontMatter reads flat keys and ignores comments', async () => {
+  const { parseFrontMatter } = await import('../src/content.js')
+  const parsed = parseFrontMatter('---\nid: consent            # comment\nversion: 2026-11-05.1\ntitle: "Before your consultation"\n---\n\nBody text\n')
+  assert.deepEqual(parsed.data, { id: 'consent', version: '2026-11-05.1', title: 'Before your consultation' })
+  assert.equal(parsed.body, 'Body text')
+})
