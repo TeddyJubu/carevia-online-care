@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
-import { isAdult, isMinor, lisbonToday, normalizePhone, parseDate } from '../src/rules.js'
+import { canReschedule, isAdult, isMinor, lisbonToday, normalizePhone, parseDate } from '../src/rules.js'
 
 test('isAdult: the 18th birthday counts', () => {
   assert.equal(isAdult('2008-11-05', '2026-11-05'), true)
@@ -67,4 +67,18 @@ test('patientBody drops only the leading draft-for-review note', async () => {
   assert.equal(data.version, '2026-11-05.1')
   assert.equal(patientBody(body), 'Please read this.\n\n> A later quote stays.')
   assert.equal(patientBody('No note here.'), 'No note here.')
+})
+
+test('canReschedule: before the start, or after a dropped call once the join window has closed', () => {
+  const startsAt = new Date('2026-11-10T10:00:00.000Z')
+  const endsAt = new Date('2026-11-10T10:30:00.000Z')
+  const visit = (more = {}) => ({ status: 'confirmed', outcome: null, startsAt, endsAt, ...more })
+  const at = (iso) => new Date(iso)
+  assert.equal(canReschedule(visit(), at('2026-11-10T09:59:00.000Z')), true) // not started (even inside the join window)
+  assert.equal(canReschedule(visit(), at('2026-11-10T10:00:00.000Z')), false) // started
+  assert.equal(canReschedule(visit({ outcome: 'ended_poor_quality' }), at('2026-11-10T11:00:00.000Z')), false) // window still open: reconnect instead
+  assert.equal(canReschedule(visit({ outcome: 'ended_poor_quality' }), at('2026-11-10T11:30:00.000Z')), true) // window closed
+  assert.equal(canReschedule(visit({ outcome: null }), at('2026-11-10T12:00:00.000Z')), false) // no dropped call recorded
+  assert.equal(canReschedule(visit({ status: 'completed', outcome: 'completed' }), at('2026-11-09T10:00:00.000Z')), false)
+  assert.equal(canReschedule(visit({ status: 'cancelled' }), at('2026-11-09T10:00:00.000Z')), false)
 })
