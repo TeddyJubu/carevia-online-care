@@ -1,0 +1,103 @@
+import { useEffect, type ReactNode } from 'react'
+import { Link, Navigate, Outlet, useLocation } from 'react-router'
+import { MOCK } from '../lib/api'
+import { content } from '../lib/content'
+import { useDemo } from '../lib/demo'
+import { useSession } from '../lib/session'
+import type { Role } from '../lib/types'
+import { Loading } from './kit'
+
+// The homepage (Design 04.5) lives at the site root, outside /app/.
+const HOME = '/'
+
+export function Header() {
+  const { user } = useSession()
+  const account = user?.role === 'clinician' ? '/doctor' : '/account'
+  return (
+    <header className="app-header on-navy">
+      <div className="app-header-inner">
+        <a href={HOME} className="brand" aria-label="Carevia home">
+          <img src="/app/brand/carevia-mark.png" alt="" width={34} height={34} />
+          <span>Carevia</span>
+        </a>
+        <span className="flex-1" />
+        <a href="tel:112" className="call-112"><span className="hidden sm:inline">Emergency?&nbsp;</span>Call 112</a>
+        {user
+          ? <Link to={account} className="nav-pill glass">{user.role === 'clinician' ? 'Your agenda' : 'Your account'}</Link>
+          : <Link to="/signin" className="nav-pill glass">Sign in</Link>}
+      </div>
+    </header>
+  )
+}
+
+export function Footer() {
+  return (
+    <footer className="app-footer on-navy">
+      <div className="mx-auto grid w-[min(1200px,calc(100%-32px))] gap-10 md:grid-cols-3">
+        <div>
+          <p className="text-[22px] font-semibold tracking-[-0.04em]">Carevia</p>
+          <p className="mt-3 text-sm text-[#c0d2e7]">Online doctor consultations for patients in mainland Portugal.</p>
+        </div>
+        <div className="text-sm">
+          <p className="eyebrow mb-3">Emergencies</p>
+          <p className="text-[#c0d2e7]">Not an emergency service. In an emergency, call <a href="tel:112" className="link text-white">112</a>.</p>
+        </div>
+        <nav aria-label="Footer" className="text-sm">
+          <p className="eyebrow mb-1">Carevia</p>
+          <ul className="grid">
+            <li><a href={HOME} className="inline-flex min-h-11 items-center">Homepage</a></li>
+            <li><Link to="/book" className="inline-flex min-h-11 items-center">Book a visit</Link></li>
+            <li><Link to="/account" className="inline-flex min-h-11 items-center">Your account</Link></li>
+          </ul>
+        </nav>
+      </div>
+      <p className="footer-wordmark" aria-hidden="true">CAREVIA</p>
+    </footer>
+  )
+}
+
+function DemoBar() {
+  const demo = useDemo()
+  if (!demo && !MOCK) return null
+  return (
+    <p className="demo-bar" role="note">
+      <strong className="font-medium">{content('demo-banner').body.split('.')[0]}.</strong>{' '}
+      {MOCK ? 'Mock API: data lives in this tab only.' : 'Nothing here is real: doctors, patients and payments are fictional.'}
+      {demo && <> <Link to="/dev/outbox" className="link ml-1">Outbox</Link></>}
+    </p>
+  )
+}
+
+export function Layout() {
+  const { pathname } = useLocation()
+  useEffect(() => { window.scrollTo(0, 0) }, [pathname])
+  return (
+    <>
+      <a href="#main" className="skip">Skip to content</a>
+      <DemoBar />
+      <Header />
+      <main id="main">
+        <Outlet />
+      </main>
+      <Footer />
+    </>
+  )
+}
+
+/** Sends visitors without the right role to sign in, then back here. */
+export function RequireRole({ role, children }: { role: Role; children: ReactNode }) {
+  const { user, loading } = useSession()
+  const { pathname, search } = useLocation()
+  if (loading) return <div className="page-narrow"><Loading label="Checking your session" /></div>
+  if (!user) return <Navigate to={`/signin?next=${encodeURIComponent(pathname + search)}`} replace />
+  if (user.role !== role) {
+    return (
+      <div className="page-narrow">
+        <h1>This page is for {role === 'clinician' ? 'doctors' : 'patients'}</h1>
+        <p className="lede mt-4">You’re signed in as {user.email}. Sign out and sign in with the right account.</p>
+        <Link to={user.role === 'clinician' ? '/doctor' : '/account'} className="btn btn-primary mt-6">Go to your {user.role === 'clinician' ? 'agenda' : 'account'}</Link>
+      </div>
+    )
+  }
+  return <>{children}</>
+}

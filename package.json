@@ -4,7 +4,8 @@
   "workspaces": [
     "apps/api",
     "apps/portal",
-    "apps/admin"
+    "apps/admin",
+    "apps/web"
   ],
   "scripts": {
     "db": "npm --prefix apps/api run db",
