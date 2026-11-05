@@ -28,3 +28,37 @@ footer{background:var(--ink);color:#fff;padding-top:160px;overflow:hidden}.foote
 /* Keep the growing design list within narrow footer columns. */
 .footer-designs{flex-wrap:wrap}
 .design-dropdown{max-height:calc(100svh - 95px);overflow-y:auto}
+
+/* All-care folders (scripts/folder-float.js, a port of React Bits' FolderFloat). Each area is a folder;
+   opening it tips the front flap and floats that area's services up out of it with a springy stagger. */
+.care-folders{display:grid;grid-template-columns:repeat(3,1fr);gap:26px 18px;margin-top:30px}
+.folder-float{--ff-h:118px;--ff-r:12px;--ff-tab:12px;--ff-back:#c4d8ec;--ff-front:#dce9f6;--ff-open:520ms;--ff-close:312ms;--ff-stagger:35ms;--ff-spring:cubic-bezier(.34,1.57,.64,1);--ff-ease-out:cubic-bezier(.23,1,.32,1);position:relative;padding-top:var(--ff-tab);line-height:1}
+.folder-float[data-open]{z-index:5}
+/* While a folder is open, everything else steps back so its services read clearly over the heading. */
+#dialog-content>*,.folder-float{transition:opacity .3s ease}
+#dialog-content:has(.folder-float[data-open])>:not(.care-folders),.care-folders:has([data-open]) .folder-float:not([data-open]){opacity:.15}
+.folder-float__folder{position:relative;height:var(--ff-h)}
+.folder-float__back{position:absolute;inset:0;border-radius:var(--ff-r);background:var(--ff-back);transform:perspective(600px) rotateX(8deg);transform-origin:50% 100%}
+.folder-float__back:before{content:'';position:absolute;top:calc(-1*var(--ff-tab));left:0;width:42%;height:calc(var(--ff-tab) + var(--ff-r));border-radius:var(--ff-r) var(--ff-r) 0 0;background:inherit}
+.folder-float__paper{position:absolute;top:10%;right:8%;left:8%;z-index:1;height:50%;border-radius:6px;background:#fff;opacity:0;transform:translateY(10px);transition:transform var(--ff-close) var(--ff-ease-out),opacity var(--ff-close) ease}
+.folder-float__front{position:absolute;inset:auto 0 0;z-index:2;display:flex;flex-direction:column;justify-content:flex-end;gap:7px;height:76%;padding:13px 14px;box-sizing:border-box;border-radius:var(--ff-r);background:linear-gradient(180deg,color-mix(in srgb,var(--ff-front) 55%,#fff),var(--ff-front) 60%);color:var(--ink);box-shadow:0 -8px 20px #102d5014,inset 0 1px #ffffffb3;transform:perspective(600px) rotateX(-16deg);transform-origin:50% 100%;transition:transform var(--ff-open) var(--ff-ease-out)}
+.folder-float__label{font-size:15px;line-height:1.15}
+.folder-float__sub{font-size:11px;color:var(--muted)}
+.folder-float__trigger{position:absolute;inset:auto 0 0;z-index:3;height:76%;border-radius:var(--ff-r);background:transparent;cursor:pointer}
+.folder-float__trigger:focus-visible{outline:2px solid var(--ink);outline-offset:3px}
+.folder-float:not([data-open]):has(.folder-float__trigger:hover) .folder-float__front{transform:perspective(600px) rotateX(-22deg)}
+.folder-float[data-open] .folder-float__front{transform:perspective(600px) rotateX(-34deg)}
+.folder-float[data-open] .folder-float__paper{opacity:1;transform:none;transition:transform var(--ff-open) var(--ff-ease-out),opacity .2s ease}
+.folder-float__items{position:absolute;top:var(--ff-tab);left:50%;z-index:1;width:0;height:0}
+.folder-float__item{position:absolute;top:0;left:50%;height:32px;padding:0 13px;border:1px solid #102d5014;border-radius:16px;background:#fff;color:var(--ink);font-size:13px;white-space:nowrap;box-shadow:0 4px 12px #102d5024;cursor:pointer;opacity:0;transform:translate(-50%,44px) scale(.6);pointer-events:none;transition:transform var(--ff-close) var(--ff-ease-out) calc((var(--ff-n) - 1 - var(--i))*var(--ff-stagger)*.5),opacity .16s ease calc((var(--ff-n) - 1 - var(--i))*var(--ff-stagger)*.5 + var(--ff-close)*.45),scale .16s var(--ff-ease-out)}
+.folder-float[data-open] .folder-float__item{opacity:1;transform:translate(calc(-50% + var(--x)),var(--y)) rotate(var(--r)) scale(1);pointer-events:auto;transition:transform var(--ff-open) var(--ff-spring) calc(var(--i)*var(--ff-stagger)),opacity .16s ease calc(var(--i)*var(--ff-stagger)),scale .16s var(--ff-ease-out)}
+@media(hover:hover) and (pointer:fine){.folder-float[data-open] .folder-float__item:hover{scale:1.05;background:#f3f7fb}}
+.folder-float[data-open] .folder-float__item:active{scale:.97}
+.folder-float__item:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
+.folder-float__item[data-pop]{animation:folder-float-pop .32s var(--ff-ease-out)}
+.folder-float__drift{display:block;animation:folder-float-drift 3.2s ease-in-out infinite;animation-delay:calc(var(--i)*-.7s);animation-play-state:paused}
+.folder-float[data-open] .folder-float__drift{animation-play-state:running}
+@keyframes folder-float-drift{0%,to{translate:0 0}50%{translate:0 -3px}}
+@keyframes folder-float-pop{30%{scale:1.1}to{scale:1}}
+@media(max-width:600px){.care-folders{grid-template-columns:repeat(2,1fr);gap:22px 12px}.folder-float{--ff-h:104px}.folder-float__label{font-size:14px}}
+@media(prefers-reduced-motion:reduce){.folder-float__front,.folder-float__paper{transition:opacity .2s ease}.folder-float[data-open] .folder-float__front{transform:perspective(600px) rotateX(-16deg)}.folder-float__paper{transform:none!important}.folder-float__item{transition:opacity .2s ease}.folder-float[data-open] .folder-float__item{transition:opacity .2s ease calc(var(--i)*var(--ff-stagger))}.folder-float__drift{animation:none}}
