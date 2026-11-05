@@ -59,3 +59,12 @@ test('parseFrontMatter reads flat keys and ignores comments', async () => {
   assert.deepEqual(parsed.data, { id: 'consent', version: '2026-11-05.1', title: 'Before your consultation' })
   assert.equal(parsed.body, 'Body text')
 })
+
+test('patientBody drops only the leading draft-for-review note', async () => {
+  const { parseFrontMatter, patientBody } = await import('../src/content.js')
+  const file = "---\nid: consent\nversion: 2026-11-05.1\n---\n\n> Draft for review by Carevia's lawyer. Not final wording.\n\nPlease read this.\n\n> A later quote stays.\n"
+  const { data, body } = parseFrontMatter(file)
+  assert.equal(data.version, '2026-11-05.1')
+  assert.equal(patientBody(body), 'Please read this.\n\n> A later quote stays.')
+  assert.equal(patientBody('No note here.'), 'No note here.')
+})

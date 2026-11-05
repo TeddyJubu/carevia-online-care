@@ -19,9 +19,14 @@ export function parseFrontMatter(text) {
   return { data, body: match[2].trim() }
 }
 
+/** Drops the leading "> Draft for review…" note: it is for reviewers, not patients. Later quotes are kept. */
+export function patientBody(body) {
+  return body.replace(/^> Draft for review[^\n]*(\r?\n)*/, '').trim()
+}
+
 /** Read on every call, so an edited consent.md takes effect without a restart. */
 export function currentConsent() {
   const file = fs.existsSync(REAL) ? REAL : PLACEHOLDER
   const { data, body } = parseFrontMatter(fs.readFileSync(file, 'utf8'))
-  return { version: data.version, title: data.title, body, recordingOffered: false }
+  return { version: data.version, title: data.title, body: patientBody(body), recordingOffered: false }
 }

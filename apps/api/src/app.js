@@ -43,6 +43,8 @@ export async function buildApp({ timers = true } = {}) {
   const app = Fastify({
     trustProxy: process.env.TRUST_PROXY === 'true',
     logger: loggerOptions(),
+    // Reject unknown fields instead of silently dropping them (Fastify's default), e.g. a free-text outcome reason.
+    ajv: { customOptions: { removeAdditional: false } },
   })
 
   // No CORS: the web and admin apps proxy /api, so every request is same-origin.

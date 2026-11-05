@@ -9,9 +9,10 @@ import { sendMail } from './mail.js'
 import { prisma } from './prisma.js'
 import { isAdult, normalizePhone } from './rules.js'
 
+// The public origins come from the environment; the localhost values are local-development defaults only.
+// With an https PUBLIC_APP_URL, Better Auth sets Secure cookies (session cookie "__Secure-carevia.session_token").
 export const PUBLIC_APP_URL = (process.env.PUBLIC_APP_URL || 'http://localhost:5180').replace(/\/$/, '')
 const ADMIN_APP_URL = (process.env.ADMIN_APP_URL || 'http://localhost:5174').replace(/\/$/, '')
-export const SESSION_COOKIE = 'carevia.session_token'
 
 function reject(code, message) {
   // Better Auth sends { code, message }. `error` is added so the body also matches the contract's error shape.
