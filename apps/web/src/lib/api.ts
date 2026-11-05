@@ -18,12 +18,15 @@ const AUTH_MESSAGES: Record<string, string> = {
   PASSWORD_COMPROMISED: 'This password has appeared in a data breach. Choose a different one.',
   INVALID_EMAIL_OR_PASSWORD: 'That email and password don’t match. Check them and try again.',
   USER_ALREADY_EXISTS: 'There’s already an account with this email. Sign in instead.',
+  USER_ALREADY_EXISTS_USE_ANOTHER_EMAIL: 'There’s already an account with this email. Sign in instead.',
   UNDERAGE: 'You need to be 18 or over to create an account. A parent or guardian can book for a child.',
   INVALID_TWO_FACTOR_CODE: 'That code didn’t work. Check your authenticator app and try again.',
   INVALID_CODE: 'That code didn’t work. Check your authenticator app and try again.',
   INVALID_PASSWORD: 'That password is not right.',
   PASSWORD_TOO_SHORT: 'Use at least 8 characters.',
   TOO_MANY_REQUESTS: 'Too many attempts. Wait a minute, then try again.',
+  HTTP_429: 'Too many attempts. Wait a minute, then try again.', // Better Auth's rate limiter sends no code
+  TWO_FACTOR_REQUIRED: 'Doctor and admin accounts need two-factor sign-in. Turn it on, then try again.',
 }
 
 export async function request<T>(method: string, path: string, body?: unknown): Promise<T> {

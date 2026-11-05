@@ -9,9 +9,10 @@ export default defineConfig({
   server: {
     port: 5180,
     strictPort: true,
-    proxy: { '/api': process.env.API_URL ?? 'http://localhost:4001' },
+    // 127.0.0.1, not localhost: the API binds IPv4 only. Open the app at http://localhost:5180 (the API's trusted origin).
+    proxy: { '/api': process.env.API_URL ?? 'http://127.0.0.1:4001' },
     // Content files live in ../../content (owned by the content thread).
     fs: { allow: ['../..'] },
   },
-  preview: { port: 5180, strictPort: true, proxy: { '/api': process.env.API_URL ?? 'http://localhost:4001' } },
+  preview: { port: 5180, strictPort: true, proxy: { '/api': process.env.API_URL ?? 'http://127.0.0.1:4001' } },
 })

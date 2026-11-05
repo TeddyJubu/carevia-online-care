@@ -99,7 +99,8 @@ export function DoctorVisit() {
   if (!load.data) return <div className="page"><Loading label="Loading the visit" /></div>
   const a = load.data
   const phase = phaseOf(a, now)
-  const canRecord = a.status === 'confirmed' || a.status === 'completed'
+  // The API accepts an outcome while the visit is confirmed and the room has opened.
+  const canRecord = a.status === 'confirmed' && phase !== 'before'
 
   async function record() {
     if (!confirm) return

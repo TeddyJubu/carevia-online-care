@@ -91,6 +91,10 @@ function CallError({ error, who, appointmentId, onRetry }: { error: ApiError; wh
     return <div className="card"><h2>It’s a little early</h2><p className="muted mt-2">{error.message}</p><Link to={who === 'patient' ? `/visits/${appointmentId}/waiting` : '/doctor'} className="btn btn-primary mt-4">{who === 'patient' ? 'Go to the waiting room' : 'Back to your agenda'}</Link></div>
   if (error.code === 'WINDOW_CLOSED')
     return <div className="card"><h2>The time to join has passed</h2><p className="muted mt-2">Your appointment isn’t lost. {who === 'patient' ? 'See what happens next.' : 'Record the outcome below.'}</p>{who === 'patient' && <Link to={`/visits/${appointmentId}/done`} className="btn btn-primary mt-4">What happens next</Link>}</div>
+  if (error.code === 'NOT_CONFIRMED')
+    return <div className="card"><h2>This visit isn’t open for a call</h2><p className="muted mt-2">{error.message}</p><Link to={back} className="btn btn-primary mt-4">Back</Link></div>
+  if (error.code === 'DAILY_ERROR')
+    return <div><ErrorState error={{ message: 'The video service didn’t respond. Your appointment is kept. Try again in a moment.' }} onRetry={onRetry} title="We couldn’t start the video" /></div>
   if (error.code === 'PRE_JOIN_REQUIRED')
     return <div className="card"><h2>Confirm it’s you first</h2><p className="muted mt-2">{error.message}</p><Link to={`/visits/${appointmentId}/join`} className="btn btn-primary mt-4">Confirm your details</Link></div>
   return <div><ErrorState error={error} onRetry={onRetry} title="We couldn’t start the call" /><Link to={back} className="link mt-4 inline-flex min-h-11 items-center">Back</Link></div>

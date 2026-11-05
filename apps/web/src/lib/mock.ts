@@ -311,8 +311,10 @@ on('POST', '/api/bookings/([^/]+)/claim', (m) => {
   const u = needRole('patient'); if (isRes(u)) return u
   const a = db().appts.find((x) => x.id === m[1])
   if (!a || (a.holdOwner !== BROWSER && a.userId !== u.id)) return err(404, 'NOT_FOUND', 'We couldn’t find that booking.')
+  if (a.status === 'confirmed') return err(409, 'NOT_HELD', 'This booking is already confirmed.')
   if (a.status !== 'held') return err(410, 'HOLD_EXPIRED', 'Your 10-minute hold has ended, so the time was released. Please choose a time again.')
   a.userId = u.id
+  if (a.for === 'self') a.patientSet = true // as the API does
   return ok({ appointment: view(a) })
 })
 on('PUT', '/api/bookings/([^/]+)/patient', (m, b) => {
@@ -460,7 +462,8 @@ on('POST', '/api/clinician/appointments/([^/]+)/outcome', (m, b) => {
   const u = needRole('clinician'); if (isRes(u)) return u
   const a = ownAppt(u, m[1]); if (isRes(a)) return a
   if (!['completed', 'ended_poor_quality', 'needs_in_person', 'no_show'].includes(b.outcome)) return err(400, 'VALIDATION', 'Choose an outcome.')
-  if (a.status !== 'confirmed' && a.status !== 'completed') return err(409, 'NOT_CONFIRMED', 'This visit is not open.')
+  if (a.status !== 'confirmed') return err(409, 'NOT_CONFIRMED', 'This visit is not open.')
+  if (Date.now() < windowOf(a).opens) return err(425, 'TOO_EARLY', 'You can record an outcome once the visit has opened.')
   a.outcome = b.outcome
   a.status = b.outcome === 'ended_poor_quality' ? 'confirmed' : 'completed'
   if (a.status === 'completed') a.callState = 'ended'

@@ -122,7 +122,7 @@ export function SignUpForm({ onDone, submitLabel = 'Create account' }: { onDone:
         // Field-level codes go next to their field; everything else shows above the button.
         if (err instanceof ApiError && err.code === 'PASSWORD_COMPROMISED') return setErrors({ password: err.message })
         if (err instanceof ApiError && err.code === 'UNDERAGE') return setErrors({ dateOfBirth: err.message })
-        if (err instanceof ApiError && err.code === 'USER_ALREADY_EXISTS') return setErrors({ email: err.message })
+        if (err instanceof ApiError && err.code.startsWith('USER_ALREADY_EXISTS')) return setErrors({ email: err.message })
         throw err
       }
       const u = await refresh()

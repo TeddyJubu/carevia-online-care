@@ -21,7 +21,8 @@ export function Outbox() {
 }
 
 function MailLink({ href }: { href: string }) {
-  // Links inside the app become router links; anything else opens as a normal link.
+  // Links inside the app become router links; anything else opens as a normal link. The API sends absolute URLs.
+  if (href.startsWith(location.origin + '/')) href = href.slice(location.origin.length)
   if (href.startsWith('/app/') || href === '/app') {
     const to = href.slice(4) || '/'
     return <Link to={to} className="link break-all inline-flex min-h-11 items-center">{href}</Link>

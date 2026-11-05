@@ -60,8 +60,14 @@ export function BookingLayout() {
   const service = group?.services.find((s) => s.id === draft.serviceId)
 
   const continueSignedIn = useCallback(async (held: Appointment) => {
-    let a = (await api.claim(held.id)).appointment
-    if (a.status === 'confirmed') return navigate(`/visits/${a.id}`)
+    let a: Appointment
+    try {
+      a = (await api.claim(held.id)).appointment
+    } catch (e) {
+      // Already paid (for example a second tab): go to the visit instead of booking again.
+      if ((e as ApiError).code === 'NOT_HELD') return navigate(`/visits/${held.id}`)
+      throw e
+    }
     if ((a.for ?? draft.for) === 'self' && !a.patient) a = (await api.setPatient(a.id, null)).appointment
     setAppt(a)
     navigate(nextStep(a, true))
