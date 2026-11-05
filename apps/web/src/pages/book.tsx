@@ -193,18 +193,17 @@ export function BookService() {
   const [type, setType] = useState<'video' | 'audio'>('video')
   const [error, setError] = useState<string | null>(null)
 
-  // Every service, one sideways-scrolling row per area. The area picked first leads; the order is fixed from then on,
-  // so choosing a service in another row doesn't reshuffle the rows under the patient's finger.
-  const lead = useRef<GroupSlug | undefined>(undefined)
-  if (!group) lead.current = undefined
-  else lead.current ??= group.slug
-  const rows = [...groups].sort((a, b) => Number(b.slug === lead.current) - Number(a.slug === lead.current))
-  // Doctors and prices are per area, so a service from another area moves the booking there and drops anything
-  // tied to the old area (a chosen doctor, a held time).
-  const pick = (g: ServiceGroup, serviceId: number) => {
+  // Two rows: areas of care, then the services in the chosen area. Doctors and prices are per area, so another area
+  // starts on its first service and drops anything tied to the old one (a chosen doctor, a held time).
+  const pickArea = (g: ServiceGroup) => {
     setError(null)
-    update(g.slug === draft.groupSlug ? { serviceId } : { groupSlug: g.slug, serviceId, doctorId: undefined, appointmentId: undefined, held: undefined })
+    if (g.slug !== draft.groupSlug) update({ groupSlug: g.slug, serviceId: g.services[0]?.id, doctorId: undefined, appointmentId: undefined, held: undefined })
   }
+  // Long area rows scroll; bring the chosen area into view once, when the step opens.
+  const areaRow = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    areaRow.current?.querySelector('label:has(input:checked)')?.scrollIntoView({ block: 'nearest', inline: 'nearest' })
+  }, [Boolean(group)]) // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <form noValidate onSubmit={(e) => {
@@ -234,27 +233,33 @@ export function BookService() {
           {/* min-w-0: a fieldset otherwise grows to its widest row and the whole page scrolls sideways. */}
           <fieldset className="mt-8 min-w-0">
             <legend className="text-[20px] font-medium">Which fits best?</legend>
-            <p className="fine mt-1">Everything we offer, by area. Scroll each row sideways for more. Not sure? Pick the closest. Your doctor will guide you.</p>
+            <p className="fine mt-1">Choose an area, then the closest match. Not sure? Your doctor will guide you.</p>
             {/* These services are named after documents; booking one must not read as a promise of it (PLAN.md). */}
             {(group.slug === 'certificates' || group.slug === 'renewals') && (
               <Notice className="mt-3"><span>Your doctor decides, after assessing you, whether anything needs to be issued. Booking a visit doesn’t guarantee a certificate, a test request or a renewal. Anything issued comes through iMED.</span></Notice>
             )}
-            <div className="mt-5 grid grid-cols-[minmax(0,1fr)] gap-5">
-              {rows.map((g) => (
-                <div key={g.id} role="group" aria-labelledby={`area-${g.slug}`}>
-                  <p id={`area-${g.slug}`} className="text-sm font-medium">
-                    {g.name}<span className="fine font-normal"> · from {euro(g.fromFee)}</span>
-                  </p>
-                  <div className="service-row mt-2">
-                    {g.services.map((s) => (
-                      <label key={s.id} className="choice service-pill">
-                        <input type="radio" name="service" checked={draft.serviceId === s.id} onChange={() => pick(g, s.id)} />
-                        <span>{s.name}</span>
-                      </label>
-                    ))}
-                  </div>
-                </div>
-              ))}
+            <div role="radiogroup" aria-labelledby="area-label" className="mt-5">
+              <p id="area-label" className="text-sm font-medium">Area of care</p>
+              <div ref={areaRow} className="service-row mt-2">
+                {groups.map((g) => (
+                  <label key={g.id} className="choice service-pill">
+                    <input type="radio" name="area" checked={g.slug === group.slug} onChange={() => pickArea(g)} />
+                    <span>{g.name}</span>
+                  </label>
+                ))}
+              </div>
+            </div>
+            <div role="radiogroup" aria-labelledby="service-label" className="mt-5">
+              <p id="service-label" className="text-sm font-medium">{group.name}<span className="fine font-normal"> · from {euro(group.fromFee)}</span></p>
+              {/* key: a new area replaces the row, so its pills animate in. */}
+              <div key={group.slug} className="service-row service-row-in mt-2">
+                {group.services.map((s, i) => (
+                  <label key={s.id} className="choice service-pill" style={{ animationDelay: `${i * 35}ms` }}>
+                    <input type="radio" name="service" checked={draft.serviceId === s.id} onChange={() => { setError(null); update({ serviceId: s.id }) }} />
+                    <span>{s.name}</span>
+                  </label>
+                ))}
+              </div>
             </div>
           </fieldset>
 

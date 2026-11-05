@@ -51,14 +51,14 @@ await shot('j1-unknown-service')
 
 // 2. Back and forward through booking, then a refresh on every step.
 await p.goto(base + '/app/book?service=general')
-await p.getByRole('group', { name: /^General & urgent care/ }).getByRole('radio', { name: 'Allergies' }).check()
+await p.getByRole('radio', { name: 'Allergies', exact: true }).check()
 await p.getByRole('button', { name: 'Continue' }).click(); await p.waitForURL(/book\/who/)
 await p.getByRole('radio', { name: /^Me / }).check(); await p.getByLabel('Yes, I’ll be in mainland Portugal').check()
 await p.getByRole('button', { name: 'Continue' }).click(); await p.waitForURL(/book\/time/)
 await p.goBack(); await p.waitForURL(/book\/who/)
 check(await p.getByRole('radio', { name: /^Me / }).isChecked(), 'Back to J2 keeps "Me" checked')
 await p.goBack(); await p.waitForURL(/\/book(\?|$)/)
-check(await p.getByRole('group', { name: /^General & urgent care/ }).getByRole('radio', { name: 'Allergies' }).isChecked(), 'Back to J1 keeps the chosen service', path())
+check(await p.getByRole('radio', { name: 'Allergies', exact: true }).isChecked(), 'Back to J1 keeps the chosen service', path())
 await p.goForward(); await p.goForward(); await p.waitForURL(/book\/time/)
 check((await h1()) === 'Doctor and time', 'Forward twice returns to J3', await h1())
 // The third time, not the first: a demo reset books the patient a visit ~15 minutes from now, and the earliest

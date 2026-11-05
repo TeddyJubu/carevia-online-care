@@ -139,12 +139,16 @@
   .choice:has(input:focus-visible) { outline: 2px solid var(--focus); outline-offset: 3px; }
   .choice:has(input:disabled) { opacity: 0.6; cursor: not-allowed; }
   .choice input { margin: 3px 0 0; width: 18px; height: 18px; accent-color: var(--color-ink); flex: none; }
-  /* Booking: every service, one sideways row per area. The 4px inset keeps the focus ring inside the scroller; on phones
+  /* Booking: the area row and the services row, each scrolling sideways. The 4px inset keeps the focus ring inside the scroller; on phones
      the row runs to the screen edges so the cut-off pill shows there is more. */
   .service-row { display: flex; gap: 8px; overflow-x: auto; scroll-snap-type: x proximity; scroll-padding-inline: 4px; padding: 4px 4px 10px; margin: -4px -4px 0; overscroll-behavior-x: contain; scrollbar-width: thin; scrollbar-color: #102d5033 transparent; }
   .service-pill { flex: none; align-items: center; min-height: 48px; padding: 11px 16px; white-space: nowrap; scroll-snap-align: start; }
   .service-pill input { margin: 0; }
   @media (max-width: 639px) { .service-row { margin-inline: -16px; padding-inline: 16px; scroll-padding-inline: 16px; } }
+  /* A new area's services rise in one after another (delays set inline); reduced motion shows them at once. */
+  .service-row-in > .service-pill { animation: pill-in 0.45s cubic-bezier(0.22, 1, 0.36, 1) both; }
+  @keyframes pill-in { from { opacity: 0; translate: 0 8px; } }
+  @media (prefers-reduced-motion: reduce) { .service-row-in > .service-pill { animation: none; } }
   .check { display: flex; gap: 12px; align-items: flex-start; min-height: 44px; padding-block: 10px; cursor: pointer; }
   .check input { margin: 2px 0 0; width: 20px; height: 20px; accent-color: var(--color-ink); flex: none; }
 
