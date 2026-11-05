@@ -10,8 +10,11 @@ Plan and rules: `docs/patient-journey/PLAN.md`. Endpoints: `docs/patient-journey
 | `npm run build` | Typecheck and production build to `dist/`. No mock, no demo logins. |
 | `npm run build:demo` | The same with demo mode on. Demo UI still needs `GET /api/demo` (API with `DEMO_MODE=true`). |
 | `node scripts/check-time.ts` | Self-check for Lisbon time, DST and age rules. |
-| `node scripts/walk-booking.mjs <dir> [width]` | Playwright: books a visit for the demo child, screenshotting each step. |
-| `node scripts/walk-visit.mjs <dir> [width]` | Playwright: visit, waiting room (fake camera), call, after-visit and doctor screens. |
+| `node scripts/walk-booking.mjs <dir> [width]` | Playwright: books a visit for a child, screenshotting each step. `SIGNUP=1` signs up a new account and adds a new child. |
+| `node scripts/walk-visit.mjs <dir> [width]` | Playwright: visit, waiting room (fake camera), call, after-visit and doctor screens. Against the real API it reads ids and moves today's demo visit into the join window; set `MOCK=1` for the mock. |
+| `node scripts/walk-reschedule.mjs <dir> [width]` | Playwright: change a visit's time; with `DROPPED_ID`, the dropped-call screen. |
+
+Against the real API: start it with `PUBLIC_APP_URL=http://localhost:5180` (see `apps/api/README.md`), run `npm run dev`, and open `http://localhost:5180/app/` (not 127.0.0.1: the API's origin check).
 
 Demo accounts (mock and demo API): `patient@example.com` / `demo-password`, `doctor@carevia.test` / `doctor-demo-password`.
 
