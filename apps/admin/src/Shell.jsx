@@ -1,3 +1,5 @@
+import mark from './assets/carevia-mark.png'
+
 const NAV = [
   { id: 'appointments', label: 'Appointments' },
   { id: 'patients', label: 'Patients' },
@@ -11,7 +13,7 @@ export default function Shell({ user, section, onSignOut, children }) {
     <div className="shell">
       <aside className="side">
         <div className="side-top">
-          <p className="wordmark">Carevia</p>
+          <p className="wordmark"><img src={mark} alt="" width="32" height="32" />Carevia</p>
           <p className="side-kicker">Operations</p>
           <nav className="side-nav" aria-label="Admin">
             {NAV.map((item) => (
