@@ -581,7 +581,7 @@ async function staffChecks(patient, doctor, admin, { today, childVisit }) {
 // CSRF: a cookie-carrying change from a sibling subdomain is refused; the same request from Carevia works.
 async function originChecks(patient, production) {
   const body = { firstName: 'Demo' }
-  const foreign = await patient.request('/api/me', { method: 'PATCH', body, origin: 'https://evil.claudemod.tech' })
+  const foreign = await patient.request('/api/me', { method: 'PATCH', body, origin: 'https://evil.triplelabs.dev' })
   const trusted = await patient.request('/api/me', { method: 'PATCH', body })
   record('a change from a foreign Origin is 403 FORBIDDEN_ORIGIN; the same change from the trusted origin works',
     is(foreign, 403, 'FORBIDDEN_ORIGIN') && trusted.status === 200, `${show(foreign)} / ${show(trusted)}`)

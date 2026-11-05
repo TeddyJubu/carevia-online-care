@@ -1,6 +1,6 @@
 // Off-script checks against a running site: node scripts/walk-edges.mjs <outDir> [width]
 // Homepage deep links, back/forward and refresh mid-booking, sign-out, 404s and the admin desk.
-// Needs /app/, /admin/ and /api on one origin (BASE_URL, e.g. https://carevia.claudemod.tech).
+// Needs /app/, /admin/ and /api on one origin (BASE_URL, e.g. https://carevia.triplelabs.dev).
 // HOME_URL (default BASE_URL) is the homepage to test; its /app links are followed on BASE_URL.
 // Prints "FAIL ..." for every broken expectation and exits 1 if there was one.
 import { launch } from './browser.mjs'

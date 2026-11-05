@@ -31,7 +31,7 @@ Every setting is in [`.env.example`](.env.example). The ones that matter most:
 |---|---|---|
 | `PORT` | `4000` | API port. The VPS uses `4100` behind nginx. |
 | `PGPORT` | `5432` | Port for `npm run db`. Keep `DATABASE_URL` in step. |
-| `PUBLIC_APP_URL` | `http://localhost:5180` | The origin patients use. Better Auth's `baseURL`, email links and trusted origin. On the VPS: `https://carevia.claudemod.tech`. |
+| `PUBLIC_APP_URL` | `http://localhost:5180` | The origin patients use. Better Auth's `baseURL`, email links and trusted origin. On the VPS: `https://carevia.triplelabs.dev`. |
 | `ADMIN_APP_URL` | `http://localhost:5174` | The admin app's origin (trusted). |
 | `DEMO_MODE` | off | Exactly `true` turns on demo logins, demo payment, `POST /api/demo/reset` and waives two-factor login for staff. |
 | `NODE_ENV` | | `development` shows the outbox without demo mode; `production` refuses changing requests that carry neither `Origin` nor `Sec-Fetch-Site`. |
@@ -64,7 +64,7 @@ Better Auth 1.7, mounted at `/api/auth/*`, stores users in the same Postgres thr
 - Two-factor login (TOTP and backup codes). Outside demo mode, clinician and admin routes return `403 TWO_FACTOR_REQUIRED` until it is on.
 - `/api/auth/update-user` is disabled; profile edits go through `PATCH /api/me`.
 
-**CSRF.** `POST`, `PUT`, `PATCH` and `DELETE` on `/api/*` (outside `/api/auth/*`, which Better Auth checks) need an `Origin` in the trusted list, or `Sec-Fetch-Site: same-origin` when there is no `Origin`. Neither header is allowed only outside production. Otherwise: `403 FORBIDDEN_ORIGIN`. SameSite Lax alone would let sibling `*.claudemod.tech` sites send cookie-carrying requests.
+**CSRF.** `POST`, `PUT`, `PATCH` and `DELETE` on `/api/*` (outside `/api/auth/*`, which Better Auth checks) need an `Origin` in the trusted list, or `Sec-Fetch-Site: same-origin` when there is no `Origin`. Neither header is allowed only outside production. Otherwise: `403 FORBIDDEN_ORIGIN`. SameSite Lax alone would let sibling `*.triplelabs.dev` sites send cookie-carrying requests.
 
 ## Endpoints
 

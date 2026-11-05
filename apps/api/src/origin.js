@@ -1,5 +1,5 @@
 // CSRF guard for every /api route that changes data. Better Auth already checks origins on /api/auth/*.
-// SameSite=Lax is not enough: sibling *.claudemod.tech subdomains count as the same site, so their
+// SameSite=Lax is not enough: sibling *.triplelabs.dev subdomains count as the same site, so their
 // cookie-carrying POSTs would reach us. The Origin header tells the real sender apart.
 const CHANGING = new Set(['POST', 'PUT', 'PATCH', 'DELETE'])
 

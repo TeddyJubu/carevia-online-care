@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Deploys the committed HEAD to https://carevia.claudemod.tech:
+# Deploys the committed HEAD to https://carevia.triplelabs.dev:
 #   /        homepage (build.mjs → dist/)
 #   /app/    patient portal (apps/web, demo build)
 #   /admin/  admin app (apps/admin, demo build)
@@ -29,7 +29,7 @@ if [ "${1:-}" = "--seed" ]; then
 fi
 
 for i in $(seq 1 30); do
-  curl -fsS https://carevia.claudemod.tech/api/health && { echo; echo "Deployed $(git rev-parse --short HEAD)"; exit 0; }
+  curl -fsS https://carevia.triplelabs.dev/api/health && { echo; echo "Deployed $(git rev-parse --short HEAD)"; exit 0; }
   sleep 2
 done
 echo "API health check failed"; exit 1

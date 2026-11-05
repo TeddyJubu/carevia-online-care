@@ -179,7 +179,7 @@ const v45Home=v45Story
 // Only the footer's and the FAQ's "Visit Carevia" keep the external site.
 if(!v45Home.includes('data-portal=')||!v45Home.includes('/signin">Sign in')||!v45Home.includes('>Not sure which one?</a>')||!v45Home.includes('/signup">Create your account')||v45Home.split(external).length-1!==2)throw new Error('Design 04.5 portal links failed');
 await writeFile('dist/design-04-5.html',v45Home);
-await writeFile('dist/index.html',v45Home.replace('rel="canonical" href="https://carevia.claudemod.tech/design-04-5.html"','rel="canonical" href="https://carevia.claudemod.tech/"'));
+await writeFile('dist/index.html',v45Home.replace('rel="canonical" href="https://carevia.triplelabs.dev/design-04-5.html"','rel="canonical" href="https://carevia.triplelabs.dev/"'));
 
 // Every served module must be .js: a .mjs import 404s or arrives as application/octet-stream on stock nginx.
 for(const name of await readdir('dist/scripts'))if(name.endsWith('.mjs')||/from ?['"][^'"]+\.mjs['"]|import\(['"][^'"]+\.mjs/.test(name.endsWith('.js')?await readFile('dist/scripts/'+name,'utf8'):''))throw new Error(`dist/scripts/${name} uses .mjs`);
