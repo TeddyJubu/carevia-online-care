@@ -15,7 +15,7 @@ type State = { kind: 'loading' } | { kind: 'error'; error: ApiError } | { kind: 
  * the patient); no name or other identifier is sent to Daily from here. A drop keeps the same appointment:
  * the patient rejoins with a fresh token while the join window is open.
  */
-export function DailyRoom({ appointmentId, who, onEnded }: { appointmentId: string; who: 'patient' | 'clinician'; onEnded: () => void }) {
+export function DailyRoom({ appointmentId, who, onEnded, onJoined }: { appointmentId: string; who: 'patient' | 'clinician'; onEnded: () => void; onJoined?: (at: number) => void }) {
   const host = useRef<HTMLDivElement>(null)
   const call = useRef<DailyCall | null>(null)
   const dropped = useRef(false)
@@ -39,7 +39,7 @@ export function DailyRoom({ appointmentId, who, onEnded }: { appointmentId: stri
         iframeStyle: { width: '100%', height: '100%', border: '0', borderRadius: '14px', background: '#061c3a' },
       })
       call.current = frame
-      frame.on('joined-meeting', () => { setState({ kind: 'joined', since: Date.now() }); void api.callEvent(appointmentId, 'joined').catch(() => {}) })
+      frame.on('joined-meeting', () => { const at = Date.now(); setState({ kind: 'joined', since: at }); onJoined?.(at); void api.callEvent(appointmentId, 'joined').catch(() => {}) })
       frame.on('network-connection', (e) => setUnstable(e?.event === 'interrupted'))
       frame.on('error', () => { dropped.current = true; setState({ kind: 'dropped' }); void api.callEvent(appointmentId, 'error').catch(() => {}) })
       frame.on('left-meeting', () => {
@@ -171,7 +171,7 @@ export function CallPage() {
   const load = useAppointment()
   const navigate = useNavigate()
   const [qOpen, setQOpen] = useState(false)
-  const [joinedAt] = useState(Date.now())
+  const [joinedAt, setJoinedAt] = useState<number>() // when Daily says we're in, not when the page opened
   return (
     <VisitGate load={load}>{(a) => {
       const qs = JSON.parse(localStorage.getItem(`carevia-questions-${a.id}`) ?? '[]').length as number
@@ -183,10 +183,10 @@ export function CallPage() {
           <h1 className="sr-only">Video consultation with {a.doctor.name}</h1>
           <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
             <p><span className="font-medium">{a.doctor.name}</span> <span className="muted">· {a.doctor.specialty} · Cédula {a.doctor.cedula}</span></p>
-            <p className="fine">Started {hhmm(new Date(joinedAt).toISOString())} · <Elapsed since={joinedAt} /></p>
+            {joinedAt && <p className="fine">Started {hhmm(new Date(joinedAt).toISOString())} · <Elapsed since={joinedAt} /></p>}
           </div>
           <div className="grid gap-4 min-[1025px]:grid-cols-[minmax(0,1fr)_300px]">
-            <DailyRoom appointmentId={a.id} who="patient" onEnded={() => navigate(`/visits/${a.id}/done`)} />
+            <DailyRoom appointmentId={a.id} who="patient" onJoined={setJoinedAt} onEnded={() => navigate(`/visits/${a.id}/done`)} />
             <div className="hidden content-start gap-3 min-[1025px]:grid">
               <Questions id={a.id} />
               {a.preJoin?.companion && <CompanionInvite id={a.id} />}
