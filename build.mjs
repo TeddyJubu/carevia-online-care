@@ -99,6 +99,9 @@ const filmStyles=`<style>.hero-film{object-fit:cover;object-position:50% 50%}
 @media(min-width:1001px) and (max-width:1100px){footer{padding-top:100px}.footer-grid{grid-template-columns:1fr 1fr;gap:65px}.footer-copyright{order:3}.footer-grid>div:nth-child(2){order:1}.footer-info{order:2}.footer-wordmark{margin-top:100px}}
 /* Footer links: 44px tap rows at every width (was touch-only). */
 .footer-info{gap:0}.footer-info a{display:inline-flex;align-items:center;min-height:44px}.footer-info .mono:not(:first-child){margin-top:24px}
+/* Phones: the brand and copyright sit in the right column, beside "The conversation", instead of a row of their own.
+   The left links span two rows; the brand takes the second row on the right and aligns to its foot. */
+@media(min-width:361px) and (max-width:600px){.footer-grid>.footer-info:nth-child(3){grid-row:span 2}.footer-copyright{grid-column:2;align-self:end}}
 /* Touch: the WebGL rim no longer loads, so a tapped nav pill gets a plain CSS orange rim instead (same #ff9a4d as the shader). */
 @media(hover:none),(pointer:coarse){.topbar .nav-pill:active{box-shadow:inset 0 0 0 1.5px #ff9a4d}}
 </style>`;
