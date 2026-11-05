@@ -1,5 +1,5 @@
 // Design 04.5 "About" as a pinned horizontal story: vertical scroll drives the track sideways.
-// On the way out, each panel passes through the left 10% of the screen: the photo turns into frosted glass and text
+// On the way out, each panel passes through the left 5% of the screen: the photo turns into frosted glass and text
 // softens (CSS in build.mjs). This script gives each of them --z, how many px of it are inside that zone.
 // --p (0..1) feeds the progress line. Under reduced motion the CSS stacks the panels and this script stands down.
 const section=document.querySelector('.about-h');
@@ -30,7 +30,7 @@ if(section){
     x=-p*travel;
     track.style.transform=`translate3d(${x}px,0,0)`;
     section.style.setProperty('--p',p.toFixed(4));
-    const zone=innerWidth*.1;
+    const zone=innerWidth*.05;
     frosted.forEach((el,i)=>el.style.setProperty('--z',`${(zone-lefts[i]-x).toFixed(1)}px`));
     section.classList.toggle('is-moving',x<-2&&x>2-travel); // frost only while panels travel: off at rest on the first and last panel (2px slack for fractional scroll offsets)
   }

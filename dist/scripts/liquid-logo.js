@@ -2,10 +2,10 @@
 // The white PNG mark stays in place until the shader is ready, so the logo never blinks out or breaks without WebGL.
 // ponytail: no pause code here. ShaderMount already drops to speed 0 (no rAF) while the tab is hidden or the logo is off screen,
 // and reduced motion passes speed 0, which renders one still frame.
-import {ShaderMount} from './vendor/paper-shaders/shader-mount.js?v=34da789160';
-import {liquidMetalFragmentShader,toProcessedLiquidMetal,LiquidMetalShapes} from './vendor/paper-shaders/shaders/liquid-metal.js?v=34da789160';
-import {ShaderFitOptions,defaultObjectSizing as s} from './vendor/paper-shaders/shader-sizing.js?v=34da789160';
-import {getShaderColorFromString as color} from './vendor/paper-shaders/get-shader-color-from-string.js?v=34da789160';
+import {ShaderMount} from './vendor/paper-shaders/shader-mount.js?v=a2d47525d7';
+import {liquidMetalFragmentShader,toProcessedLiquidMetal,LiquidMetalShapes} from './vendor/paper-shaders/shaders/liquid-metal.js?v=a2d47525d7';
+import {ShaderFitOptions,defaultObjectSizing as s} from './vendor/paper-shaders/shader-sizing.js?v=a2d47525d7';
+import {getShaderColorFromString as color} from './vendor/paper-shaders/get-shader-color-from-string.js?v=a2d47525d7';
 
 const logo=document.querySelector('.topbar .nav-logo');
 if(logo){
