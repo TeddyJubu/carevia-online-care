@@ -87,16 +87,16 @@ export const GROUPS = [
     blurb: 'Fitness and health assessments with a doctor',
     icon: 'file-check',
     services: [
-      'Sick leave',
-      'Illness certificate',
-      'Nursery and school certificate',
-      'Occupational certificate',
-      'Driving fitness',
+      'Sick leave assessment',
+      'Illness assessment',
+      'Nursery and school fitness assessment',
+      'Occupational fitness assessment',
+      'Driving fitness assessment',
       'Driving fitness with psychotechnical assessment',
       'In-person psychotechnical assessment',
-      'Hunting or firearms certificate',
-      'Diving certificate',
-      'Boating licence renewal',
+      'Hunting or firearms fitness assessment',
+      'Diving fitness assessment',
+      'Boating licence fitness assessment',
     ],
   },
   {
@@ -118,7 +118,7 @@ export const GROUPS = [
     name: 'Test requests & renewals',
     blurb: 'Doctor consultations for test requests and treatment renewals',
     icon: 'clipboard-list',
-    services: ['Tests and laboratory investigations', 'Medical treatment renewal'],
+    services: ['Tests and laboratory investigations', 'Treatment renewal review'],
   },
 ]
 
