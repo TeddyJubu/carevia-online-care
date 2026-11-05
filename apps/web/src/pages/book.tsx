@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState, type FormEvent, type ReactNode } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent, type ReactNode } from 'react'
 import { Link, Outlet, useLocation, useNavigate, useOutletContext, useSearchParams } from 'react-router'
 import { api, ApiError } from '../lib/api'
 import { nextStep, useDraft, type Draft } from '../lib/booking'
@@ -193,6 +193,19 @@ export function BookService() {
   const [type, setType] = useState<'video' | 'audio'>('video')
   const [error, setError] = useState<string | null>(null)
 
+  // Every service, one sideways-scrolling row per area. The area picked first leads; the order is fixed from then on,
+  // so choosing a service in another row doesn't reshuffle the rows under the patient's finger.
+  const lead = useRef<GroupSlug | undefined>(undefined)
+  if (!group) lead.current = undefined
+  else lead.current ??= group.slug
+  const rows = [...groups].sort((a, b) => Number(b.slug === lead.current) - Number(a.slug === lead.current))
+  // Doctors and prices are per area, so a service from another area moves the booking there and drops anything
+  // tied to the old area (a chosen doctor, a held time).
+  const pick = (g: ServiceGroup, serviceId: number) => {
+    setError(null)
+    update(g.slug === draft.groupSlug ? { serviceId } : { groupSlug: g.slug, serviceId, doctorId: undefined, appointmentId: undefined, held: undefined })
+  }
+
   return (
     <form noValidate onSubmit={(e) => {
       e.preventDefault()
@@ -218,22 +231,31 @@ export function BookService() {
         </fieldset>
       ) : (
         <>
-          <fieldset className="mt-8">
+          {/* min-w-0: a fieldset otherwise grows to its widest row and the whole page scrolls sideways. */}
+          <fieldset className="mt-8 min-w-0">
             <legend className="text-[20px] font-medium">Which fits best?</legend>
-            <p className="fine mt-1">Not sure? Pick the closest. Your doctor will guide you.</p>
+            <p className="fine mt-1">Everything we offer, by area. Scroll each row sideways for more. Not sure? Pick the closest. Your doctor will guide you.</p>
             {/* These services are named after documents; booking one must not read as a promise of it (PLAN.md). */}
             {(group.slug === 'certificates' || group.slug === 'renewals') && (
               <Notice className="mt-3"><span>Your doctor decides, after assessing you, whether anything needs to be issued. Booking a visit doesn’t guarantee a certificate, a test request or a renewal. Anything issued comes through iMED.</span></Notice>
             )}
-            <div className="mt-4 grid gap-2 sm:grid-cols-2">
-              {group.services.map((s) => (
-                <label key={s.id} className="choice min-h-12 py-3">
-                  <input type="radio" name="service" checked={draft.serviceId === s.id} onChange={() => update({ serviceId: s.id })} />
-                  <span>{s.name}</span>
-                </label>
+            <div className="mt-5 grid grid-cols-[minmax(0,1fr)] gap-5">
+              {rows.map((g) => (
+                <div key={g.id} role="group" aria-labelledby={`area-${g.slug}`}>
+                  <p id={`area-${g.slug}`} className="text-sm font-medium">
+                    {g.name}<span className="fine font-normal"> · from {euro(g.fromFee)}</span>
+                  </p>
+                  <div className="service-row mt-2">
+                    {g.services.map((s) => (
+                      <label key={s.id} className="choice service-pill">
+                        <input type="radio" name="service" checked={draft.serviceId === s.id} onChange={() => pick(g, s.id)} />
+                        <span>{s.name}</span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
               ))}
             </div>
-            <button type="button" className="link mt-4 inline-flex min-h-11 items-center text-sm" onClick={() => update({ groupSlug: undefined, serviceId: undefined, appointmentId: undefined, held: undefined })}>Choose a different area of care</button>
           </fieldset>
 
           <fieldset className="mt-8">
