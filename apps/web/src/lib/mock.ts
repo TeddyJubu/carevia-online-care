@@ -94,7 +94,8 @@ function seed(): DB {
   const plus = (iso: string, min: number) => new Date(Date.parse(iso) + min * 60000).toISOString()
   const base = { outcome: null, holdExpiresAt: null, holdOwner: null, fee: 45, doctorId: 0, userId: 'u-patient', patientSet: true, paid: true, callState: 'not_started' as const, reconnects: 0, preJoin: null }
   const consent = { version: content('consent').version, acceptedAt: at(-86400000) }
-  const soon = at(15 * 60000)
+  // ponytail: 8 minutes (the contract's seed uses 15) so the mock's join window is already open for demos and screenshots.
+  const soon = at(8 * 60000)
   const in3 = lisbonToUtc(addDays(lisbonDay(), 3), '10:00').toISOString()
   const past = (days: number) => lisbonToUtc(addDays(lisbonDay(), -days), '11:00').toISOString()
   const appt = (id: string, startsAt: string, more: Partial<Rec>): Rec => ({ ...base, id, startsAt, endsAt: plus(startsAt, SLOT_MIN), status: 'confirmed', serviceId: 1, for: 'self', familyMemberId: null, consent, ...more })

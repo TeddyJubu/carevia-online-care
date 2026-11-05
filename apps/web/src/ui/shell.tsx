@@ -31,6 +31,8 @@ export function Header() {
 }
 
 export function Footer() {
+  const { user } = useSession()
+  const clinician = user?.role === 'clinician'
   return (
     <footer className="app-footer on-navy">
       <div className="mx-auto grid w-[min(1200px,calc(100%-32px))] gap-10 md:grid-cols-3">
@@ -46,8 +48,10 @@ export function Footer() {
           <p className="eyebrow mb-1">Carevia</p>
           <ul className="grid">
             <li><a href={HOME} className="inline-flex min-h-11 items-center">Homepage</a></li>
-            <li><Link to="/book" className="inline-flex min-h-11 items-center">Book a visit</Link></li>
-            <li><Link to="/account" className="inline-flex min-h-11 items-center">Your account</Link></li>
+            {clinician ? <li><Link to="/doctor" className="inline-flex min-h-11 items-center">Your agenda</Link></li> : <>
+              <li><Link to="/book" className="inline-flex min-h-11 items-center">Book a visit</Link></li>
+              <li><Link to="/account" className="inline-flex min-h-11 items-center">Your account</Link></li>
+            </>}
           </ul>
         </nav>
       </div>
