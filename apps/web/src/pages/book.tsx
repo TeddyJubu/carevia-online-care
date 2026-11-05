@@ -181,23 +181,24 @@ export function BookService() {
   const [params] = useSearchParams()
   const navigate = useNavigate()
 
-  // Deep link: /app/book?service=<group slug>, optionally &doctor=<id> for a follow-up.
+  // Deep link: /app/book?service=<group slug>, optionally &doctor=<id> for a follow-up. The link chooses the area;
+  // the service is still the patient's choice, so none is selected for them.
   useEffect(() => {
     const slug = params.get('service') as GroupSlug | null
     const g = groups.find((x) => x.slug === slug)
     if (!g) return
     const doctor = params.get('doctor')
-    if (g.slug !== draft.groupSlug || doctor) update({ groupSlug: g.slug, serviceId: g.services[0]?.id, doctorId: doctor ? Number(doctor) : undefined })
+    if (g.slug !== draft.groupSlug || doctor) update({ groupSlug: g.slug, serviceId: undefined, doctorId: doctor ? Number(doctor) : undefined })
   }, [params, groups]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const [type, setType] = useState<'video' | 'audio'>('video')
   const [error, setError] = useState<string | null>(null)
 
-  // Two rows: areas of care, then the services in the chosen area. Doctors and prices are per area, so another area
-  // starts on its first service and drops anything tied to the old one (a chosen doctor, a held time).
+  // Two rows: areas of care, then (once an area is chosen) the services in it. Nothing is selected for the patient.
+  // Doctors and prices are per area, so another area clears the service and anything tied to the old area.
   const pickArea = (g: ServiceGroup) => {
     setError(null)
-    if (g.slug !== draft.groupSlug) update({ groupSlug: g.slug, serviceId: g.services[0]?.id, doctorId: undefined, appointmentId: undefined, held: undefined })
+    if (g.slug !== draft.groupSlug) update({ groupSlug: g.slug, serviceId: undefined, doctorId: undefined, appointmentId: undefined, held: undefined })
   }
   // Long area rows scroll; bring the chosen area into view once, when the step opens.
   const areaRow = useRef<HTMLDivElement>(null)
@@ -208,7 +209,8 @@ export function BookService() {
   return (
     <form noValidate onSubmit={(e) => {
       e.preventDefault()
-      if (!group || !draft.serviceId) return setError('Choose the care you need.')
+      if (!group) return setError('Choose an area of care.')
+      if (!draft.serviceId) return setError('Choose the service that fits best.')
       navigate('/book/who')
     }}>
       <PageTitle eyebrow="Book a visit" lede={group ? group.blurb : 'Choose an area of care. You’ll see doctors, times and the price before you give any details.'}>
@@ -216,53 +218,42 @@ export function BookService() {
       </PageTitle>
       <div className="mt-6"><Emergency compact /></div>
 
-      {!group ? (
-        <fieldset className="mt-8">
-          <legend className="text-[20px] font-medium">Areas of care</legend>
-          <div className="mt-4 grid gap-3 sm:grid-cols-2">
+      {/* min-w-0: a fieldset otherwise grows to its widest row and the whole page scrolls sideways. */}
+      <fieldset className="mt-8 min-w-0">
+        <legend className="text-[20px] font-medium">Which fits best?</legend>
+        <p className="fine mt-1">Choose an area, then the closest match. Not sure? Your doctor will guide you.</p>
+        {/* These services are named after documents; booking one must not read as a promise of it (PLAN.md). */}
+        {(group?.slug === 'certificates' || group?.slug === 'renewals') && (
+          <Notice className="mt-3"><span>Your doctor decides, after assessing you, whether anything needs to be issued. Booking a visit doesn’t guarantee a certificate, a test request or a renewal. Anything issued comes through iMED.</span></Notice>
+        )}
+        <div role="radiogroup" aria-labelledby="area-label" className="mt-5">
+          <p id="area-label" className="text-sm font-medium">Area of care</p>
+          <div ref={areaRow} className="service-row mt-2">
             {groups.map((g) => (
-              <label key={g.id} className="choice">
-                <input type="radio" name="group" value={g.slug} onChange={() => { update({ groupSlug: g.slug, serviceId: g.services[0]?.id }); setError(null) }} />
-                <span><span className="block font-medium">{g.name}</span><span className="fine block">{g.blurb}</span><span className="fine block mt-1">From {euro(g.fromFee)}</span></span>
+              <label key={g.id} className="choice service-pill">
+                <input type="radio" name="area" checked={g.slug === group?.slug} onChange={() => pickArea(g)} />
+                <span>{g.name}</span>
               </label>
             ))}
           </div>
-        </fieldset>
-      ) : (
-        <>
-          {/* min-w-0: a fieldset otherwise grows to its widest row and the whole page scrolls sideways. */}
-          <fieldset className="mt-8 min-w-0">
-            <legend className="text-[20px] font-medium">Which fits best?</legend>
-            <p className="fine mt-1">Choose an area, then the closest match. Not sure? Your doctor will guide you.</p>
-            {/* These services are named after documents; booking one must not read as a promise of it (PLAN.md). */}
-            {(group.slug === 'certificates' || group.slug === 'renewals') && (
-              <Notice className="mt-3"><span>Your doctor decides, after assessing you, whether anything needs to be issued. Booking a visit doesn’t guarantee a certificate, a test request or a renewal. Anything issued comes through iMED.</span></Notice>
-            )}
-            <div role="radiogroup" aria-labelledby="area-label" className="mt-5">
-              <p id="area-label" className="text-sm font-medium">Area of care</p>
-              <div ref={areaRow} className="service-row mt-2">
-                {groups.map((g) => (
-                  <label key={g.id} className="choice service-pill">
-                    <input type="radio" name="area" checked={g.slug === group.slug} onChange={() => pickArea(g)} />
-                    <span>{g.name}</span>
-                  </label>
-                ))}
-              </div>
+        </div>
+        {group && (
+          <div role="radiogroup" aria-labelledby="service-label" className="service-block mt-5">
+            <p id="service-label" className="text-sm font-medium">{group.name}<span className="fine font-normal"> · from {euro(group.fromFee)}</span></p>
+            {/* key: a new area replaces the row, so its pills animate in. */}
+            <div key={group.slug} className="service-row service-row-in mt-2">
+              {group.services.map((s, i) => (
+                <label key={s.id} className="choice service-pill" style={{ animationDelay: `${i * 35}ms` }}>
+                  <input type="radio" name="service" checked={draft.serviceId === s.id} onChange={() => { setError(null); update({ serviceId: s.id }) }} />
+                  <span>{s.name}</span>
+                </label>
+              ))}
             </div>
-            <div role="radiogroup" aria-labelledby="service-label" className="mt-5">
-              <p id="service-label" className="text-sm font-medium">{group.name}<span className="fine font-normal"> · from {euro(group.fromFee)}</span></p>
-              {/* key: a new area replaces the row, so its pills animate in. */}
-              <div key={group.slug} className="service-row service-row-in mt-2">
-                {group.services.map((s, i) => (
-                  <label key={s.id} className="choice service-pill" style={{ animationDelay: `${i * 35}ms` }}>
-                    <input type="radio" name="service" checked={draft.serviceId === s.id} onChange={() => { setError(null); update({ serviceId: s.id }) }} />
-                    <span>{s.name}</span>
-                  </label>
-                ))}
-              </div>
-            </div>
-          </fieldset>
+          </div>
+        )}
+      </fieldset>
 
+      {group && (
           <fieldset className="mt-8">
             <legend className="text-[20px] font-medium">How would you like to talk?</legend>
             <div className="mt-4 grid gap-3 sm:grid-cols-2">
@@ -276,22 +267,21 @@ export function BookService() {
               </label>
             </div>
           </fieldset>
-        </>
       )}
       <FormError error={error} />
-      <Actions><button className="btn btn-primary" disabled={!group}>Continue</button></Actions>
+      <Actions><button className="btn btn-primary">Continue</button></Actions>
     </form>
   )
 }
 
 // ---------- J2: who and where ----------
 export function BookWho() {
-  const { group, draft, update, appt, setAppt } = useBooking()
+  const { group, service, draft, update, appt, setAppt } = useBooking()
   const navigate = useNavigate()
   const [who, setWho] = useState<For | undefined>(draft.for)
   const [where, setWhere] = useState<'yes' | 'no' | undefined>(draft.inMainland === undefined ? undefined : draft.inMainland ? 'yes' : 'no')
   const [errors, setErrors] = useState<{ who?: string; where?: string }>({})
-  if (!group) return <NeedCare />
+  if (!group || !service) return <NeedCare />
 
   function onSubmit(e: FormEvent) {
     e.preventDefault()

@@ -11,7 +11,7 @@ p.on('console', (m) => m.type() === 'error' && console.log('CONSOLE', m.text()))
 let n = 0
 const shot = async (name) => { await p.waitForTimeout(500); await p.screenshot({ path: `${out}/b${String(++n).padStart(2, '0')}-${name}-${width}.png`, fullPage: true }); console.log('shot', name, p.url()) }
 await p.goto(base + '/app/book?service=general'); await shot('j1-service')
-await p.getByRole('button', { name: 'Continue' }).click()
+await p.getByRole('radio', { name: 'Adult urgent care', exact: true }).check(); await p.getByRole('button', { name: 'Continue' }).click()
 await p.getByLabel('My child').check(); await p.getByLabel('Yes, I’ll be in mainland Portugal').check(); await shot('j2-who')
 await p.getByRole('button', { name: 'Continue' }).click()
 await p.locator('[role=radiogroup] [role=radio]').first().waitFor(); await p.locator('[role=radiogroup] [role=radio]').first().click(); await shot('j3-time')

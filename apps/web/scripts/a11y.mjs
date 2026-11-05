@@ -78,7 +78,7 @@ for (const width of widths.length ? widths.map(Number) : [390, 1280]) {
   await go('/app/reset-password?token=x', 'reset-password')
   await go('/app/nope', '404')
   await go('/app/book?service=general', 'J1-service')
-  await p.getByRole('button', { name: 'Continue' }).click(); await p.waitForURL(/book\/who/)
+  await p.getByRole('radio', { name: 'Adult urgent care', exact: true }).check(); await p.getByRole('button', { name: 'Continue' }).click(); await p.waitForURL(/book\/who/)
   await p.getByRole('button', { name: 'Continue' }).click(); await p.waitForTimeout(300)
   rows.push(await audit(p, 'J2-who-errors', width))
   await p.getByRole('radio', { name: /^Me / }).check(); await p.getByLabel('Yes, I’ll be in mainland Portugal').check()

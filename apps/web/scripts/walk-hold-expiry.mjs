@@ -9,7 +9,7 @@ const p = await (await b.newContext({ viewport: { width, height: width < 600 ? 8
 p.on('response', async (r) => { if (r.url().includes('/api/') && r.status() >= 400) console.log('api', r.status(), r.request().method(), new URL(r.url()).pathname, (await r.text().catch(() => '')).slice(0, 120)) })
 let failed = 0
 const check = (ok, what, got = '') => { console.log(ok ? 'ok  ' : 'FAIL', what, got ? `(${got})` : ''); if (!ok) failed++ }
-await p.goto(base + '/app/book?service=general'); await p.getByRole('button', { name: 'Continue' }).click()
+await p.goto(base + '/app/book?service=general'); await p.getByRole('radio', { name: 'Adult urgent care', exact: true }).check(); await p.getByRole('button', { name: 'Continue' }).click()
 await p.getByRole('radio', { name: /^Me / }).check(); await p.getByLabel('Yes, I’ll be in mainland Portugal').check()
 await p.getByRole('button', { name: 'Continue' }).click()
 const slot = p.locator('[role=radiogroup] [role=radio]').first(); await slot.click()
