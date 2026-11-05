@@ -1,8 +1,8 @@
-import{services as originalServices}from'./content.js';
-import{services as design42Services}from'./services-04-2.js';
-import{initExpandingSearch}from'./expanding-search.js';
-import{initFaqSection}from'./faq-section.js';
-import{initFrostNav}from'./frost-nav.js';
+import{services as originalServices}from'./content.js?v=f044a5b372';
+import{services as design42Services}from'./services-04-2.js?v=f044a5b372';
+import{initExpandingSearch}from'./expanding-search.js?v=f044a5b372';
+import{initFaqSection}from'./faq-section.js?v=f044a5b372';
+import{initFrostNav}from'./frost-nav.js?v=f044a5b372';
 const services=['04.2','04.5'].includes(document.documentElement.dataset.design)?design42Services:originalServices;
 // Set by build.mjs on 04.5 only: the patient portal's base URL (PORTAL_URL).
 const portal=document.documentElement.dataset.portal;
@@ -26,8 +26,8 @@ if(faqRoot)initFaqSection(faqRoot);
 document.querySelectorAll('[data-service]').forEach(b=>b.addEventListener('click',()=>showService(b.dataset.service,b)));document.querySelector('[data-all-care]').addEventListener('click',e=>{show(`<p class="mono">Seven areas of care</p><h2 id="dialog-title">Find your starting point.</h2><p>Choose an area to explore the consultation, example price, and next steps.</p><div class="all-care-list">${services.map(s=>`<button data-service="${s.id}">${esc(s.name)}<span>From €${s.price}</span></button>`).join('')}</div>`,e.currentTarget);content.querySelectorAll('[data-service]').forEach(b=>b.addEventListener('click',()=>showService(b.dataset.service,opener)))});dialog.querySelector('.dialog-close').addEventListener('click',()=>dialog.close());dialog.addEventListener('click',e=>{if(e.target!==dialog)return;const r=dialog.getBoundingClientRect();if(e.clientX<r.left||e.clientX>r.right||e.clientY<r.top||e.clientY>r.bottom)dialog.close()});dialog.addEventListener('close',()=>{document.body.style.overflow='';opener?.focus({preventScroll:true})});
 document.querySelectorAll('.faq-toggle').forEach(b=>b.addEventListener('click',()=>{const item=b.closest('.faq-item'),open=b.getAttribute('aria-expanded')==='true';b.setAttribute('aria-expanded',String(!open));item.classList.toggle('open',!open);item.querySelector('.faq-answer').inert=open}));
 const statements={heard:['Good care starts with being heard. A little more understanding. A little more clarity. More room to be you.','A conversation with space for your questions, your concerns, and what matters most to you.'],clear:['A real conversation. A clear price. A next step you understand. Care should feel more straightforward.','See the consultation price before confirming. Pay for the visit you choose, with no subscription.'],together:['The conversation is just the beginning. Keep the details together, and your next step close.','Your clinical summary, and anything your doctor decides to issue, is available through iMED, Carevia’s clinical system.']};document.querySelectorAll('[data-principle]').forEach(b=>b.addEventListener('click',()=>{document.querySelectorAll('[data-principle]').forEach(el=>{el.classList.toggle('selected',el===b);el.setAttribute('aria-pressed',String(el===b))});const [heading,copy]=statements[b.dataset.principle],h=document.querySelector('.approach-statement');h.textContent=heading;document.querySelector('.principle-copy').textContent=copy;if(!reduced)h.animate([{opacity:0,transform:'translateY(10px)'},{opacity:1,transform:'translateY(0)'}],{duration:450,easing:'ease-out'})}));
-import{GlassPhoto}from'./glass.js';document.querySelectorAll('.hero [data-glass],.wide-banner [data-glass],.treatment-card [data-glass],.start-card [data-glass]').forEach(el=>new GlassPhoto(el,reduced));
+import{GlassPhoto}from'./glass.js?v=f044a5b372';document.querySelectorAll('.hero [data-glass],.wide-banner [data-glass],.treatment-card [data-glass],.start-card [data-glass]').forEach(el=>new GlassPhoto(el,reduced));
 
 // Load the Paper heatmap only when its card nears the viewport; the static logo stays if WebGL is unavailable.
 const heatmap=document.querySelector('[data-heatmap]');
-if(heatmap&&'IntersectionObserver'in window)new IntersectionObserver(([entry],observer)=>{if(!entry.isIntersecting)return;observer.disconnect();import('./start-heatmap.js').then(m=>m.mountHeatmap(heatmap)).catch(()=>{})},{rootMargin:'400px'}).observe(heatmap);
+if(heatmap&&'IntersectionObserver'in window)new IntersectionObserver(([entry],observer)=>{if(!entry.isIntersecting)return;observer.disconnect();import('./start-heatmap.js?v=f044a5b372').then(m=>m.mountHeatmap(heatmap)).catch(()=>{})},{rootMargin:'400px'}).observe(heatmap);
