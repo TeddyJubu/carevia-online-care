@@ -74,7 +74,14 @@ const filmStyles=`<style>.hero-film{object-fit:cover;object-position:50% 50%}
 /* Touch screens (desktop untouched): 44px tap targets, and the 112 notice at a readable size. */
 @media(max-width:1024px){.film-toggle{width:44px;height:44px}.care-open{min-height:46px;padding:12px 0 0;align-items:center}.emergency>p{font-size:14px}.emergency>a{display:inline-flex;align-items:center;min-height:44px;padding-inline:4px;font-size:14px;font-weight:500}.topbar :is(.menu-toggle,.nav-logo){flex:none;min-width:44px}.footer-info{gap:0}.footer-info a{display:inline-flex;align-items:center;min-height:44px}.footer-info .mono:not(:first-child){margin-top:24px}}
 /* Phones: the heading wraps freely (balanced, no orphaned "you"), and the film button sits above the wordmark instead of on its last letter. */
-@media(max-width:600px){.hero .hero-intro h1{text-wrap:balance}.hero .hero-intro h1 br{display:none}.film-toggle:not(.banner-toggle){bottom:calc(var(--hero-fade) + 17.7vw + 6px)}.emergency{gap:6px 12px}}</style>`;
+@media(max-width:600px){.hero .hero-intro h1{text-wrap:balance}.hero .hero-intro h1 br{display:none}.film-toggle:not(.banner-toggle){bottom:calc(var(--hero-fade) + 17.7vw + 6px)}.emergency{gap:6px 12px}}
+/* Desktop gets the same accessible sizing as touch: 44px film toggles and price rows, and a 14px 112 notice. The link's negative margin keeps its text on the notice's first line while its tap area stays 44px. */
+@media(min-width:1025px){.film-toggle{width:44px;height:44px}.care-open{min-height:46px;padding:12px 0 0;align-items:center}.emergency>p{font-size:14px}.emergency>a{display:inline-flex;align-items:center;min-height:44px;margin-block:-11.5px;padding-inline:4px;font-size:14px;font-weight:500}}
+/* Phones: Our care cards size to their content instead of 4.2's fixed 520px. Equal rows (sized by the tallest card) keep the sticky stack even, and any spare height sits above the price row so number, title and description read as one block. */
+@media(max-width:600px){.treatment-stack{grid-auto-rows:1fr}.treatment-card{height:auto;grid-template-rows:220px auto}.treatment-body>h3{margin-top:12px;padding-top:0}.treatment-body>p{min-height:0;margin:10px 0 15px}.treatment-body>.care-open{margin-top:auto}}
+/* Small laptops and 1024 landscape: the two-column footer from 4.2's 1000px breakpoint, so the heading keeps three lines. */
+@media(min-width:1001px) and (max-width:1100px){footer{padding-top:100px}.footer-grid{grid-template-columns:1fr 1fr;gap:65px}.footer-copyright{order:3}.footer-grid>div:nth-child(2){order:1}.footer-info{order:2}.footer-wordmark{margin-top:100px}}
+</style>`;
 const v45=clashEditorial
  .replace('data-design="04.2"','data-design="04.5"')
  .replace('/design-04-2.html"','/design-04-5.html"')
