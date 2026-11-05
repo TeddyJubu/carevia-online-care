@@ -11,7 +11,8 @@ export function PageTitle({ children, title, eyebrow, lede, className = '' }: { 
   useEffect(() => {
     document.title = `${title ?? (typeof children === 'string' ? children : 'Carevia')} · Carevia`
     ref.current?.focus({ preventScroll: true })
-  }, [title, children])
+    // With a fixed title, a heading that changes in place (booking step 1 shows the chosen area) keeps the patient's focus.
+  }, [title ?? children]) // eslint-disable-line react-hooks/exhaustive-deps
   return (
     <div className={className}>
       {eyebrow && <p className="eyebrow mb-3">{eyebrow}</p>}

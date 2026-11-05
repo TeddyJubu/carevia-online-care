@@ -139,16 +139,41 @@
   .choice:has(input:focus-visible) { outline: 2px solid var(--focus); outline-offset: 3px; }
   .choice:has(input:disabled) { opacity: 0.6; cursor: not-allowed; }
   .choice input { margin: 3px 0 0; width: 18px; height: 18px; accent-color: var(--color-ink); flex: none; }
-  /* Booking: the area row and the services row, each scrolling sideways. The 4px inset keeps the focus ring inside the scroller; on phones
-     the row runs to the screen edges so the cut-off pill shows there is more. */
-  .service-row { display: flex; gap: 8px; overflow-x: auto; scroll-snap-type: x proximity; scroll-padding-inline: 4px; padding: 4px 4px 10px; margin: -4px -4px 0; overscroll-behavior-x: contain; scrollbar-width: thin; scrollbar-color: #102d5033 transparent; }
-  .service-pill { flex: none; align-items: center; min-height: 48px; padding: 11px 16px; white-space: nowrap; scroll-snap-align: start; }
-  .service-pill input { margin: 0; }
-  @media (max-width: 639px) { .service-row { margin-inline: -16px; padding-inline: 16px; scroll-padding-inline: 16px; } }
-  /* A new area's services rise in one after another (delays set inline); reduced motion shows them at once. */
-  .service-row-in > .service-pill { animation: pill-in 0.45s cubic-bezier(0.22, 1, 0.36, 1) both; }
-  @keyframes pill-in { from { opacity: 0; translate: 0 8px; } }
-  @media (prefers-reduced-motion: reduce) { .service-row-in > .service-pill { animation: none; } }
+  /* Booking step 1: React Bits BranchedMenu (JS-CSS), restyled. Areas hang off a trunk; the chosen one opens its
+     services on a branch, and a navy line traces to the chosen service. Radios are invisible but cover each row,
+     so the row is the target (44px+) and the focus ring sits on the row. Enter ~500ms, exit 220ms. */
+  .bm { position: relative; display: flex; flex-direction: column; gap: 2px; padding-left: 16px; }
+  .bm::before { content: ""; position: absolute; top: 8px; bottom: 8px; left: 0; width: 2px; border-radius: 1px; background: linear-gradient(#102d5033 60%, #102d5000); }
+  .bm input { position: absolute; inset: 0; width: 100%; height: 100%; margin: 0; opacity: 0; cursor: pointer; }
+  .bm-head, .bm-item { position: relative; display: flex; align-items: center; gap: 12px; border: 1px solid transparent; cursor: pointer; transition: color 0.2s, background 0.2s, border-color 0.2s, box-shadow 0.2s; }
+  .bm-head { min-height: 52px; padding: 10px 14px; border-radius: 12px; font-size: 17px; font-weight: 500; color: var(--color-muted); }
+  .bm-head-label { flex: 1; min-width: 0; }
+  .bm-meta { white-space: nowrap; }
+  .bm-chev { flex: none; transition: rotate 0.22s var(--ease); }
+  .bm-head:hover, .bm-section[data-open] .bm-head { color: var(--color-ink); }
+  .bm-head:hover { background: #102d500a; }
+  .bm-section[data-open] .bm-chev { rotate: 180deg; transition-duration: 0.5s; }
+  /* The marker on the main trunk beside the chosen area. */
+  .bm-head::before { content: ""; position: absolute; left: -17px; top: 50%; width: 2px; height: 22px; margin-top: -11px; border-radius: 1px; background: var(--color-ink); scale: 1 0; transition: scale 0.22s var(--ease); }
+  .bm-section[data-open] .bm-head::before { scale: 1 1; transition-duration: 0.45s; }
+  .bm-head:has(input:focus-visible), .bm-item:has(input:focus-visible) { outline: 2px solid var(--focus); outline-offset: 2px; }
+
+  .bm-body { display: grid; grid-template-rows: 0fr; visibility: hidden; transition: grid-template-rows 0.22s var(--ease), visibility 0s 0.22s; }
+  .bm-section[data-open] .bm-body { grid-template-rows: 1fr; visibility: visible; transition: grid-template-rows 0.5s var(--ease), visibility 0s; }
+  .bm-fold { min-height: 0; overflow: hidden; }
+  /* Padding keeps each row's focus ring inside the fold's overflow. */
+  .bm-tree { position: relative; display: grid; gap: 2px; padding: 4px 4px 10px 44px; }
+  .bm-lines { position: absolute; top: 0; left: 0; overflow: visible; pointer-events: none; opacity: 0; transition: opacity 0.2s; }
+  .bm-section[data-open] .bm-lines { opacity: 1; transition: opacity 0.3s 0.1s; }
+  .bm-lines path { fill: none; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
+  .bm-base { stroke: #102d5033; }
+  .bm-reach { stroke: var(--color-ink); stroke-width: 2; transition: stroke-dashoffset 0.5s var(--ease); }
+  .bm-item { min-height: 44px; padding: 9px 14px; border-radius: 10px; font-size: 15px; line-height: 1.35; color: var(--color-ink); }
+  .bm-item:hover { border-color: #102d5033; background: #fff; }
+  .bm-item:has(input:checked) { border-color: var(--color-ink); box-shadow: inset 0 0 0 1px var(--color-ink); background: #f4f8fc; font-weight: 500; }
+  .bm-section[data-open] .bm-item { animation: pill-in 0.45s var(--ease) both; animation-delay: calc(var(--i) * 25ms + 60ms); }
+  @keyframes pill-in { from { opacity: 0; translate: 0 6px; } }
+  @media (prefers-reduced-motion: reduce) { .bm-section[data-open] .bm-item { animation: none; } .bm-body, .bm-section[data-open] .bm-body { transition: none; } }
   .check { display: flex; gap: 12px; align-items: flex-start; min-height: 44px; padding-block: 10px; cursor: pointer; }
   .check input { margin: 2px 0 0; width: 20px; height: 20px; accent-color: var(--color-ink); flex: none; }
 

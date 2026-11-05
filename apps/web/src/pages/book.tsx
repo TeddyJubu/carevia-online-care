@@ -8,6 +8,7 @@ import { addDays, age, birthDate, dayLabel, hhmm, lisbonDay, when } from '../lib
 import type { Appointment, Doctor, For, GroupSlug, ServiceGroup, SlotWithDoctor } from '../lib/types'
 import { Dialog, DoctorAvatar, Emergency, ErrorState, euro, Field, FormError, HoldTimer, Loading, Markdown, Notice, PageTitle, Spinner } from '../ui/kit'
 import { SignInForm, SignUpForm } from './auth'
+import { BranchedMenu } from '../ui/branched-menu'
 
 // ---------- shared booking state ----------
 type Ctx = {
@@ -202,17 +203,13 @@ export function BookService() {
   const [type, setType] = useState<'video' | 'audio'>('video')
   const [error, setError] = useState<string | null>(null)
 
-  // Two rows: areas of care, then (once an area is chosen) the services in it. Nothing is selected for the patient.
+  // A branched menu: areas of care, and (once an area is chosen) the services in it on a branch. Nothing is selected for the patient.
   // Doctors and prices are per area, so another area clears the service and anything tied to the old area.
   const pickArea = (g: ServiceGroup) => {
     setError(null)
     if (g.slug !== draft.groupSlug) update({ groupSlug: g.slug, serviceId: undefined, doctorId: undefined, appointmentId: undefined, held: undefined })
   }
-  // Long area rows scroll; bring the chosen area into view once, when the step opens.
   const areaRow = useRef<HTMLDivElement>(null)
-  useEffect(() => {
-    areaRow.current?.querySelector('label:has(input:checked)')?.scrollIntoView({ block: 'nearest', inline: 'nearest' })
-  }, [Boolean(group)]) // eslint-disable-line react-hooks/exhaustive-deps
   // Arrived from "Change care": put the patient on the area row.
   const focusArea = (state as { focusArea?: number } | null)?.focusArea
   useEffect(() => {
@@ -228,12 +225,12 @@ export function BookService() {
       if (!draft.serviceId) return setError('Choose the service that fits best.')
       navigate('/book/who')
     }}>
-      <PageTitle eyebrow="Book a visit" lede={group ? group.blurb : 'Choose an area of care. You’ll see doctors, times and the price before you give any details.'}>
+      <PageTitle eyebrow="Book a visit" title="Book a visit" lede={group ? group.blurb : 'Choose an area of care. You’ll see doctors, times and the price before you give any details.'}>
         {group ? group.name : 'What do you need help with?'}
       </PageTitle>
       <div className="mt-6"><Emergency compact /></div>
 
-      {/* min-w-0: a fieldset otherwise grows to its widest row and the whole page scrolls sideways. */}
+      {/* min-w-0: a fieldset otherwise grows to its widest child and the whole page scrolls sideways. */}
       <fieldset className="mt-8 min-w-0">
         <legend className="text-[20px] font-medium">Which fits best?</legend>
         <p className="fine mt-1">Choose an area, then the closest match. Not sure? Your doctor will guide you.</p>
@@ -241,31 +238,19 @@ export function BookService() {
         {(group?.slug === 'certificates' || group?.slug === 'renewals') && (
           <Notice className="mt-3"><span>Your doctor decides, after assessing you, whether anything needs to be issued. Booking a visit doesn’t guarantee a certificate, a test request or a renewal. Anything issued comes through iMED.</span></Notice>
         )}
-        <div role="radiogroup" aria-labelledby="area-label" className="mt-5">
-          <p id="area-label" className="text-sm font-medium">Area of care</p>
-          <div ref={areaRow} className="service-row mt-2">
-            {groups.map((g) => (
-              <label key={g.id} className="choice service-pill">
-                <input type="radio" name="area" checked={g.slug === group?.slug} onChange={() => pickArea(g)} />
-                <span>{g.name}</span>
-              </label>
-            ))}
-          </div>
-        </div>
-        {group && (
-          <div role="radiogroup" aria-labelledby="service-label" className="service-block mt-5">
-            <p id="service-label" className="text-sm font-medium">{group.name}<span className="fine font-normal"> · from {euro(group.fromFee)}</span></p>
-            {/* key: a new area replaces the row, so its pills animate in. */}
-            <div key={group.slug} className="service-row service-row-in mt-2">
-              {group.services.map((s, i) => (
-                <label key={s.id} className="choice service-pill" style={{ animationDelay: `${i * 35}ms` }}>
-                  <input type="radio" name="service" checked={draft.serviceId === s.id} onChange={() => { setError(null); update({ serviceId: s.id }) }} />
-                  <span>{s.name}</span>
-                </label>
-              ))}
-            </div>
-          </div>
-        )}
+        <p id="area-label" className="mt-5 text-sm font-medium">Area of care</p>
+        <BranchedMenu
+          ref={areaRow}
+          className="mt-2"
+          labelledBy="area-label"
+          name="area"
+          childName="service"
+          sections={groups.map((g) => ({ value: g.slug, label: g.name, meta: `from ${euro(g.fromFee)}`, children: g.services.map((sv) => ({ value: sv.id, label: sv.name })) }))}
+          open={group?.slug}
+          active={draft.serviceId}
+          onOpen={(i) => pickArea(groups[i])}
+          onSelect={(serviceId) => { setError(null); update({ serviceId }) }}
+        />
       </fieldset>
 
       {group && (
