@@ -1,3 +1,4 @@
+import './env.js'
 import { buildApp } from './app.js'
 import { prisma } from './prisma.js'
 
