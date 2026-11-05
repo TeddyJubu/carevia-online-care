@@ -221,6 +221,10 @@ export function BookService() {
           <fieldset className="mt-8">
             <legend className="text-[20px] font-medium">Which fits best?</legend>
             <p className="fine mt-1">Not sure? Pick the closest. Your doctor will guide you.</p>
+            {/* These services are named after documents; booking one must not read as a promise of it (PLAN.md). */}
+            {(group.slug === 'certificates' || group.slug === 'renewals') && (
+              <Notice className="mt-3"><span>Your doctor decides, after assessing you, whether anything needs to be issued. Booking a visit doesn’t guarantee a certificate, a test request or a renewal. Anything issued comes through iMED.</span></Notice>
+            )}
             <div className="mt-4 grid gap-2 sm:grid-cols-2">
               {group.services.map((s) => (
                 <label key={s.id} className="choice min-h-12 py-3">

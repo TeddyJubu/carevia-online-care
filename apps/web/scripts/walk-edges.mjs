@@ -45,6 +45,7 @@ for (const [name, want, heading] of [
 for (const slug of ['general', 'mental', 'nutrition', 'specialist', 'certificates', 'treatments', 'renewals', 'bogus']) {
   await p.goto(`${base}/app/book?service=${slug}`); await p.waitForLoadState('networkidle'); await p.waitForTimeout(300)
   console.log('     J1', slug, '->', await h1())
+  if (slug === 'certificates' || slug === 'renewals') check(await p.getByText(/doesn’t guarantee a certificate/).isVisible(), `J1 ${slug} says booking doesn’t guarantee a document`)
 }
 await shot('j1-unknown-service')
 
