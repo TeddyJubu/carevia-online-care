@@ -223,7 +223,7 @@ h1, h2 {
 
 .demo dt {
   font-size: 12px;
-  color: var(--muted);
+  color: var(--secondary); /* --muted is under 4.5:1 on the demo panel at 12px */
 }
 
 .demo dd {
