@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { getDaily, redact, saveDailyKey } from './api.js'
 
-export default function DailyScreen({ user, onSignOut, onDenied }) {
+export default function DailyScreen({ user, onSignOut, onDenied, embedded = false }) {
   const [loadState, setLoadState] = useState('loading')
   const [status, setStatus] = useState({ enabled: false, hint: '' })
   const [draft, setDraft] = useState('')
@@ -121,16 +121,8 @@ export default function DailyScreen({ user, onSignOut, onDenied }) {
   const windowText =
     loadState !== 'ready' ? '—' : status.hint ? `••••${status.hint}` : status.enabled ? 'Key saved' : 'No key saved'
 
-  return (
-    <div className="desk">
-      <header className="desk-bar">
-        <p className="wordmark">Carevia</p>
-        <p className="desk-user">{user?.email || 'Admin'}</p>
-        <button className="button button-quiet" type="button" onClick={onSignOut}>
-          Sign out
-        </button>
-      </header>
-      <main className="desk-main" id="main">
+  const body = (
+      <main className={embedded ? 'page' : 'desk-main'} id="main">
         <section className="plate" data-state={plateState} aria-live="polite">
           <div className="plate-top">
             <p className="eyebrow on-dark">Video consultations</p>
@@ -202,6 +194,20 @@ export default function DailyScreen({ user, onSignOut, onDenied }) {
           </form>
         </section>
       </main>
+  )
+
+  if (embedded) return body
+
+  return (
+    <div className="desk">
+      <header className="desk-bar">
+        <p className="wordmark">Carevia</p>
+        <p className="desk-user">{user?.email || 'Admin'}</p>
+        <button className="button button-quiet" type="button" onClick={onSignOut}>
+          Sign out
+        </button>
+      </header>
+      {body}
     </div>
   )
 }

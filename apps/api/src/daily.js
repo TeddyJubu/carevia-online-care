@@ -71,7 +71,7 @@ export function createMeetingToken(apiKey, { roomName, isOwner, nbf, exp }) {
   })
 }
 
-function lisbonUnix(day, time) {
+export function lisbonUnix(day, time) {
   const [dateText, monthName, yearText] = day.split(' ')
   const month = MONTHS[monthName]
   const year = Number(yearText)

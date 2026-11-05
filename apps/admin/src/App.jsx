@@ -2,12 +2,18 @@ import { useEffect, useState } from 'react'
 import { getSession, logout } from './api.js'
 import DailyScreen from './DailyScreen.jsx'
 import DeniedScreen from './DeniedScreen.jsx'
+import DoctorsScreen from './DoctorsScreen.jsx'
 import LoginScreen from './LoginScreen.jsx'
+import PatientsScreen from './PatientsScreen.jsx'
+import { parseRoute } from './route.js'
+import ServicesScreen from './ServicesScreen.jsx'
+import Shell from './Shell.jsx'
 
 export default function App() {
   const [phase, setPhase] = useState('checking')
   const [user, setUser] = useState(null)
   const [unreachable, setUnreachable] = useState(false)
+  const [route, setRoute] = useState(() => parseRoute(window.location.hash))
 
   useEffect(() => {
     let live = true
@@ -24,6 +30,13 @@ export default function App() {
     return () => {
       live = false
     }
+  }, [])
+
+  useEffect(() => {
+    const onChange = () => setRoute(parseRoute(window.location.hash))
+    window.addEventListener('hashchange', onChange)
+    if (!window.location.hash) window.location.hash = '#/patients'
+    return () => window.removeEventListener('hashchange', onChange)
   }, [])
 
   function applySession(session) {
@@ -53,6 +66,10 @@ export default function App() {
     setPhase('login')
   }
 
+  function deny() {
+    applySession({ user, forbidden: true })
+  }
+
   return (
     <>
       <a className="skip-link" href="#main">
@@ -64,7 +81,12 @@ export default function App() {
       ) : null}
       {phase === 'denied' ? <DeniedScreen user={user} onSignOut={signOut} /> : null}
       {phase === 'settings' ? (
-        <DailyScreen user={user} onSignOut={signOut} onDenied={() => applySession({ user, forbidden: true })} />
+        <Shell user={user} section={route.section} onSignOut={signOut}>
+          {route.section === 'patients' ? <PatientsScreen id={route.id} onSignOut={signOut} onDenied={deny} /> : null}
+          {route.section === 'doctors' ? <DoctorsScreen id={route.id} onSignOut={signOut} onDenied={deny} /> : null}
+          {route.section === 'services' ? <ServicesScreen id={route.id} onSignOut={signOut} onDenied={deny} /> : null}
+          {route.section === 'daily' ? <DailyScreen embedded onSignOut={signOut} onDenied={deny} /> : null}
+        </Shell>
       ) : null}
     </>
   )

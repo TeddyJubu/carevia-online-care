@@ -52,6 +52,7 @@ model ServiceGroup {
   blurb     String
   icon      String
   sortOrder Int
+  active    Boolean   @default(true)
   services  Service[]
   doctors   Doctor[]
 }
@@ -62,6 +63,7 @@ model Service {
   group     ServiceGroup @relation(fields: [groupId], references: [id], onDelete: Cascade)
   name      String
   sortOrder Int
+  active    Boolean      @default(true)
   doctors   Doctor[]
 
   @@unique([groupId, name])
@@ -79,6 +81,7 @@ model Doctor {
   education         String
   approach          String
   cedula            String
+  active            Boolean       @default(true)
   groupId           Int
   group             ServiceGroup  @relation(fields: [groupId], references: [id])
   serviceId         Int

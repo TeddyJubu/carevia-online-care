@@ -2,13 +2,15 @@ import bcrypt from 'bcryptjs'
 import Fastify from 'fastify'
 import fastifyCookie from '@fastify/cookie'
 import fastifyCors from '@fastify/cors'
-import { languageTokens } from './catalog.js'
+import { registerAdminCatalog } from './admin-catalog.js'
+import { isUpcoming, languageTokens } from './catalog.js'
 import { createMeetingToken, createPrivateRoom, dailyHint, tokenWindow } from './daily.js'
 import { prisma } from './prisma.js'
 import {
   SESSION_COOKIE,
   createSession,
   destroySession,
+  requireAdmin,
   sessionCookieOptions,
   toPublicUser,
   userFromRequest,
@@ -70,7 +72,7 @@ export async function buildApp() {
   await app.register(fastifyCors, {
     origin: ALLOWED_ORIGINS,
     credentials: true,
-    methods: ['GET', 'HEAD', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    methods: ['GET', 'HEAD', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
   })
   await app.register(fastifyCookie)
 
@@ -182,17 +184,20 @@ export async function buildApp() {
 
   app.get('/api/services', async () => {
     const groups = await prisma.serviceGroup.findMany({
+      where: { active: true },
       orderBy: { sortOrder: 'asc' },
-      include: { services: { orderBy: { sortOrder: 'asc' } } },
+      include: { services: { where: { active: true }, orderBy: { sortOrder: 'asc' } } },
     })
     return {
-      groups: groups.map((group) => ({
-        id: group.id,
-        name: group.name,
-        blurb: group.blurb,
-        icon: group.icon,
-        services: group.services.map((service) => service.name),
-      })),
+      groups: groups
+        .filter((group) => group.services.length > 0)
+        .map((group) => ({
+          id: group.id,
+          name: group.name,
+          blurb: group.blurb,
+          icon: group.icon,
+          services: group.services.map((service) => service.name),
+        })),
     }
   })
 
@@ -205,7 +210,11 @@ export async function buildApp() {
     const group = single(request.query.group).trim()
     const language = single(request.query.language).trim()
 
-    const where = {}
+    const where = {
+      active: true,
+      group: { active: true },
+      service: { active: true },
+    }
     if (q) {
       where.OR = [
         { name: { contains: q, mode: 'insensitive' } },
@@ -229,7 +238,7 @@ export async function buildApp() {
       }
       where.availabilityIndex = { lte: index }
     }
-    if (service) where.service = { ...(where.service || {}), name: service }
+    if (service) where.service = { ...where.service, name: service }
     if (group !== '' && group !== 'any') {
       const groupId = Number(group)
       if (!Number.isInteger(groupId)) {
@@ -259,7 +268,9 @@ export async function buildApp() {
       where: { id },
       include: { group: true, service: true },
     })
-    if (!doctor) return reply.code(404).send({ error: 'NOT_FOUND', message: 'Doctor not found.' })
+    if (!doctor || !doctor.active || !doctor.group.active || !doctor.service.active) {
+      return reply.code(404).send({ error: 'NOT_FOUND', message: 'Doctor not found.' })
+    }
     return { doctor: toDoctor(doctor) }
   })
 
@@ -268,11 +279,17 @@ export async function buildApp() {
     if (!Number.isInteger(id)) {
       return reply.code(400).send({ error: 'VALIDATION', message: 'Doctor id must be a number.' })
     }
-    const doctor = await prisma.doctor.findUnique({ where: { id } })
-    if (!doctor) return reply.code(404).send({ error: 'NOT_FOUND', message: 'Doctor not found.' })
+    const now = new Date()
+    const doctor = await prisma.doctor.findUnique({
+      where: { id },
+      include: { group: true, service: true },
+    })
+    if (!doctor || !doctor.active || !doctor.group.active || !doctor.service.active) {
+      return reply.code(404).send({ error: 'NOT_FOUND', message: 'Doctor not found.' })
+    }
     const [slots, booked] = await Promise.all([
       prisma.slot.findMany({
-        where: { doctorId: id },
+        where: { doctorId: id, startsAt: { gt: now } },
         orderBy: { startsAt: 'asc' },
       }),
       prisma.appointment.findMany({
@@ -284,7 +301,7 @@ export async function buildApp() {
     return {
       doctorId: id,
       slots: slots
-        .filter((slot) => !taken.has(slot.label))
+        .filter((slot) => isUpcoming(slot.startsAt, now) && !taken.has(slot.label))
         .map((slot) => ({ label: slot.label, day: slot.day, time: slot.time })),
     }
   })
@@ -323,9 +340,9 @@ export async function buildApp() {
 
     const doctor = await prisma.doctor.findUnique({
       where: { id: request.body.doctorId },
-      include: { service: true },
+      include: { service: true, group: true },
     })
-    if (!doctor) {
+    if (!doctor || !doctor.active || !doctor.group.active || !doctor.service.active) {
       return reply.code(404).send({ error: 'DOCTOR_NOT_FOUND', message: 'That doctor is not available.' })
     }
     if (doctor.service.name !== request.body.service) {
@@ -334,8 +351,11 @@ export async function buildApp() {
     const slot = await prisma.slot.findUnique({
       where: { doctorId_label: { doctorId: doctor.id, label: request.body.slot } },
     })
-    if (!slot) {
-      return reply.code(400).send({ error: 'UNKNOWN_SLOT', message: 'Choose an available time.' })
+    if (!slot || !isUpcoming(slot.startsAt)) {
+      return reply.code(400).send({
+        error: slot ? 'SLOT_PAST' : 'UNKNOWN_SLOT',
+        message: slot ? 'That time has already passed. Choose a later time.' : 'Choose an available time.',
+      })
     }
 
     const already = await prisma.appointment.findUnique({
@@ -447,18 +467,7 @@ export async function buildApp() {
     }
   })
 
-  async function requireAdmin(request, reply) {
-    const user = await userFromRequest(request)
-    if (!user) {
-      reply.code(401).send({ error: 'UNAUTHENTICATED', message: 'Log in to continue.' })
-      return null
-    }
-    if (user.role !== 'admin') {
-      reply.code(403).send({ error: 'FORBIDDEN', message: 'Admin access only.' })
-      return null
-    }
-    return user
-  }
+  registerAdminCatalog(app)
 
   app.get('/api/admin/daily', async (request, reply) => {
     const admin = await requireAdmin(request, reply)

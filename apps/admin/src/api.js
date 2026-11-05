@@ -133,6 +133,80 @@ export function saveDailyKey(apiKey) {
   })
 }
 
+export function sessionFailure(error, onSignOut, onDenied) {
+  if (error?.status === 401) {
+    onSignOut()
+    return true
+  }
+  if (error?.status === 403) {
+    onDenied()
+    return true
+  }
+  return false
+}
+
+export function listPatients(q = '') {
+  const query = q.trim() ? `?q=${encodeURIComponent(q.trim())}` : ''
+  return request(`/api/admin/patients${query}`)
+}
+
+export function getPatient(id) {
+  return request(`/api/admin/patients/${encodeURIComponent(id)}`)
+}
+
+export function savePatient(id, body) {
+  return request(`/api/admin/patients/${encodeURIComponent(id)}`, { method: 'PATCH', body })
+}
+
+export function listServiceGroups() {
+  return request('/api/admin/service-groups')
+}
+
+export function createServiceGroup(body) {
+  return request('/api/admin/service-groups', { method: 'POST', body })
+}
+
+export function updateServiceGroup(id, body) {
+  return request(`/api/admin/service-groups/${id}`, { method: 'PATCH', body })
+}
+
+export function createService(body) {
+  return request('/api/admin/services', { method: 'POST', body })
+}
+
+export function updateService(id, body) {
+  return request(`/api/admin/services/${id}`, { method: 'PATCH', body })
+}
+
+export function listDoctors(q = '') {
+  const query = q.trim() ? `?q=${encodeURIComponent(q.trim())}` : ''
+  return request(`/api/admin/doctors${query}`)
+}
+
+export function getDoctor(id) {
+  return request(`/api/admin/doctors/${id}`)
+}
+
+export function createDoctor(body) {
+  return request('/api/admin/doctors', { method: 'POST', body })
+}
+
+export function saveDoctor(id, body) {
+  return request(`/api/admin/doctors/${id}`, { method: 'PATCH', body })
+}
+
+export function listDoctorSlots(id) {
+  return request(`/api/admin/doctors/${id}/slots`)
+}
+
+export function addDoctorSlot(id, body) {
+  return request(`/api/admin/doctors/${id}/slots`, { method: 'POST', body })
+}
+
+export function removeDoctorSlot(doctorId, slotId) {
+  return request(`/api/admin/doctors/${doctorId}/slots/${slotId}`, { method: 'DELETE' })
+}
+
 export function redact(message, secret) {
   if (!message) return 'The request failed.'
   if (!secret) return message

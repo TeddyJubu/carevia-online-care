@@ -233,6 +233,66 @@ try {
       && tokenAgain.json?.error === 'VIDEO_DISABLED',
     `status ${disabledAgain.json?.enabled}`,
   )
+
+  const patientsForbidden = await request('/api/admin/patients', { cookie: patientCookie })
+  const patients = await request('/api/admin/patients?q=patient@example.com', { cookie: adminCookie })
+  record(
+    'admin can list patients without passwords',
+    patientsForbidden.status === 403
+      && patients.status === 200
+      && patients.json?.patients?.some((item) => item.email === 'patient@example.com')
+      && !patients.text.includes('passwordHash'),
+    `status ${patients.status}`,
+  )
+
+  const adminSlots = await request('/api/admin/doctors/0/slots', { cookie: adminCookie })
+  const slotTimes = adminSlots.json?.slots || []
+  record(
+    'admin schedule hides past times',
+    adminSlots.status === 200
+      && slotTimes.every((slot) => Date.parse(slot.startsAt) > Date.now()),
+    `slots ${slotTimes.length}`,
+  )
+
+  const pastSlot = await request('/api/admin/doctors/0/slots', {
+    method: 'POST',
+    cookie: adminCookie,
+    body: { date: '2020-01-15', time: '09:00' },
+  })
+  record(
+    'past time cannot be added',
+    pastSlot.status === 400 && pastSlot.json?.error === 'SLOT_PAST',
+    `status ${pastSlot.status} ${pastSlot.json?.error}`,
+  )
+
+  const passedBooking = await request('/api/appointments', {
+    method: 'POST',
+    cookie: patientCookie,
+    body: { doctorId: 0, service: 'Adult urgent care', slot: '30 October 2026 \u00b7 09:00', channel: 'video' },
+  })
+  record(
+    'past slot cannot be booked',
+    passedBooking.status === 400 && ['SLOT_PAST', 'UNKNOWN_SLOT'].includes(passedBooking.json?.error),
+    `status ${passedBooking.status} ${passedBooking.json?.error}`,
+  )
+
+  const futureSlot = await request('/api/admin/doctors/0/slots', {
+    method: 'POST',
+    cookie: adminCookie,
+    body: { date: '2027-06-15', time: '10:00' },
+  })
+  const visible = await request('/api/doctors/0/slots')
+  const createdId = futureSlot.json?.slot?.id
+  const removedSlot = createdId
+    ? await request(`/api/admin/doctors/0/slots/${createdId}`, { method: 'DELETE', cookie: adminCookie })
+    : { status: 0 }
+  record(
+    'future time is visible then removed',
+    futureSlot.status === 201
+      && visible.json?.slots?.some((slot) => slot.label === '15 June 2027 \u00b7 10:00')
+      && removedSlot.status === 200,
+    `create ${futureSlot.status}, delete ${removedSlot.status}`,
+  )
 } catch (error) {
   record('smoke script', false, error instanceof Error ? error.message : String(error))
 }

@@ -18,6 +18,9 @@ async function main() {
     slotsForDoctor(doctor).map((slot) => ({ doctorId: doctor.id, ...slot })),
   )
   if (slots.length !== 1485) throw new Error(`Expected 1485 slots, got ${slots.length}`)
+  if (slots.some((slot) => slot.startsAt.getTime() <= Date.now())) {
+    throw new Error('Seed slots must be in the future')
+  }
 
   await prisma.appointment.deleteMany()
   await prisma.slot.deleteMany()

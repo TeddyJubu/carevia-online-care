@@ -44,6 +44,19 @@ export async function userFromRequest(request) {
   return session.user
 }
 
+export async function requireAdmin(request, reply) {
+  const user = await userFromRequest(request)
+  if (!user) {
+    reply.code(401).send({ error: 'UNAUTHENTICATED', message: 'Log in to continue.' })
+    return null
+  }
+  if (user.role !== 'admin') {
+    reply.code(403).send({ error: 'FORBIDDEN', message: 'Admin access only.' })
+    return null
+  }
+  return user
+}
+
 export async function destroySession(request) {
   const token = request.cookies?.[SESSION_COOKIE]
   if (!token) return

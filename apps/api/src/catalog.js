@@ -1,10 +1,16 @@
 // Catalog copied from the patient-booking wireframe.
 // Men’s health uses U+2019, the same apostrophe as that file.
 // Schedule times are the three buttons on the wireframe schedule screen.
+// Demo days are the next three Lisbon dates, so a reseed is not already in the past.
 
-export const DEMO_DAYS = ['30 October 2026', '2 November 2026', '5 November 2026']
+import { lisbonUnix } from './daily.js'
+
 export const SLOT_TIMES = ['09:00', '11:30', '15:00']
 export const SLOT_JOINER = ' \u00b7 '
+const MONTH_NAMES = [
+  'January', 'February', 'March', 'April', 'May', 'June',
+  'July', 'August', 'September', 'October', 'November', 'December',
+]
 
 const FIRST_NAMES = ['Emma', 'Lucas', 'Sofia', 'Noah', 'Amelia', 'Hugo', 'Clara', 'Leo', 'Ines', 'Oscar', 'Maya', 'Felix', 'Elena', 'Adam', 'Nora', 'Louis', 'Alice', 'Milan', 'Sara', 'Theo']
 const LAST_NAMES = ['Laurent', 'Meyer', 'Martins', 'Rossi', 'Dubois', 'Silva', 'Weber', 'Costa', 'Moreau', 'Fischer', 'Romano', 'Pereira', 'Bernard', 'Schmidt', 'Almeida', 'Fontana', 'Petit', 'Andersson', 'Novak', 'Lindberg']
@@ -16,20 +22,6 @@ const APPROACHES = [
   'A supportive conversation focused on your next steps.',
 ]
 const FEES = [45, 65, 85, 110]
-const MONTHS = {
-  January: 0,
-  February: 1,
-  March: 2,
-  April: 3,
-  May: 4,
-  June: 5,
-  July: 6,
-  August: 7,
-  September: 8,
-  October: 9,
-  November: 10,
-  December: 11,
-}
 
 export const GROUPS = [
   {
@@ -172,9 +164,59 @@ export function slotLabel(day, time) {
 }
 
 export function slotStartsAt(day, time) {
-  const [dateText, monthName, yearText] = day.split(' ')
+  const unix = lisbonUnix(day, time)
+  if (unix == null) return new Date(NaN)
+  return new Date(unix * 1000)
+}
+
+export function isUpcoming(startsAt, now = new Date()) {
+  return startsAt instanceof Date && !Number.isNaN(startsAt.getTime()) && startsAt.getTime() > now.getTime()
+}
+
+export function formatSlotDay(year, monthIndex, day) {
+  return `${day} ${MONTH_NAMES[monthIndex]} ${year}`
+}
+
+export function upcomingDemoDays(from = new Date(), count = 3) {
+  const parts = new Intl.DateTimeFormat('en-US', {
+    timeZone: 'Europe/Lisbon',
+    year: 'numeric',
+    month: 'numeric',
+    day: 'numeric',
+  }).formatToParts(from)
+  const map = Object.fromEntries(parts.filter((part) => part.type !== 'literal').map((part) => [part.type, part.value]))
+  const cursor = new Date(Date.UTC(Number(map.year), Number(map.month) - 1, Number(map.day)))
+  cursor.setUTCDate(cursor.getUTCDate() + 1)
+  return Array.from({ length: count }, (_, index) => {
+    const date = new Date(cursor)
+    date.setUTCDate(cursor.getUTCDate() + index)
+    return formatSlotDay(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate())
+  })
+}
+
+export function slotFromDateAndTime(date, time, now = new Date()) {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(date) || !/^\d{2}:\d{2}$/.test(time)) {
+    return { error: 'Choose a date and a time.' }
+  }
+  const [year, month, day] = date.split('-').map(Number)
   const [hours, minutes] = time.split(':').map(Number)
-  return new Date(Date.UTC(Number(yearText), MONTHS[monthName], Number(dateText), hours, minutes))
+  const probe = new Date(Date.UTC(year, month - 1, day))
+  const validDate = probe.getUTCFullYear() === year && probe.getUTCMonth() === month - 1 && probe.getUTCDate() === day
+  if (!validDate || hours > 23 || minutes > 59) {
+    return { error: 'Choose a valid date and time.' }
+  }
+  const dayLabel = formatSlotDay(year, month - 1, day)
+  const clock = `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`
+  const startsAt = slotStartsAt(dayLabel, clock)
+  if (!isUpcoming(startsAt, now)) {
+    return { error: 'Choose a time that has not already passed.' }
+  }
+  return {
+    day: dayLabel,
+    time: clock,
+    label: slotLabel(dayLabel, clock),
+    startsAt,
+  }
 }
 
 export function buildDoctors() {
@@ -210,8 +252,8 @@ export function buildDoctors() {
   return doctors
 }
 
-export function slotsForDoctor(doctor) {
-  return DEMO_DAYS.slice(doctor.availabilityIndex).flatMap((day) =>
+export function slotsForDoctor(doctor, days = upcomingDemoDays()) {
+  return days.slice(doctor.availabilityIndex).flatMap((day) =>
     SLOT_TIMES.map((time) => ({
       day,
       time,

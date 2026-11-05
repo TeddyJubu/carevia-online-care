@@ -36,9 +36,9 @@ export default function LoginScreen({ unreachable, onSession }) {
         <p className="wordmark">Carevia</p>
         <div className="rail-copy">
           <p className="eyebrow">Operations</p>
-          <h1>The key stays on the server.</h1>
+          <h1>Patients, doctors, and care.</h1>
           <p>
-            Video consultations stay off until a Daily API key is saved here. Replace it from this desk when the paid plan changes.
+            Manage registered patients, the doctors they can book, the services on the portal, and the Daily key for video.
           </p>
         </div>
         <p className="rail-foot">The full key is not shown again after it is saved.</p>
@@ -46,7 +46,7 @@ export default function LoginScreen({ unreachable, onSession }) {
       <main className="pane" id="main">
         <form className="card" onSubmit={onSubmit} noValidate>
           <h2>Sign in</h2>
-          <p className="lede">Use an admin account. Other accounts stay outside operations.</p>
+          <p className="lede">Use an admin account. Patient accounts stay on the patient portal.</p>
           {unreachable ? (
             <p className="notice" role="status">
               The API at localhost:4000 did not respond. This screen is ready. Signing in needs the API.
