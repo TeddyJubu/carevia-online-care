@@ -107,12 +107,12 @@ const v45=clashEditorial
  .replace('/design-04-2.html"','/design-04-5.html"')
  .replace(/<div class="glass-image hero-glass"[^>]*>[\s\S]*?<\/div>/,heroFilm)
  .replace('<h1>Find the right care.<br>Feel better supported.</h1>','')
- .replace('<div class="hero-intro">','<h1>The doctor will see you <br>at home.</h1><div class="hero-intro">')
+ .replace('<div class="hero-intro">','<h1>The doctor will <br>see you at home.</h1><div class="hero-intro">')
  .replace('<span>Search care</span>','<span>Find your care<span class="search-example">e.g. Mental health</span></span>')
  .replace('placeholder="What care do you need?"','placeholder="Find your care, e.g. Mental health"')
  .replace('<div class="hero-wordmark" aria-hidden="true">CAREVIA</div></section>','</section><div class="wordmark-band"><div class="hero-wordmark" aria-hidden="true">CAREVIA</div></div>')
  .replace('</head>',`<link rel="preload" href="assets/geist-serif-regular.woff2" as="font" type="font/woff2" crossorigin><script type="module" src="scripts/liquid-logo.js"></script><script type="module" src="scripts/specular-nav.js"></script>${filmStyles}</head>`);
-if(!v45.includes('hero-film')||!v45.includes('see you <br>at home')||!v45.includes('</section><div class="wordmark-band"><div class="hero-wordmark"'))throw new Error('Design 04.5 hero replacement failed');
+if(!v45.includes('hero-film')||!v45.includes('will <br>see you at home')||!v45.includes('</section><div class="wordmark-band"><div class="hero-wordmark"'))throw new Error('Design 04.5 hero replacement failed');
 // 4.5 About: a pinned horizontal story (scripts/about-hscroll.js); the "Your next chapter" banner is gone and Start your care moves up below Our care.
 const aboutStory=`<section class="about-h" id="about" aria-labelledby="about-title"><div class="ah-pin"><div class="ah-track">`
  +`<div class="ah-panel ah-title"><p class="mono">Your life, our starting point</p><h2 id="about-title">Online care that puts you first</h2></div>`
