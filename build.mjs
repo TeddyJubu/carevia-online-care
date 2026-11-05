@@ -2,6 +2,8 @@ import {cp,rm,mkdir,readFile,writeFile} from 'node:fs/promises';
 import {services,faqs,guides} from './src/content.mjs';
 import {services as design42Services} from './src/services-04-2.mjs';
 const esc=s=>String(s).replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('"','&quot;');
+// The patient portal that 04.5 links into: PORTAL_URL=http://localhost:5180/app node build.mjs
+const PORTAL_URL=(process.env.PORTAL_URL||'/app').replace(/\/+$/,'');
 let html=await readFile('src/design-03.html','utf8');
 const featured=[services[0],services[1],services[6],services[3]];
 html=html.replace('<!-- SERVICE_CARDS -->',featured.map((s,i)=>`<button class="care-card" data-service="${s.id}"><span class="glass-image" data-glass="hover" data-src="assets/${s.image||'field.jpg'}" data-focus="${s.focus||'50% 55%'}"><img src="assets/${s.image||'field.jpg'}" alt="" loading="lazy" width="600" height="800"></span><span class="care-card-top"><span>0${i+1}</span></span><span class="care-card-bottom"><strong>${esc(s.name)}</strong><span class="card-meta"><span>From €${s.price}</span><span>${s.duration}</span></span></span></button>`).join(''));
@@ -33,8 +35,8 @@ const clashEditorial=editorial
  .replace(/<h1>Thoughtful care combining[\s\S]*?<\/h1>/,'<h1>Find the right care.<br>Feel better supported.</h1>')
  .replace('<a class="button light" href="#care">Find your care</a>',heroSearch)
 await writeFile('dist/design-04-2.html',clashEditorial);
-await writeFile('dist/index.html',clashEditorial.replace('rel="canonical" href="https://carevia-glass.triple-labs-8416.chatgpt.site/design-04-2.html"','rel="canonical" href="https://carevia-glass.triple-labs-8416.chatgpt.site/"'));
 // Design 04.5: Design 04.2 with the v5 night film in place of the glass hero photo.
+// ponytail: the patient portal (apps/portal on the backend branch) only runs locally so far; swap in its hosted URL once it's deployed. Its /login page links on to /register.
 const heroFilm=`<video class="hero-photo hero-film" autoplay muted loop playsinline preload="auto" poster="assets/film/night.webp" aria-hidden="true"><source src="assets/film/night-720.mp4" type="video/mp4" media="(max-width: 767px)"><source src="assets/film/night-1080.mp4" type="video/mp4"></video><button class="film-toggle" type="button" aria-label="Pause film" aria-pressed="false"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect class="i-pause" x="6" y="5" width="4" height="14" rx="1"/><rect class="i-pause" x="14" y="5" width="4" height="14" rx="1"/><path class="i-play" d="M8 5.5v13l10.5-6.5z"/></svg></button><script>{const v=document.querySelector('.hero-film'),b=v.nextElementSibling,set=p=>{p?v.pause():v.play().catch(()=>{});b.setAttribute('aria-pressed',p);b.setAttribute('aria-label',p?'Play film':'Pause film')};if(matchMedia('(prefers-reduced-motion: reduce)').matches){v.removeAttribute('autoplay');set(true)}b.onclick=()=>set(!v.paused)}</script><script>addEventListener('DOMContentLoaded',()=>{const w=document.querySelector('.hero-wordmark');w&&w.addEventListener('pointermove',e=>{const r=w.getBoundingClientRect();w.style.setProperty('--mx',e.clientX-r.left+'px');w.style.setProperty('--my',e.clientY-r.top+'px')})})</script>`;
 const filmStyles=`<style>.hero-film{object-fit:cover;object-position:50% 50%}
 /* Deep-blue vignette: dark navy at every edge, still see-through, clearing towards the middle. */
@@ -44,25 +46,39 @@ const filmStyles=`<style>.hero-film{object-fit:cover;object-position:50% 50%}
 /* Liquid-metal mark (scripts/liquid-logo.js): the canvas floats over the PNG, which keeps the layout and is hidden once the shader runs. */
 .liquid-logo{position:absolute;left:50%;top:50%;width:104px;height:104px;translate:-50% -50%;pointer-events:none}.nav-logo.is-metal .carevia-mark{visibility:hidden}
 /* Orange specular rim (scripts/specular-nav.js): canvas spills 24px past each pill and sits at z-index -1 inside the pill's isolated stack (above its fill, below its text); 4.2's blue chroma rim is retired on the pills. */
-.specular-light{position:absolute;inset:-24px;width:calc(100% + 48px);height:calc(100% + 48px);z-index:-1;pointer-events:none;opacity:0;transition:opacity .35s}.topbar .nav-pill:is(:hover,:focus-visible) .specular-light{opacity:1}.topbar .nav-pill::after{display:none}
+.specular-light{position:absolute;inset:-24px;width:calc(100% + 48px);height:calc(100% + 48px);z-index:-1;pointer-events:none;opacity:0;transition:opacity .35s}.topbar .nav-pill:is(:hover,:focus-visible) .specular-light,.hero .search-shell:hover .specular-light{opacity:1}.topbar .nav-pill::after{display:none}
 /* Calm load: everything in the hero clears from a light blur, one after another.
    Fill is "backwards", so once done each element drops back to filter:none; a held blur(0) would still switch off the nav pills' and search bar's backdrop blur. */
 @keyframes calm-in{from{opacity:0;filter:blur(6px);translate:0 6px}to{opacity:1;filter:none;translate:0 0}}
 @keyframes film-in{from{opacity:0;filter:blur(10px)}to{opacity:1;filter:none}}
-@keyframes wordmark45{from{opacity:0;filter:blur(8px);translate:0 10px}to{opacity:.8;filter:none;translate:0 0}}
 .hero-film{animation:film-in 1.8s cubic-bezier(.25,.6,.3,1) backwards}
 .topbar{animation:calm-in 1.2s .2s cubic-bezier(.25,.6,.3,1) backwards}
 .hero .hero-intro>*{animation:calm-in 1.2s cubic-bezier(.25,.6,.3,1) backwards}
-.hero .hero-intro>.hero-note{animation-delay:.4s}.hero .hero-intro>h1{animation-delay:.55s}.hero .hero-intro>:is(.care-search,noscript){animation-delay:.7s}
-.hero .hero-wordmark{opacity:.8;animation:wordmark45 1.5s .85s cubic-bezier(.25,.6,.3,1) backwards}
+.hero .hero-intro>.hero-note{animation-delay:.4s}.hero>h1{animation:calm-in 1.2s .55s cubic-bezier(.25,.6,.3,1) backwards}.hero .hero-intro>:is(.care-search,noscript){animation-delay:.7s}
 .film-toggle{animation:calm-in 1s 1.1s cubic-bezier(.25,.6,.3,1) backwards}
-/* Hover glow: a lit copy of the wordmark with a blue halo, revealed only in a soft circle around the pointer. */
-.hero .hero-wordmark::after{content:'CAREVIA';position:absolute;inset:-48px;padding:48px;color:#fff;filter:drop-shadow(0 0 5px #c4e6ff) drop-shadow(0 0 16px #62b4ff) drop-shadow(0 0 38px #2a7dff);-webkit-mask-image:radial-gradient(circle 220px at calc(var(--mx,-999px) + 48px) calc(var(--my,-999px) + 48px),#000 0%,#000a 40%,transparent 80%);mask-image:radial-gradient(circle 220px at calc(var(--mx,-999px) + 48px) calc(var(--my,-999px) + 48px),#000 0%,#000a 40%,transparent 80%);opacity:0;transition:opacity .35s;pointer-events:none}
-.hero .hero-wordmark:hover::after{opacity:1}
-.hero .hero-intro{max-width:680px}.hero .hero-intro h1{font-size:clamp(32px,6.3vw,62px)}
+/* CAREVIA sits in a navy band just below the hero: the hero now fades into navy (not paper), the band carries that navy under the letters, then fades to paper itself.
+   overflow-x:clip stops the scaled-up wordmark adding a sideways scrollbar while still letting it grow upward over the hero. */
+.hero:after{background:linear-gradient(transparent,#071d3a)}
+/* The fade runs up behind the letters and reaches paper exactly at their baseline (the band is only as tall as the wordmark), so white CAREVIA melts into the page. Navy to paper: a long fade with smoothstep-spaced stops (no hard knee where it starts or ends), mixed in oklab so the middle stays a soft blue instead of going muddy grey. */
+.wordmark-band{position:relative;z-index:4;--band-fade:85%;background:linear-gradient(#071d3a,color-mix(in oklab,#071d3a,var(--paper) 6%) 15%,color-mix(in oklab,#071d3a,var(--paper) 22%) 30%,color-mix(in oklab,#071d3a,var(--paper) 43%) 45%,color-mix(in oklab,#071d3a,var(--paper) 65%) 60%,color-mix(in oklab,#071d3a,var(--paper) 84%) 75%,color-mix(in oklab,#071d3a,var(--paper) 97%) 90%,var(--paper)) bottom/100% var(--band-fade) no-repeat,#071d3a;overflow-x:clip}
+.wordmark-band>.hero-wordmark{position:relative;z-index:auto;left:auto;bottom:auto;transform:none;margin:0 auto;color:var(--paper);opacity:1;animation:none}
+/* Scrubbed by scroll across the wordmark's pass through the viewport: it arrives already sharp, then keeps growing and thinning as it rises,
+   and is blurred out by the time it reaches the top. No scroll timelines or reduced motion: it simply sits sharp and solid. */
+@keyframes wordmark-pass{0%,45%{opacity:1;filter:blur(0);scale:1}90%,100%{opacity:0;filter:blur(20px);scale:1.35}}
+@supports (animation-timeline:view()){@media(prefers-reduced-motion:no-preference){.wordmark-band>.hero-wordmark{animation:wordmark-pass linear both;animation-timeline:view()}}}
+/* Hover glow: a lit copy of the wordmark with a soft blue halo (kept mild: two light, half-transparent shadows), revealed only in a soft circle around the pointer. */
+.hero-wordmark::after{content:'CAREVIA';position:absolute;inset:-48px;padding:48px;color:var(--paper);filter:drop-shadow(0 0 4px #c4e6ff80) drop-shadow(0 0 14px #62b4ff4d);-webkit-mask-image:radial-gradient(circle 220px at calc(var(--mx,-999px) + 48px) calc(var(--my,-999px) + 48px),#000 0%,#000a 40%,transparent 80%);mask-image:radial-gradient(circle 220px at calc(var(--mx,-999px) + 48px) calc(var(--my,-999px) + 48px),#000 0%,#000a 40%,transparent 80%);opacity:0;transition:opacity .35s;pointer-events:none}
+.hero-wordmark:hover::after{opacity:1}
+.hero .hero-intro{max-width:680px}.hero>h1{font-size:clamp(32px,6.3vw,62px)}
+/* Layout: the note and search sit centred where the heading used to be; the heading moves to the bottom-left of the film, left aligned.
+   z-index 4 keeps it above the shade and fade but under .hero-intro (5), so the open search panel still covers it. */
+.hero .hero-intro{top:38svh}
+.hero>h1{position:absolute;z-index:4;left:clamp(20px,4vw,64px);right:clamp(20px,4vw,64px);bottom:calc(var(--hero-fade) + clamp(28px,6vh,72px));max-width:none;margin:0;text-align:left;line-height:1.08}
+/* Search: "Find your care" with a dimmer example query after it. */
+.search-example{opacity:.55;margin-left:.35em}
 /* Geist Serif (Design 03's face) for the hero heading and every h2. It ships in one weight, so 400 avoids faux bold. */
 @font-face{font-family:"Geist Serif";src:url('assets/geist-serif-regular.woff2') format('woff2');font-weight:400;font-style:normal;font-display:swap}
-.hero .hero-intro h1,h2{font-family:"Geist Serif",Georgia,serif;font-weight:400}.journey-heading h2{font-weight:400}/* Geist Serif has no light weight, so it reads lighter through size, open spacing and a softer white. */.hero .hero-intro h1{letter-spacing:-.012em;color:#ffffffe6}
+.hero>h1,h2{font-family:"Geist Serif",Georgia,serif;font-weight:400}.journey-heading h2{font-weight:400}/* Geist Serif has no light weight, so it reads lighter through size, open spacing and a softer white. */.hero>h1{letter-spacing:-.012em;color:#ffffffe6}
 /* Dark blue glass search bar (collapsed state only; the open panel stays dark so results read clearly). */
 .hero .search-shell{background:linear-gradient(180deg,#123c66a6,#06203d8c);border-color:#a9d4ff33;box-shadow:inset 0 1px 0 #ffffff47,inset 0 -1px 0 #ffffff14,0 14px 40px #04162c40;backdrop-filter:blur(14px) saturate(160%) brightness(1.06);-webkit-backdrop-filter:blur(14px) saturate(160%) brightness(1.06)}
 .hero .search-shell::before{content:'';position:absolute;inset:0;border-radius:inherit;padding:1.2px;background:linear-gradient(180deg,#cfe8ff73,#cfe8ff17 22%,#fff0 45%,#fff0 60%,#cfe8ff17 80%,#cfe8ff47);-webkit-mask:linear-gradient(#fff 0 0) content-box,linear-gradient(#fff 0 0);-webkit-mask-composite:xor;mask-composite:exclude;pointer-events:none}
@@ -70,11 +86,11 @@ const filmStyles=`<style>.hero-film{object-fit:cover;object-position:50% 50%}
 .hero .search-trigger>span{color:#ffffffc7}
 /* Orange labels: one hue, three tints so 12px text keeps its contrast on each background. !important beats 4.2's per-section label colours. */
 .mono{color:#b54e14!important;font-family:"Geist Serif",Georgia,serif!important;font-weight:400!important;letter-spacing:.01em!important;text-transform:capitalize!important;font-size:13px!important}:is(.journey-heading,footer) .mono{color:#f59e5b!important}
-@media(max-width:600px){.hero .hero-intro h1{font-size:34px}.topbar .nav-logo .carevia-mark{width:46px;height:46px}.liquid-logo{width:84px;height:84px}}.film-toggle{position:absolute;z-index:6;right:24px;bottom:calc(var(--hero-fade) + 20px);width:40px;height:40px;border-radius:50%;display:grid;place-items:center;color:#fff;background:#ffffff14;border:1px solid #ffffff38;backdrop-filter:blur(6px);cursor:pointer}.film-toggle .i-play,.film-toggle[aria-pressed=true] .i-pause{display:none}.film-toggle[aria-pressed=true] .i-play{display:inline}@media(max-width:600px){.hero-film{object-position:62% 50%}.film-toggle{right:16px}}
+@media(max-width:600px){.hero>h1{font-size:34px}.topbar .nav-logo .carevia-mark{width:46px;height:46px}.liquid-logo{width:84px;height:84px}}.film-toggle{position:absolute;z-index:6;right:24px;bottom:calc(var(--hero-fade) + 20px);width:40px;height:40px;border-radius:50%;display:grid;place-items:center;color:#fff;background:#ffffff14;border:1px solid #ffffff38;backdrop-filter:blur(6px);cursor:pointer}.film-toggle .i-play,.film-toggle[aria-pressed=true] .i-pause{display:none}.film-toggle[aria-pressed=true] .i-play{display:inline}@media(max-width:600px){.hero-film{object-position:62% 50%}.film-toggle{right:16px}}
 /* Touch screens (desktop untouched): 44px tap targets, and the 112 notice at a readable size. */
 @media(max-width:1024px){.film-toggle{width:44px;height:44px}.care-open{min-height:46px;padding:12px 0 0;align-items:center}.emergency>p{font-size:14px}.emergency>a{display:inline-flex;align-items:center;min-height:44px;padding-inline:4px;font-size:14px;font-weight:500}.topbar :is(.menu-toggle,.nav-logo){flex:none;min-width:44px}}
-/* Phones: the heading wraps freely (balanced, no orphaned "you"), and the film button sits above the wordmark instead of on its last letter. */
-@media(max-width:600px){.hero .hero-intro h1{text-wrap:balance}.hero .hero-intro h1 br{display:none}.film-toggle{bottom:calc(var(--hero-fade) + 17.7vw + 6px)}.emergency{gap:6px 12px}}
+/* Phones: the heading wraps freely (balanced, no orphaned "you"). */
+@media(max-width:600px){.hero>h1{text-wrap:balance}.hero>h1 br{display:none}.emergency{gap:6px 12px}}
 /* Desktop gets the same accessible sizing as touch: 44px film toggles and price rows, and a 14px 112 notice. The link's negative margin keeps its text on the notice's first line while its tap area stays 44px. */
 @media(min-width:1025px){.film-toggle{width:44px;height:44px}.care-open{min-height:46px;padding:12px 0 0;align-items:center}.emergency>p{font-size:14px}.emergency>a{display:inline-flex;align-items:center;min-height:44px;margin-block:-11.5px;padding-inline:4px;font-size:14px;font-weight:500}}
 /* Phones: Our care cards size to their content instead of 4.2's fixed 520px. Equal rows (sized by the tallest card) keep the sticky stack even, and any spare height sits above the price row so number, title and description read as one block. */
@@ -90,9 +106,13 @@ const v45=clashEditorial
  .replace('data-design="04.2"','data-design="04.5"')
  .replace('/design-04-2.html"','/design-04-5.html"')
  .replace(/<div class="glass-image hero-glass"[^>]*>[\s\S]*?<\/div>/,heroFilm)
- .replace('<h1>Find the right care.<br>Feel better supported.</h1>','<h1>The doctor will see you <br>at home.</h1>')
+ .replace('<h1>Find the right care.<br>Feel better supported.</h1>','')
+ .replace('<div class="hero-intro">','<h1>The doctor will see you <br>at home.</h1><div class="hero-intro">')
+ .replace('<span>Search care</span>','<span>Find your care<span class="search-example">e.g. Mental health</span></span>')
+ .replace('placeholder="What care do you need?"','placeholder="Find your care, e.g. Mental health"')
+ .replace('<div class="hero-wordmark" aria-hidden="true">CAREVIA</div></section>','</section><div class="wordmark-band"><div class="hero-wordmark" aria-hidden="true">CAREVIA</div></div>')
  .replace('</head>',`<link rel="preload" href="assets/geist-serif-regular.woff2" as="font" type="font/woff2" crossorigin><script type="module" src="scripts/liquid-logo.js"></script><script type="module" src="scripts/specular-nav.js"></script>${filmStyles}</head>`);
-if(!v45.includes('hero-film')||!v45.includes('see you <br>at home'))throw new Error('Design 04.5 hero replacement failed');
+if(!v45.includes('hero-film')||!v45.includes('see you <br>at home')||!v45.includes('</section><div class="wordmark-band"><div class="hero-wordmark"'))throw new Error('Design 04.5 hero replacement failed');
 // 4.5 About: a pinned horizontal story (scripts/about-hscroll.js); the "Your next chapter" banner is gone and Start your care moves up below Our care.
 const aboutStory=`<section class="about-h" id="about" aria-labelledby="about-title"><div class="ah-pin"><div class="ah-track">`
  +`<div class="ah-panel ah-title"><p class="mono">Your life, our starting point</p><h2 id="about-title">Online care that puts you first</h2></div>`
@@ -139,6 +159,18 @@ const v45Story=v45
  .replace('</head>',`<script type="module" src="scripts/about-hscroll.js"></script>${aboutStyles}</head>`);
 if(!v45Story.includes('ah-track')||!v45Story.includes('clinician-45-3.jpg')||v45Story.includes('wide-banner')||!/id="care"[\s\S]*?<\/section><section class="start-steps/.test(v45Story))throw new Error('Design 04.5 about story or Start your care move failed');
 
-await writeFile('dist/design-04-5.html',v45Story);
+// Patient journey: 04.5 is the homepage and links into the portal (/book, /signin, /signup under PORTAL_URL).
+// design-04.js reads data-portal to turn each service dialog's button into "Book {service}".
+const portal=esc(PORTAL_URL),external='https://carevia.triple-labs-8416.chatgpt.site/';
+const v45Home=v45Story
+ .replace('data-design="04.5"',`data-design="04.5" data-portal="${portal}"`)
+ .replace('<a class="nav-pill nav-book" href="#care">Find your care</a>',`<a class="nav-pill nav-book" href="${portal}/signin">Sign in</a>`)
+ .replace('<button class="button dark" data-all-care>View all care options</button>',`<button class="button dark" data-all-care>View all care options</button><a class="button light" href="${portal}/book?service=general" style="text-decoration:underline;text-decoration-color:#a7bdd0;text-underline-offset:4px">Not sure which one?</a>`)
+ .replace(`<a class="button light" href="${external}" target="_blank" rel="noopener">Create your account</a>`,`<a class="button light" href="${portal}/signup">Create your account</a>`)
+ .replace(`<a class="button dark" href="${external}#doctors" target="_blank" rel="noopener">Explore Carevia’s clinicians</a>`,'<a class="button dark" href="#care">Find your clinician</a>');
+// Only the footer's and the FAQ's "Visit Carevia" keep the external site.
+if(!v45Home.includes('data-portal=')||!v45Home.includes('/signin">Sign in')||!v45Home.includes('>Not sure which one?</a>')||!v45Home.includes('/signup">Create your account')||v45Home.split(external).length-1!==2)throw new Error('Design 04.5 portal links failed');
+await writeFile('dist/design-04-5.html',v45Home);
+await writeFile('dist/index.html',v45Home.replace('rel="canonical" href="https://carevia.claudemod.tech/design-04-5.html"','rel="canonical" href="https://carevia.claudemod.tech/"'));
 
 console.log('Built Carevia designs 03, 04.2 and 04.5.');
