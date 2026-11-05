@@ -10,6 +10,7 @@ import { bookingRoutes } from './routes/bookings.js'
 import { catalogRoutes } from './routes/catalog.js'
 import { peopleRoutes } from './routes/people.js'
 import { staffRoutes } from './routes/staff.js'
+import { sendDueReminders } from './reminders.js'
 import { sweepExpiredHolds, topUpSlots } from './schedule.js'
 
 const SENSITIVE = [
@@ -89,7 +90,7 @@ export async function buildApp({ timers = true } = {}) {
   app.get('/api/dev/outbox', async (_request, reply) => {
     if (!OUTBOX_ENABLED) return reply.code(404).send({ error: 'NOT_FOUND', message: 'Not found.' })
     const messages = await prisma.outboxMessage.findMany({ orderBy: { sentAt: 'desc' }, take: 100 })
-    return { messages: messages.map(({ id, to, subject, text, links, sentAt }) => ({ id, to, subject, text, links, sentAt })) }
+    return { messages: messages.map(({ id, channel, to, subject, text, links, sentAt }) => ({ id, channel, to, subject, text, links, sentAt })) }
   })
 
   await app.register(authRoutes)
@@ -102,15 +103,21 @@ export async function buildApp({ timers = true } = {}) {
 
   // Keep the 21-day schedule topped up (on start-up, then hourly; new days appear after midnight Lisbon time)
   // and sweep expired holds every minute. Reads never depend on the sweep: they check holdExpiresAt themselves.
+  // Visit reminders go out every 5 minutes, about 24 hours before; reminderSentAt keeps it to one per visit.
   if (timers) {
     const intervals = []
+    const remind = () => sendDueReminders()
+      .then((sent) => { if (sent) app.log.info({ sent }, 'visit reminders sent') })
+      .catch((error) => app.log.error({ errCode: error?.code }, 'visit reminders failed'))
     app.addHook('onReady', async () => {
       const added = await topUpSlots()
       app.log.info({ added }, 'slot schedule topped up')
       intervals.push(
         setInterval(() => topUpSlots().catch((error) => app.log.error({ errCode: error?.code }, 'slot top-up failed')), 60 * 60_000),
         setInterval(() => sweepExpiredHolds().catch((error) => app.log.error({ errCode: error?.code }, 'hold sweep failed')), 60_000),
+        setInterval(remind, 5 * 60_000),
       )
+      remind()
       for (const interval of intervals) interval.unref()
     })
     app.addHook('onClose', async () => intervals.forEach(clearInterval))

@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
-import { canReschedule, isAdult, isMinor, lisbonToday, normalizePhone, parseDate } from '../src/rules.js'
+import { canReschedule, isAdult, isMinor, lisbonToday, normalizePhone, parseDate, reminderDue } from '../src/rules.js'
 
 test('isAdult: the 18th birthday counts', () => {
   assert.equal(isAdult('2008-11-05', '2026-11-05'), true)
@@ -81,4 +81,20 @@ test('canReschedule: before the start, or after a dropped call once the join win
   assert.equal(canReschedule(visit({ outcome: null }), at('2026-11-10T12:00:00.000Z')), false) // no dropped call recorded
   assert.equal(canReschedule(visit({ status: 'completed', outcome: 'completed' }), at('2026-11-09T10:00:00.000Z')), false)
   assert.equal(canReschedule(visit({ status: 'cancelled' }), at('2026-11-09T10:00:00.000Z')), false)
+})
+
+test('reminderDue: once, inside the last 24 hours, only for visits paid for earlier than that', () => {
+  const startsAt = new Date('2026-11-10T10:00:00Z')
+  const a = { status: 'confirmed', startsAt, remindEmail: true, remindSms: false, reminderSentAt: null, payment: { createdAt: new Date('2026-11-01T10:00:00Z') } }
+  const at = (iso) => new Date(iso)
+  assert.equal(reminderDue(a, at('2026-11-09T09:59:00Z')), false, 'more than 24 hours before')
+  assert.equal(reminderDue(a, at('2026-11-09T10:00:00Z')), true, 'exactly 24 hours before')
+  assert.equal(reminderDue(a, at('2026-11-10T09:59:00Z')), true, 'still due after a restart that missed the moment')
+  assert.equal(reminderDue(a, at('2026-11-10T10:00:00Z')), false, 'the visit has started')
+  assert.equal(reminderDue({ ...a, reminderSentAt: at('2026-11-09T10:00:00Z') }, at('2026-11-09T11:00:00Z')), false, 'already sent')
+  assert.equal(reminderDue({ ...a, remindEmail: false }, at('2026-11-09T11:00:00Z')), false, 'both channels off')
+  assert.equal(reminderDue({ ...a, remindEmail: false, remindSms: true }, at('2026-11-09T11:00:00Z')), true, 'SMS only')
+  assert.equal(reminderDue({ ...a, status: 'cancelled' }, at('2026-11-09T11:00:00Z')), false, 'cancelled')
+  assert.equal(reminderDue({ ...a, payment: { createdAt: at('2026-11-09T12:00:00Z') } }, at('2026-11-09T13:00:00Z')), false, 'booked inside the 24 hours')
+  assert.equal(reminderDue({ ...a, payment: null }, at('2026-11-09T11:00:00Z')), false, 'never paid')
 })

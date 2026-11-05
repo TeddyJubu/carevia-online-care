@@ -144,6 +144,8 @@ model TwoFactor {
 // Emails that would have been sent. Written only in demo mode or development (GET /api/dev/outbox).
 model OutboxMessage {
   id      String   @id @default(cuid())
+  // "email" or "sms". No SMS provider exists yet, so SMS rows are never delivered anywhere.
+  channel String   @default("email")
   to      String
   subject String
   text    String
@@ -254,6 +256,10 @@ model Appointment {
   dailyRoomName      String?
   dailyRoomUrl       String?
   cancelledAt        DateTime?
+  // Reminder choices (email on, SMS off by default) and when the one reminder went out.
+  remindEmail        Boolean           @default(true)
+  remindSms          Boolean           @default(false)
+  reminderSentAt     DateTime?
   createdAt          DateTime          @default(now())
   updatedAt          DateTime          @updatedAt
   consents           ConsentRecord[]

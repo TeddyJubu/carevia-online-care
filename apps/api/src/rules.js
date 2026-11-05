@@ -190,3 +190,21 @@ export function joinState(appointment, now = new Date()) {
   if (now > joinClosesAt) return 'closed'
   return 'open'
 }
+
+export const REMINDER_HOURS_BEFORE = 24
+
+/**
+ * Whether the one reminder for this appointment should go out now: it is confirmed, not started, the patient
+ * wants at least one channel, none has been sent, we are within 24 hours of the start, and it was paid for more
+ * than 24 hours ahead (a visit booked later than that has just had its confirmation, which serves as the reminder).
+ * ponytail: a visit moved to a time less than 24 hours away still gets one, right after its "new time" email.
+ * Store when it was last scheduled if that duplicate ever matters.
+ */
+export function reminderDue(appointment, now = new Date()) {
+  const dueAt = appointment.startsAt.getTime() - REMINDER_HOURS_BEFORE * 3_600_000
+  return effectiveStatus(appointment, now) === 'confirmed'
+    && !appointment.reminderSentAt
+    && (appointment.remindEmail || appointment.remindSms)
+    && now.getTime() >= dueAt && now < appointment.startsAt
+    && Boolean(appointment.payment) && appointment.payment.createdAt.getTime() < dueAt
+}

@@ -118,7 +118,7 @@ export async function appointmentRoutes(app) {
         data: {
           slotId: slot.id, doctorId: slot.doctorId, startsAt: slot.startsAt, endsAt: slot.endsAt,
           outcome: null, callState: 'not_started', reconnects: 0, preJoinConfirmedAt: null, companion: false,
-          dailyRoomName: null, dailyRoomUrl: null,
+          dailyRoomName: null, dailyRoomUrl: null, reminderSentAt: null,
         },
       })
     } catch (error) {
@@ -130,6 +130,27 @@ export async function appointmentRoutes(app) {
     const moved = await load(appointment.id)
     await sendBookingConfirmation(user, moved, { moved: true })
     return { appointment: toAppointment(moved, 'patient') }
+  })
+
+  // Reminder choices for this visit. The reminder itself goes out about 24 hours before (src/reminders.js).
+  app.put('/api/appointments/:id/reminders', {
+    schema: {
+      params: idParams,
+      body: {
+        type: 'object', additionalProperties: false, required: ['email', 'sms'],
+        properties: { email: { type: 'boolean' }, sms: { type: 'boolean' } },
+      },
+    },
+  }, async (request, reply) => {
+    const { appointment } = await accessible(request, reply, ['patient'])
+    if (!appointment) return
+    if (effectiveStatus(appointment) !== 'confirmed') return sendError(reply, 409, 'NOT_CONFIRMED', 'Only a confirmed visit has reminders.')
+    if (new Date() >= appointment.startsAt) return sendError(reply, 409, 'VISIT_STARTED', 'This visit has started, so there is nothing to remind you of.')
+    await prisma.appointment.update({
+      where: { id: appointment.id },
+      data: { remindEmail: request.body.email, remindSms: request.body.sms },
+    })
+    return { appointment: toAppointment(await load(appointment.id), 'patient') }
   })
 
   app.get('/api/appointments/:id/calendar.ics', { schema: { params: idParams } }, async (request, reply) => {

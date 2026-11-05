@@ -2,7 +2,8 @@
 //   Demo mode:   DEMO_MODE=true NODE_ENV=development DAILY_API_URL=http://127.0.0.1:4090/v1 npm run start
 //   Normal mode: NODE_ENV=production DAILY_API_URL=http://127.0.0.1:4090/v1 npm run start
 // The script starts a fake Daily on 127.0.0.1:4090, so no real Daily key or network call is needed for video.
-// It uses Prisma directly once, to backdate a hold for the HOLD_EXPIRED check.
+// It uses Prisma directly once, to backdate a hold for the HOLD_EXPIRED check, and runs the reminder job itself
+// with a simulated clock (same database) to check one reminder per visit.
 import http from 'node:http'
 import { prisma } from '../src/prisma.js'
 
@@ -369,6 +370,64 @@ async function rescheduleChecks(demoPatient) {
   expectError('rescheduling a finished visit is 409 CANNOT_RESCHEDULE', await demoPatient.post(`/api/appointments/${past?.id}/reschedule`, { slotId: spare.id }), 409, 'CANNOT_RESCHEDULE')
 }
 
+// Reminder choices (owner only), the receipt's payment data, and one reminder per visit however often the job runs.
+async function reminderChecks(demoPatient) {
+  const patient = new Browser()
+  await patient.signUp({ email: `remind-${stamp}@example.com`, firstName: 'Remindme', lastName: 'Smoke' })
+  const consent = await patient.get('/api/consent/current')
+  // A time more than two days away, so the reminder isn't due yet and the visit counts as booked well ahead.
+  const slot = (await patient.get('/api/doctors/7/slots?days=21')).json.slots.find((s) => Date.parse(s.startsAt) > Date.now() + 48 * 3_600_000)
+  const held = await patient.post('/api/bookings', { slotId: slot.id, serviceId: 1, channel: 'video', for: 'self', inMainlandPortugal: true })
+  const id = held.json?.appointment?.id
+  await patient.post(`/api/bookings/${id}/consent`, { version: consent.json.version })
+  const paid = await patient.post(`/api/bookings/${id}/pay`, { method: 'demo' })
+  const a = (await patient.get(`/api/appointments/${id}`)).json?.appointment
+  record('reminders default to email on, SMS off, none sent', paid.status === 200 && a?.reminders?.email === true && a.reminders.sms === false && a.reminders.sentAt === null, JSON.stringify(a?.reminders))
+  record('receipt data: amount, method, date paid and status, nothing else',
+    a?.payment?.amount === a?.fee && a.payment.method === 'demo' && a.payment.status === 'paid' && !Number.isNaN(Date.parse(a.payment.paidAt))
+      && Object.keys(a.payment).sort().join() === 'amount,method,paidAt,status',
+    JSON.stringify(a?.payment))
+  // The demo doctor (doctor 0) sees the demo patient's visits with her: no payment and no reminders in that view.
+  const ownVisit = (await demoPatient.get('/api/appointments?scope=upcoming')).json?.appointments?.find((item) => item.doctor.id === 0)
+  const doctorView = await (async () => { const d = new Browser(); await d.signIn(...DEMO.doctor); return d.get(`/api/appointments/${ownVisit?.id}`) })()
+  record('a doctor never sees payment or reminders', doctorView.status === 200 && !('payment' in doctorView.json.appointment) && !('reminders' in doctorView.json.appointment), show(doctorView))
+
+  const saved = await patient.put(`/api/appointments/${id}/reminders`, { email: true, sms: true })
+  record('PUT reminders saves the choice', saved.status === 200 && saved.json?.appointment?.reminders?.sms === true && saved.json.appointment.reminders.email === true, show(saved))
+  expectError('PUT reminders on another patient’s visit is 404', await demoPatient.put(`/api/appointments/${id}/reminders`, { email: false, sms: false }), 404, 'NOT_FOUND')
+  expectError('PUT reminders without a session is 401', await new Browser().put(`/api/appointments/${id}/reminders`, { email: false, sms: false }), 401, 'AUTH_REQUIRED')
+  expectError('PUT reminders with a non-boolean is 400', await patient.put(`/api/appointments/${id}/reminders`, { email: 'yes', sms: true }), 400, 'VALIDATION')
+  expectError('PUT reminders missing a field is 400', await patient.put(`/api/appointments/${id}/reminders`, { email: true }), 400, 'VALIDATION')
+  expectError('PUT reminders with an unknown field is 400', await patient.put(`/api/appointments/${id}/reminders`, { email: true, sms: true, when: '1h' }), 400, 'VALIDATION')
+  const cancelled = (await demoPatient.get('/api/appointments?scope=past')).json?.appointments?.find((item) => item.status === 'cancelled')
+  expectError('PUT reminders on a cancelled visit is 409 NOT_CONFIRMED', await demoPatient.put(`/api/appointments/${cancelled?.id}/reminders`, { email: true, sms: false }), 409, 'NOT_CONFIRMED')
+  const noOrigin = await patient.request(`/api/appointments/${id}/reminders`, { method: 'PUT', body: { email: true, sms: true }, origin: 'https://evil.example' })
+  expectError('PUT reminders from another origin is 403 FORBIDDEN_ORIGIN', noOrigin, 403, 'FORBIDDEN_ORIGIN')
+
+  // Run the job as if it were 23 hours before the visit, twice. The smoke process shares the API's database;
+  // DEMO_MODE is set first so this process writes to the outbox too (the API is in demo mode to get here).
+  process.env.DEMO_MODE = 'true'
+  const { sendDueReminders } = await import('../src/reminders.js')
+  const at = new Date(Date.parse(a.startsAt) - 23 * 3_600_000)
+  const notYet = await sendDueReminders(new Date(Date.parse(a.startsAt) - 25 * 3_600_000))
+  const first = await sendDueReminders(at)
+  const second = await sendDueReminders(new Date(at.getTime() + 5 * 60_000))
+  const mine = (await patient.get('/api/dev/outbox')).json.messages.filter((m) => /^Reminder|^SMS/.test(m.subject) && m.links.some((link) => link.endsWith(`/app/visits/${id}`)))
+  const email = mine.find((m) => m.channel === 'email')
+  const sms = mine.find((m) => m.channel === 'sms')
+  record('reminders: nothing 25 hours before; one email and one SMS at 23 hours; nothing on the next run',
+    notYet === 0 && first >= 1 && second === 0 && mine.length === 2 && !!email && !!sms, `${notYet}/${first}/${second}, ${mine.length} messages`)
+  record('reminder text: Lisbon time, doctor and 112; no patient name',
+    !!email && /Lisbon time/.test(email.text) && email.text.includes(a.doctor.name) && /112/.test(email.text) && !/Remindme|Smoke/.test(email.text + email.subject)
+      && !!sms && sms.to === '+351912000000' && /not sent/.test(sms.subject) && !/Remindme|Smoke/.test(sms.text),
+    email?.text)
+  const after = (await patient.get(`/api/appointments/${id}`)).json?.appointment
+  record('reminders: the sent time is stored', !!after?.reminders?.sentAt, String(after?.reminders?.sentAt))
+  const target = (await patient.get('/api/doctors/7/slots?days=21')).json.slots.find((s) => Date.parse(s.startsAt) > Date.parse(a.startsAt) + 24 * 3_600_000)
+  const moved = await patient.post(`/api/appointments/${id}/reschedule`, { slotId: target.id })
+  record('moving a visit clears the sent reminder, so the new time gets one', moved.status === 200 && moved.json?.appointment?.reminders?.sentAt === null, show(moved))
+}
+
 async function clashChecks() {
   // One person can't be in two calls: a second visit at the same time is refused at payment and at reschedule.
   const patient = new Browser()
@@ -631,6 +690,7 @@ try {
     const extra = await bookingChecks(patient)
     await familyAndProfileChecks(patient, extra)
     await rescheduleChecks(patient)
+    await reminderChecks(patient)
     await clashChecks()
     const visits = await visitChecks(patient, doctor, admin)
     await staffChecks(patient, doctor, admin, visits)

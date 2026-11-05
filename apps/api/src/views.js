@@ -15,8 +15,8 @@ export function sendError(reply, status, error, message) {
 
 /**
  * The contract's appointment object, with only the fields `role` may see:
- * - patient: everything below
- * - clinician: no payment
+ * - patient: everything below, including payment (with amount and date paid) and reminder choices
+ * - clinician: no payment, no reminders
  * - admin: operational fields only (no patient name, no consent or pre-join detail)
  * No clinical fields exist to leak. iMED status is always "not_connected" in this build.
  */
@@ -56,6 +56,10 @@ export function toAppointment(a, role, now = new Date()) {
   const consent = a.consents?.[0]
   view.consent = consent ? { version: consent.version, acceptedAt: consent.acceptedAt } : null
   view.preJoin = { confirmedAt: a.preJoinConfirmedAt, companion: a.companion }
-  if (role === 'patient') view.payment = a.payment ? { status: a.payment.status, method: a.payment.method } : null
+  if (role === 'patient') {
+    // The receipt's data: amount, method and date paid. Payment only, never anything clinical.
+    view.payment = a.payment ? { status: a.payment.status, method: a.payment.method, amount: a.payment.amount, paidAt: a.payment.createdAt } : null
+    view.reminders = { email: a.remindEmail, sms: a.remindSms, sentAt: a.reminderSentAt }
+  }
   return view
 }
