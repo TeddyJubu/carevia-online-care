@@ -108,6 +108,7 @@ export const api = {
   appointments: (scope: 'upcoming' | 'past') => get<{ appointments: Appointment[] }>(`/api/appointments?scope=${scope}`),
   appointment: (id: string) => get<A>(`/api/appointments/${id}`),
   cancel: (id: string) => post<A>(`/api/appointments/${id}/cancel`),
+  reschedule: (id: string, slotId: SlotId) => post<A>(`/api/appointments/${id}/reschedule`, { slotId }),
   calendarUrl: (id: string) => `/api/appointments/${id}/calendar.ics`,
   preJoin: (id: string, companion: boolean) =>
     post<A>(`/api/appointments/${id}/pre-join`, { emailConfirmed: true, mobileConfirmed: true, companion }),

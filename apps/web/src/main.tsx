@@ -7,7 +7,7 @@ import { BookAccount, BookConsent, BookFamily, BookingLayout, BookPay, BookServi
 import { CallPage } from './pages/call'
 import { Outbox } from './pages/dev'
 import { Agenda, DoctorVisit } from './pages/doctor'
-import { Done, Prepare, PreJoin } from './pages/visit'
+import { Done, Prepare, PreJoin, Reschedule } from './pages/visit'
 import { Waiting } from './pages/waiting'
 import { homeFor, SessionProvider, useSession } from './lib/session'
 import { Loading, PageTitle } from './ui/kit'
@@ -55,6 +55,7 @@ const router = createBrowserRouter(
         },
         { path: 'visits/:id', element: patient(<Prepare />) },
         { path: 'visits/:id/join', element: patient(<PreJoin />) },
+        { path: 'visits/:id/reschedule', element: patient(<Reschedule />) },
         { path: 'visits/:id/waiting', element: patient(<Waiting />) },
         { path: 'visits/:id/call', element: patient(<CallPage />) },
         { path: 'visits/:id/done', element: patient(<Done />) },

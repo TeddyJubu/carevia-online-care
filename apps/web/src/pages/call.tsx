@@ -109,7 +109,7 @@ export function VideoOff({ who }: { who: 'patient' | 'clinician' }) {
       <h2 className="mt-2 text-white">Video calls aren’t switched on right now</h2>
       <p className="mt-3 text-[#c0d2e7]">
         {who === 'patient'
-          ? 'Your appointment is kept and nothing has been lost. Please try again in a few minutes. If it’s still off, Carevia will contact you to arrange your visit.'
+          ? 'Your appointment is kept and nothing has been lost. Please try again in a few minutes. If video stays off, your visit isn’t lost and you won’t pay again: your doctor will mark the call as ended, and you can then choose a new time from your account.'
           : 'Add the Daily API key in the admin app’s Daily settings. Video stays off until a key is saved.'}
       </p>
       </div>

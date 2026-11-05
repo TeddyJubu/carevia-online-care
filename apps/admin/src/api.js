@@ -116,7 +116,8 @@ export function enableTwoFactor(password) {
 
 /** Demo logins are shown only when this build has demo mode on AND the API says demo mode is on. */
 export async function getDemoAdmin() {
-  if (import.meta.env.VITE_DEMO_MODE !== 'true') return null
+  // Either flag turns the demo logins on: VITE_DEMO_MODE=true (this app's own) or VITE_DEMO=1 (the patient app's).
+  if (import.meta.env.VITE_DEMO_MODE !== 'true' && import.meta.env.VITE_DEMO !== '1') return null
   try {
     const data = await request('/api/demo')
     return data?.accounts?.find((account) => account.role === 'admin') || null

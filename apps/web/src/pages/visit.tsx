@@ -7,6 +7,7 @@ import { useQuestions } from '../lib/questions'
 import { useSession } from '../lib/session'
 import { countdown, fullDate, hhmm, minutes, when } from '../lib/time'
 import type { Appointment } from '../lib/types'
+import { TimePicker } from './book'
 import { Dialog, DoctorAvatar, Emergency, ErrorState, euro, FormError, Loading, Markdown, PageTitle } from '../ui/kit'
 
 export function useAppointment() {
@@ -15,6 +16,13 @@ export function useAppointment() {
 }
 
 export type Phase = 'before' | 'open' | 'closed'
+
+/** Mirrors the API's canReschedule: confirmed, and not started, or the call dropped and rejoining is over. */
+export function canReschedule(a: Appointment, now = Date.now()): boolean {
+  if (a.status !== 'confirmed') return false
+  if (now < Date.parse(a.startsAt)) return true
+  return a.outcome === 'ended_poor_quality' && now >= Date.parse(a.call.joinClosesAt)
+}
 export function phaseOf(a: Appointment, now = Date.now()): Phase {
   if (now < Date.parse(a.call.joinOpensAt)) return 'before'
   return now < Date.parse(a.call.joinClosesAt) ? 'open' : 'closed'
@@ -62,6 +70,7 @@ export function Prepare() {
   const load = useAppointment()
   const [params] = useSearchParams()
   const booked = params.get('booked') === '1'
+  const moved = params.get('moved') === '1'
   const navigate = useNavigate()
   const now = useNow(15000)
   const [cancelling, setCancelling] = useState(false)
@@ -81,6 +90,7 @@ export function Prepare() {
               <PageTitle eyebrow={a.status === 'cancelled' ? 'Cancelled' : booked ? 'Payment received (demo)' : 'Your visit'} title={booked ? 'You’re booked' : 'Your visit'}>
                 {a.status === 'cancelled' ? 'This visit was cancelled' : booked ? 'You’re booked' : 'Your visit'}
               </PageTitle>
+              {moved && <p role="status" className="notice notice-ok mt-6">Your visit has a new time. We’ve emailed you the details.</p>}
               <div className="mt-8"><VisitCard a={a} /></div>
               {a.status === 'confirmed' && (
                 <>
@@ -91,8 +101,11 @@ export function Prepare() {
                     <CalendarLink a={a} />
                   </div>
                   <p className="fine mt-4">{booked ? 'We’ve emailed your confirmation. ' : ''}Paid {euro(a.fee)} (demo).</p>
-                  {phase !== 'closed' && Date.parse(a.startsAt) > now && (
-                    <button type="button" className="link mt-8 inline-flex min-h-11 items-center text-sm" onClick={() => setCancelling(true)}>Cancel this visit</button>
+                  {canReschedule(a, now) && (
+                    <div className="mt-8 flex flex-wrap gap-x-6">
+                      <Link to={`/visits/${a.id}/reschedule`} className="link inline-flex min-h-11 items-center text-sm">Change the time</Link>
+                      <button type="button" className="link inline-flex min-h-11 items-center text-sm" onClick={() => setCancelling(true)}>Cancel this visit</button>
+                    </div>
                   )}
                 </>
               )}
@@ -268,7 +281,7 @@ function statusCopy(a: Appointment, phase: Phase): { title: string; lede: string
     case 'ended_poor_quality':
       return phase === 'open'
         ? { title: 'The call ended because of the connection', lede: 'Your appointment is still open. Move somewhere with a stronger signal, then rejoin.', action: rejoin }
-        : { title: 'The call ended because of the connection', lede: 'Your appointment stays open: it isn’t lost or charged twice. The Carevia team will contact you to arrange a new time.' }
+        : { title: 'The call ended because of the connection', lede: 'Your appointment stays open: it isn’t lost, and you won’t pay again. Choose a new time for the same visit.', action: <Link to={`/visits/${a.id}/reschedule`} className="btn btn-primary">Choose a new time</Link> }
     default:
       return phase === 'open'
         ? { title: 'Your doctor is finishing up', lede: 'If the call dropped, you can rejoin. Otherwise your doctor will record how the visit went in a few minutes.', action: rejoin }
@@ -276,3 +289,39 @@ function statusCopy(a: Appointment, phase: Phase): { title: string; lede: string
   }
 }
 
+
+// ---------- Reschedule: the same appointment at another time (reuses the J3 picker) ----------
+export function Reschedule() {
+  const load = useAppointment()
+  const navigate = useNavigate()
+  return (
+    <VisitGate load={load}>{(a) => {
+      if (!canReschedule(a)) {
+        return (
+          <div className="page-narrow">
+            <PageTitle lede="Only a confirmed visit that hasn’t started can be moved, or one whose call dropped once the time to rejoin has passed.">This visit can’t be moved</PageTitle>
+            <Link to={`/visits/${a.id}`} className="btn btn-primary mt-8">Back to your visit</Link>
+          </div>
+        )
+      }
+      const dropped = a.outcome === 'ended_poor_quality'
+      return (
+        <div className="page">
+          <div className="max-w-[760px]">
+            <PageTitle eyebrow={`${a.service.groupName} · ${a.service.name}`}
+              lede={<>{dropped ? 'Your call dropped and the time to rejoin has passed. ' : ''}Same visit, same payment: you won’t be charged again. Now: <strong className="font-medium text-ink">{when(a.startsAt)}</strong> with {a.doctor.name}.</>}>
+              Choose a new time
+            </PageTitle>
+            <TimePicker groupSlug={a.service.groupSlug} service={{ id: a.service.id, name: a.service.name }} preferredDoctorId={a.doctor.id} preferredLabel="Your doctor" includePreferred
+              back={`/visits/${a.id}`} verb="Move to" pendingLabel="Moving your visit…"
+              submit={async (picked) => {
+                await api.reschedule(a.id, picked.id)
+                navigate(`/visits/${a.id}?moved=1`, { replace: true })
+              }} />
+            <div className="mt-8"><Emergency compact /></div>
+          </div>
+        </div>
+      )
+    }}</VisitGate>
+  )
+}

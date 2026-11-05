@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
 import {
-  SLOT_TIMES, effectiveStatus, holdExpiry, joinState, joinWindow, lisbonDayRange, lisbonTimeToUtc, scheduleFor,
+  SLOT_TIMES, effectiveStatus, holdExpiry, joinState, joinWindow, lisbonDateTime, lisbonDayRange, lisbonTimeToUtc, scheduleFor,
 } from '../src/rules.js'
 
 const iso = (date) => date.toISOString()
@@ -82,4 +82,9 @@ test('Join window opens 10 minutes before the start and closes 60 minutes after 
   assert.equal(joinState(visit, new Date('2026-11-05T09:50:00Z')), 'open')
   assert.equal(joinState(visit, new Date('2026-11-05T11:30:00Z')), 'open')
   assert.equal(joinState(visit, new Date('2026-11-05T11:30:01Z')), 'closed')
+})
+
+test('lisbonDateTime writes the visit time in Lisbon wall-clock time, summer and winter', () => {
+  assert.equal(lisbonDateTime('2026-07-15T08:30:00.000Z'), 'Wednesday 15 July 2026 at 09:30')
+  assert.equal(lisbonDateTime('2026-11-06T09:30:00.000Z'), 'Friday 6 November 2026 at 09:30')
 })

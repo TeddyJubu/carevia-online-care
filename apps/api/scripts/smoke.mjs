@@ -280,6 +280,14 @@ async function bookingChecks(patient) {
   record('demo payment confirms the visit', paid.status === 200 && paid.json?.appointment?.status === 'confirmed'
     && paid.json.appointment.payment?.status === 'paid' && paid.json.appointment.payment.method === 'demo' && paid.json.appointment.holdExpiresAt === null,
   show(paid))
+  const confirmation = (await anon.get('/api/dev/outbox')).json?.messages?.find((m) => m.to === email && /booked/.test(m.subject))
+  const startsAt = paid.json?.appointment?.startsAt
+  const lisbonTime = startsAt && new Intl.DateTimeFormat('en-GB', { timeZone: 'Europe/Lisbon', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }).format(new Date(startsAt))
+  record('payment sends a confirmation: Lisbon time, doctor, link to /app/visits/:id, no patient name or reason',
+    !!confirmation && confirmation.text.includes(paid.json.appointment.doctor.name) && confirmation.text.includes(`at ${lisbonTime}`)
+      && confirmation.text.includes('Lisbon time') && confirmation.links.some((link) => link.endsWith(`/app/visits/${holdId}`))
+      && !confirmation.text.includes('Booking Smoke') && !confirmation.text.includes(paid.json.appointment.service.name),
+    confirmation ? confirmation.text : 'no message')
   expectError('releasing a confirmed visit is 409 NOT_HELD', await anon.del(`/api/bookings/${holdId}`), 409, 'NOT_HELD')
   expectError('another patient cannot read the visit (404)', await other.get(`/api/appointments/${holdId}`), 404, 'NOT_FOUND')
 
@@ -321,6 +329,44 @@ async function bookingChecks(patient) {
   const releasedChild = await patient.del(`/api/bookings/${childHold}`)
   record('release a hold', releasedChild.status === 200 && releasedChild.json?.ok === true, show(releasedChild))
   return { adultId: adult.json?.member?.id }
+}
+
+// Reschedule moves the same appointment; it never creates a second one.
+async function rescheduleChecks(demoPatient) {
+  // A new patient with a confirmed visit with doctor 3 (General & urgent care), so the demo patient's lists stay as seeded.
+  const patient = new Browser()
+  await patient.signUp({ email: `mover-${stamp}@example.com`, firstName: 'Mover', lastName: 'Smoke' })
+  const consent = await patient.get('/api/consent/current')
+  const first = await freeSlot(patient, { doctorId: 3, skip: 4 })
+  const held = await patient.post('/api/bookings', { slotId: first.id, serviceId: 1, channel: 'video', for: 'self', inMainlandPortugal: true })
+  const id = held.json?.appointment?.id
+  await patient.post(`/api/bookings/${id}/consent`, { version: consent.json.version })
+  const paid = await patient.post(`/api/bookings/${id}/pay`, { method: 'demo' })
+  const before = (await patient.get('/api/appointments?scope=upcoming')).json?.appointments?.length
+
+  const target = await freeSlot(patient, { doctorId: 3, skip: 6 })
+  const moved = await patient.post(`/api/appointments/${id}/reschedule`, { slotId: target.id })
+  const after = await patient.get('/api/appointments?scope=upcoming')
+  const freed = (await patient.get('/api/doctors/3/slots?days=21')).json.slots.some((slot) => slot.id === first.id)
+  record('reschedule moves the same appointment to the new slot and frees the old one',
+    paid.status === 200 && moved.status === 200 && moved.json?.appointment?.id === id && moved.json.appointment.startsAt === target.startsAt
+      && moved.json.appointment.status === 'confirmed' && moved.json.appointment.payment?.status === 'paid' && freed,
+    show(moved))
+  record('reschedule never creates a second appointment', after.json?.appointments?.length === before
+    && after.json.appointments.filter((item) => item.id === id).length === 1, `${before} then ${after.json?.appointments?.length}`)
+  const note = (await patient.get('/api/dev/outbox')).json?.messages?.find((m) => /new time/.test(m.subject) && m.links.some((link) => link.endsWith(`/app/visits/${id}`)))
+  record('reschedule sends a "new time" message with the visit link', !!note, note?.text ?? 'no message')
+
+  const taken = await freeSlot(patient, { doctorId: 3, skip: 8 })
+  await new Browser().post('/api/bookings', { slotId: taken.id, serviceId: 1, channel: 'video', for: 'self', inMainlandPortugal: true })
+  expectError('reschedule onto a held slot is 409 SLOT_TAKEN', await patient.post(`/api/appointments/${id}/reschedule`, { slotId: taken.id }), 409, 'SLOT_TAKEN')
+  const elsewhere = await freeSlot(patient, { doctorId: 60 })
+  expectError('reschedule to another area of care is 400 SERVICE_MISMATCH', await patient.post(`/api/appointments/${id}/reschedule`, { slotId: elsewhere.id }), 400, 'SERVICE_MISMATCH')
+
+  const spare = await freeSlot(patient, { doctorId: 3, skip: 10 })
+  expectError('rescheduling someone else’s appointment is 404', await demoPatient.post(`/api/appointments/${id}/reschedule`, { slotId: spare.id }), 404, 'NOT_FOUND')
+  const past = (await demoPatient.get('/api/appointments?scope=past')).json?.appointments?.find((item) => item.status === 'completed')
+  expectError('rescheduling a finished visit is 409 CANNOT_RESCHEDULE', await demoPatient.post(`/api/appointments/${past?.id}/reschedule`, { slotId: spare.id }), 409, 'CANNOT_RESCHEDULE')
 }
 
 async function familyAndProfileChecks(patient, { adultId }) {
@@ -518,6 +564,7 @@ try {
     await authChecks()
     const extra = await bookingChecks(patient)
     await familyAndProfileChecks(patient, extra)
+    await rescheduleChecks(patient)
     const visits = await visitChecks(patient, doctor, admin)
     await staffChecks(patient, doctor, admin, visits)
     await originChecks(patient, false)

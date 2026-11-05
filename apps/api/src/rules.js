@@ -22,6 +22,16 @@ function compareParts(a, b) {
 }
 
 /** Today's calendar date in Lisbon, as "YYYY-MM-DD". */
+const visitTimeFormatter = new Intl.DateTimeFormat('en-GB', {
+  timeZone: ZONE, weekday: 'long', day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit', hourCycle: 'h23',
+})
+
+/** "Thursday 6 November 2026 at 10:30", in Lisbon time, for messages to patients. */
+export function lisbonDateTime(date) {
+  const p = Object.fromEntries(visitTimeFormatter.formatToParts(new Date(date)).map((part) => [part.type, part.value]))
+  return `${p.weekday} ${p.day} ${p.month} ${p.year} at ${p.hour}:${p.minute}`
+}
+
 export function lisbonToday(now = new Date()) {
   const parts = Object.fromEntries(
     new Intl.DateTimeFormat('en-GB', { timeZone: ZONE, year: 'numeric', month: '2-digit', day: '2-digit' })
@@ -160,6 +170,17 @@ export function joinWindow(appointment) {
     joinOpensAt: new Date(appointment.startsAt.getTime() - JOIN_OPENS_MINUTES_BEFORE * 60_000),
     joinClosesAt: new Date(appointment.endsAt.getTime() + JOIN_CLOSES_MINUTES_AFTER * 60_000),
   }
+}
+
+/**
+ * Whether the patient may move this same appointment to another time (never a second appointment):
+ * it is confirmed, and either it hasn't started yet, or the call dropped (outcome ended_poor_quality)
+ * and the join window has closed, so reconnecting is no longer possible.
+ */
+export function canReschedule(appointment, now = new Date()) {
+  if (effectiveStatus(appointment, now) !== 'confirmed') return false
+  if (now < appointment.startsAt) return true
+  return appointment.outcome === 'ended_poor_quality' && now >= joinWindow(appointment).joinClosesAt
 }
 
 /** "too_early", "open" or "closed". */

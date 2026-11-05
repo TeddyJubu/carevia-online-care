@@ -1,9 +1,10 @@
 import { createHash, randomBytes } from 'node:crypto'
-import { requireRole, sessionUser } from '../auth.js'
+import { PUBLIC_APP_URL, requireRole, sessionUser } from '../auth.js'
 import { DEMO_MODE } from '../config.js'
 import { currentConsent } from '../content.js'
+import { sendMail } from '../mail.js'
 import { prisma } from '../prisma.js'
-import { effectiveStatus, holdExpiry, isAdult, isMinor } from '../rules.js'
+import { effectiveStatus, holdExpiry, isAdult, isMinor, lisbonDateTime } from '../rules.js'
 import { APPOINTMENT_INCLUDE, sendError, toAppointment } from '../views.js'
 
 export const HOLD_COOKIE = 'carevia_hold'
@@ -26,6 +27,27 @@ function setHoldCookie(reply, token) {
 }
 
 const load = (id) => prisma.appointment.findUnique({ where: { id }, include: APPOINTMENT_INCLUDE })
+
+/**
+ * The booking confirmation, to the account holder. Date, time (Lisbon), doctor and a link only: no reason for
+ * the visit, no clinical data, and not the patient's name (it may be a child's). A mail failure never undoes
+ * a payment that has already gone through.
+ */
+export async function sendBookingConfirmation(user, appointment, { moved = false } = {}) {
+  const when = lisbonDateTime(appointment.startsAt)
+  try {
+    await sendMail({
+      template: moved ? 'booking-moved' : 'booking-confirmed',
+      to: user.email,
+      subject: moved ? 'Your Carevia visit has a new time' : 'Your Carevia visit is booked',
+      text: `Your video consultation with ${appointment.doctor.name} is ${moved ? 'now' : 'confirmed'} on ${when} (Lisbon time). `
+        + 'You can join from your Carevia account 10 minutes before it starts. Not an emergency service: in an emergency, call 112.',
+      links: [`${PUBLIC_APP_URL}/app/visits/${appointment.id}`],
+    })
+  } catch (error) {
+    console.warn(`[mail] ${moved ? 'booking-moved' : 'booking-confirmed'} failed: ${error?.message}`)
+  }
+}
 
 /** A held appointment owned by this patient, or sends 404 / 410 HOLD_EXPIRED / 409 NOT_HELD and returns null. */
 async function ownedHold(reply, id, user) {
@@ -239,6 +261,7 @@ export async function bookingRoutes(app) {
       return true
     })
     if (!confirmed) return sendError(reply, 410, 'HOLD_EXPIRED', 'This time is no longer held for you. Choose a time again.')
+    await sendBookingConfirmation(user, appointment)
     return { appointment: toAppointment(await load(appointment.id), 'patient') }
   })
 

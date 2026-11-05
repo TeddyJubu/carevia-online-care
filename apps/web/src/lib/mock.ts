@@ -13,7 +13,7 @@ const GROUPS: { slug: GroupSlug; name: string; blurb: string; icon: string; serv
   { slug: 'mental', name: 'Mental health', blurb: 'Psychology, psychiatry and ongoing support', icon: 'brain', services: ['Adult psychology', 'Child psychology', 'Psychiatry', 'Child psychiatry', 'Adult ADHD', 'Child ADHD', 'Autism', 'Couples and family therapy', 'Eating disorders', 'Screen and gaming dependency', 'Substance and behavioural dependencies', 'Smoking cessation'] },
   { slug: 'nutrition', name: 'Weight management', blurb: 'Nutrition and weight-loss consultations', icon: 'heart', services: ['Nutrition', 'Weight-loss consultation'] },
   { slug: 'specialist', name: 'Specialist care', blurb: 'Find the right specialist for your needs', icon: 'activity', services: ['Gynaecology', 'Neurology', 'Endocrinology', 'Rheumatology', 'Paediatrics', 'Migraine', 'Menopause', 'Breastfeeding', 'Travel medicine'] },
-  { slug: 'certificates', name: 'Certificates & assessments', blurb: 'Medical documents and fitness assessments', icon: 'file-check', services: ['Sick leave', 'Illness certificate', 'Nursery and school certificate', 'Occupational certificate', 'Driving fitness', 'Driving fitness with psychotechnical assessment', 'In-person psychotechnical assessment', 'Hunting or firearms certificate', 'Diving certificate', 'Boating licence renewal'] },
+  { slug: 'certificates', name: 'Certificates & assessments', blurb: 'Fitness and health assessments with a doctor', icon: 'file-check', services: ['Sick leave', 'Illness certificate', 'Nursery and school certificate', 'Occupational certificate', 'Driving fitness', 'Driving fitness with psychotechnical assessment', 'In-person psychotechnical assessment', 'Hunting or firearms certificate', 'Diving certificate', 'Boating licence renewal'] },
   { slug: 'treatments', name: 'Treatments', blurb: 'Clinical advice and treatment review', icon: 'heart-pulse', services: ['Skin treatment', 'Hair-loss treatment', 'Pain management', 'Allergies treatment', 'Hypertension treatment', 'Smoking cessation'] },
   { slug: 'renewals', name: 'Test requests & renewals', blurb: 'Doctor consultations for test requests and treatment renewals', icon: 'clipboard-list', services: ['Tests and laboratory investigations', 'Medical treatment renewal'] },
 ]
@@ -379,6 +379,21 @@ on('POST', '/api/appointments/([^/]+)/cancel', (m) => {
   const a = ownAppt(u, m[1]); if (isRes(a)) return a
   if (a.status !== 'confirmed' || Date.parse(a.startsAt) <= Date.now()) return err(409, 'CANNOT_CANCEL', 'This visit can no longer be cancelled.')
   a.status = 'cancelled'
+  return ok({ appointment: view(a) })
+})
+on('POST', '/api/appointments/([^/]+)/reschedule', (m, b) => {
+  const u = needRole('patient'); if (isRes(u)) return u
+  const a = ownAppt(u, m[1]); if (isRes(a)) return a
+  const now = Date.now()
+  const ok2 = a.status === 'confirmed' && (now < Date.parse(a.startsAt) || (a.outcome === 'ended_poor_quality' && now >= windowOf(a).closes))
+  if (!ok2) return err(409, 'CANNOT_RESCHEDULE', 'This visit can no longer be moved.')
+  const [docId, startsAt] = String(b.slotId).split('_')
+  const d = doctors[+docId]
+  if (!d || !startsAt) return err(404, 'SLOT_NOT_FOUND', 'That time no longer exists. Choose another time.')
+  if (d.id !== a.doctorId && d.groupIndex !== services.find((s) => s.id === a.serviceId)!.groupIndex) return err(400, 'SERVICE_MISMATCH', 'Choose the same doctor, or another doctor in the same area of care.')
+  if (!slotsFor(d, lisbonDay(startsAt), 1).some((s) => s.startsAt === startsAt)) return err(409, 'SLOT_TAKEN', 'That time was just booked. Choose another time.')
+  Object.assign(a, { doctorId: d.id, startsAt, endsAt: new Date(Date.parse(startsAt) + SLOT_MIN * 60000).toISOString(), outcome: null, callState: 'not_started', reconnects: 0, preJoin: null })
+  mail(u.email, 'Your Carevia visit has a new time', `Your video consultation with ${d.name} has a new time.`, [`/app/visits/${a.id}`])
   return ok({ appointment: view(a) })
 })
 on('POST', '/api/appointments/([^/]+)/pre-join', (m, b) => {

@@ -3,7 +3,6 @@
   "private": true,
   "workspaces": [
     "apps/api",
-    "apps/portal",
     "apps/admin",
     "apps/web"
   ],
@@ -11,10 +10,10 @@
     "db": "npm --prefix apps/api run db",
     "db:setup": "npm --prefix apps/api run db:setup",
     "dev:api": "npm --prefix apps/api run dev",
-    "dev:portal": "npm --prefix apps/portal run dev",
     "dev:admin": "npm --prefix apps/admin run dev",
     "test:api": "npm --prefix apps/api test",
-    "smoke:api": "npm --prefix apps/api run smoke"
+    "smoke:api": "npm --prefix apps/api run smoke",
+    "dev:web": "npm --prefix apps/web run dev"
   },
   "engines": {
     "node": ">=20"
