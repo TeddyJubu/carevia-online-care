@@ -357,7 +357,8 @@ function attach(button, s) {
 
 // Settings mirror SpecularButton's props; lineColor/baseColor are Carevia orange. Hover-only: no idle light, no reaction from outside the pill.
 const settings = { radius: 10, lineColor: '#ff9a4d', baseColor: '#8a4a1f', intensity: 1.15, idleIntensity: 0, shineSize: 12, shineFade: 40, thickness: 1.3, glow: 1.2, speed: 0.35, followMouse: true, proximity: 1, autoAnimate: false, disabled: false };
-const start = () => { for (const pill of document.querySelectorAll('.topbar .nav-pill')) attach(pill, { ...settings, radius: parseFloat(getComputedStyle(pill).borderTopLeftRadius) || 10 }); };
+// The hero search bar gets the same rim. Its shell clips overflow, so only the outward glow is trimmed; the rim itself sits just inside the edge.
+const start = () => { for (const pill of document.querySelectorAll('.topbar .nav-pill, .hero .search-shell')) attach(pill, { ...settings, radius: parseFloat(getComputedStyle(pill).borderTopLeftRadius) || 10 }); };
 // Touch-only devices never see the hover rim, so they get no WebGL contexts at all. A convertible that gains a mouse attaches then.
 const canHover = matchMedia('(hover: hover) and (pointer: fine)');
 if (canHover.matches) start();
