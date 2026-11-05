@@ -74,6 +74,13 @@ export function BookingLayout() {
   }, [navigate, draft.for])
 
   const expire = useCallback(() => setExpired(true), [])
+  // "Change care": clear the area and everything tied to it (as picking another area does), then go to step 1
+  // and focus the area row. A plain link to /book did nothing when already on /book.
+  const changeCare = () => {
+    setAppt(undefined)
+    update({ groupSlug: undefined, serviceId: undefined, doctorId: undefined, appointmentId: undefined, held: undefined })
+    navigate('/book', { state: { focusArea: Date.now() } })
+  }
   const step = Math.max(0, STEPS.findIndex((s) => s.paths.includes(pathname.replace(/\/$/, ''))))
 
   if (services.error) return <div className="page"><ErrorState error={services.error} onRetry={services.reload} /></div>
@@ -99,7 +106,7 @@ export function BookingLayout() {
           )}
         </div>
         <aside className="book-aside hidden min-[1025px]:block" aria-label="Your visit">
-          <Summary {...{ group, service, draft, appt }} onExpire={expire} />
+          <Summary {...{ group, service, draft, appt }} onExpire={expire} onChangeCare={changeCare} />
         </aside>
       </div>
       <Dialog open={expired} onClose={() => setExpired(false)} title="Your time was released">
@@ -143,12 +150,12 @@ function SummaryBody({ group, service, draft, appt, onExpire }: SumProps) {
   )
 }
 
-function Summary(p: SumProps) {
+function Summary({ onChangeCare, ...p }: SumProps & { onChangeCare: () => void }) {
   return (
     <div className="card">
       <p className="eyebrow mb-3">Your visit</p>
       <SummaryBody {...p} />
-      {p.group && <Link to="/book" className="link mt-4 inline-flex min-h-11 items-center text-sm">Change care</Link>}
+      {p.group && <button type="button" onClick={onChangeCare} className="link mt-4 cursor-pointer inline-flex min-h-11 items-center text-sm">Change care</button>}
     </div>
   )
 }
@@ -180,6 +187,7 @@ export function BookService() {
   const { groups, group, draft, update } = useBooking()
   const [params] = useSearchParams()
   const navigate = useNavigate()
+  const { state } = useLocation()
 
   // Deep link: /app/book?service=<group slug>, optionally &doctor=<id> for a follow-up. The link chooses the area;
   // the service is still the patient's choice, so none is selected for them.
@@ -205,6 +213,13 @@ export function BookService() {
   useEffect(() => {
     areaRow.current?.querySelector('label:has(input:checked)')?.scrollIntoView({ block: 'nearest', inline: 'nearest' })
   }, [Boolean(group)]) // eslint-disable-line react-hooks/exhaustive-deps
+  // Arrived from "Change care": put the patient on the area row.
+  const focusArea = (state as { focusArea?: number } | null)?.focusArea
+  useEffect(() => {
+    if (!focusArea) return
+    areaRow.current?.scrollIntoView({ block: 'center', behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' })
+    areaRow.current?.querySelector('input')?.focus({ preventScroll: true })
+  }, [focusArea])
 
   return (
     <form noValidate onSubmit={(e) => {
