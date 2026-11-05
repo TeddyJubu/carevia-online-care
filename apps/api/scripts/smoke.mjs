@@ -495,6 +495,48 @@ async function visitChecks(patient, doctor, admin) {
   return { today, childVisit }
 }
 
+async function catalogAdminChecks(patient, admin) {
+  expectError('a patient cannot list admin patients (403)', await patient.get('/api/admin/patients'), 403, 'FORBIDDEN')
+  const found = await admin.get('/api/admin/patients?q=patient@example.com')
+  record('admin finds a patient; no password data', found.status === 200 && found.json.patients.some((p) => p.email === 'patient@example.com') && !/password/i.test(found.text), show(found))
+
+  const schedule = await admin.get('/api/admin/doctors/11/slots')
+  record('admin schedule lists only future open times', schedule.status === 200 && schedule.json.slots.length > 0 && schedule.json.slots.every((slot) => Date.parse(slot.startsAt) > Date.now() && slot.day && slot.time), show(schedule))
+  expectError('admin cannot add a past time (400 SLOT_PAST)', await admin.post('/api/admin/doctors/11/slots', { date: '2020-01-15', time: '09:00' }), 400, 'SLOT_PAST')
+
+  // Past the 21-day rolling schedule, so the time is free.
+  const date = new Date(Date.now() + 30 * 86_400_000).toISOString().slice(0, 10)
+  const visible = async () => (await patient.get(`/api/doctors/11/slots?from=${date}&days=1`)).json?.slots?.length ?? -1
+  const added = await admin.post('/api/admin/doctors/11/slots', { date, time: '08:00' })
+  const slotId = added.json?.slot?.id
+  record('admin adds a time; patients see it', added.status === 201 && await visible() === 1, show(added))
+  expectError('an overlapping time is refused (409 SLOT_EXISTS)', await admin.post('/api/admin/doctors/11/slots', { date, time: '08:15' }), 409, 'SLOT_EXISTS')
+  const removed = await admin.del(`/api/admin/doctors/11/slots/${slotId}`)
+  record('admin removes a time; patients no longer see it', removed.status === 200 && await visible() === 0, show(removed))
+  const reopened = await admin.post('/api/admin/doctors/11/slots', { date, time: '08:00' })
+  record('adding a removed time opens the same slot again', reopened.status === 201 && reopened.json.slot.id === slotId, show(reopened))
+  const hold = await patient.post('/api/bookings', { slotId, serviceId: 1, channel: 'video', for: 'self', inMainlandPortugal: true })
+  expectError('a held time cannot be removed (409 SLOT_BOOKED)', await admin.del(`/api/admin/doctors/11/slots/${slotId}`), 409, 'SLOT_BOOKED')
+  await patient.del(`/api/bookings/${hold.json?.appointment?.id}`)
+  await admin.del(`/api/admin/doctors/11/slots/${slotId}`)
+
+  const { doctor } = (await admin.get('/api/admin/doctors/11')).json
+  const fields = ({ active, ...rest }) => Object.fromEntries(Object.entries(rest).filter(([key]) => ['name', 'specialty', 'languages', 'fee', 'experience', 'education', 'approach', 'cedula', 'groupId', 'serviceId'].includes(key)))
+  const off = await admin.patch('/api/admin/doctors/11', { ...fields(doctor), active: false })
+  const open = await freeSlot(patient, { doctorId: 12 })
+  const closedSlot = (await admin.get('/api/admin/doctors/11/slots')).json.slots[0]
+  record('a switched-off doctor is hidden from patients', off.status === 200 && (await patient.get('/api/doctors/11')).status === 404
+    && !(await patient.get('/api/doctors')).json.doctors.some((d) => d.id === 11), show(off))
+  expectError('a switched-off doctor cannot be booked (409 SLOT_TAKEN)', await patient.post('/api/bookings', { slotId: closedSlot.id, serviceId: 1, channel: 'video', for: 'self', inMainlandPortugal: true }), 409, 'SLOT_TAKEN')
+  await admin.patch('/api/admin/doctors/11', { ...fields(doctor), active: true })
+
+  const serviceOff = await admin.patch('/api/admin/services/1', { active: false })
+  const listed = (await patient.get('/api/services')).json.groups.flatMap((g) => g.services.map((item) => item.id))
+  record('a switched-off service leaves the menu', serviceOff.status === 200 && !listed.includes(1), show(serviceOff))
+  expectError('a switched-off service cannot be booked (404)', await patient.post('/api/bookings', { slotId: open.id, serviceId: 1, channel: 'video', for: 'self', inMainlandPortugal: true }), 404, 'SERVICE_NOT_FOUND')
+  await admin.patch('/api/admin/services/1', { active: true })
+}
+
 async function staffChecks(patient, doctor, admin, { today, childVisit }) {
   const agenda = await doctor.get('/api/clinician/agenda')
   const entry = agenda.json?.appointments?.find((item) => item.id === today.id)
@@ -592,6 +634,7 @@ try {
     await clashChecks()
     const visits = await visitChecks(patient, doctor, admin)
     await staffChecks(patient, doctor, admin, visits)
+    await catalogAdminChecks(patient, admin)
     await originChecks(patient, false)
     const outbox = await anon.get('/api/dev/outbox')
     record('dev outbox lists messages newest first', outbox.status === 200 && outbox.json.messages.every((m, i, all) => i === 0 || all[i - 1].sentAt >= m.sentAt))

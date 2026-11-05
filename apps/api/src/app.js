@@ -3,6 +3,7 @@ import fastifyCookie from '@fastify/cookie'
 import { TRUSTED_ORIGINS, authRoutes } from './auth.js'
 import { OUTBOX_ENABLED } from './config.js'
 import { originProblem } from './origin.js'
+import { adminCatalogRoutes } from './routes/admin-catalog.js'
 import { prisma } from './prisma.js'
 import { appointmentRoutes } from './routes/appointments.js'
 import { bookingRoutes } from './routes/bookings.js'
@@ -97,6 +98,7 @@ export async function buildApp({ timers = true } = {}) {
   await app.register(appointmentRoutes)
   await app.register(peopleRoutes)
   await app.register(staffRoutes)
+  await app.register(adminCatalogRoutes)
 
   // Keep the 21-day schedule topped up (on start-up, then hourly; new days appear after midnight Lisbon time)
   // and sweep expired holds every minute. Reads never depend on the sweep: they check holdExpiresAt themselves.

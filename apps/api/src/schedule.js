@@ -20,9 +20,14 @@ export async function sweepExpiredHolds(now = new Date(), db = prisma) {
   return count
 }
 
-/** Free slots: in the future, and not held (unexpired) or confirmed. Used as a Prisma `where` on Slot. */
+/** Doctors patients can see and book: switched on, in a group that is switched on (admin Doctors and Services). */
+export const LISTED_DOCTOR = { active: true, group: { active: true } }
+
+/** Free slots: listed doctor, not removed by an admin, in the future, and not held (unexpired) or confirmed. A Prisma `where` on Slot. */
 export function freeSlotWhere(now = new Date()) {
   return {
+    closedAt: null,
+    doctor: LISTED_DOCTOR,
     startsAt: { gt: now },
     appointments: {
       none: { OR: [{ status: 'confirmed' }, { status: 'held', holdExpiresAt: { gt: now } }] },

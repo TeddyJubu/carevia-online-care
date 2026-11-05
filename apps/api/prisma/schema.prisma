@@ -158,6 +158,8 @@ model ServiceGroup {
   blurb     String
   icon      String
   sortOrder Int
+  // Off hides the group, its services and its doctors from patients; admins still see it.
+  active    Boolean   @default(true)
   services  Service[]
   doctors   Doctor[]
 }
@@ -168,6 +170,7 @@ model Service {
   group        ServiceGroup  @relation(fields: [groupId], references: [id], onDelete: Cascade)
   name         String
   sortOrder    Int
+  active       Boolean       @default(true)
   doctors      Doctor[]
   appointments Appointment[]
 
@@ -186,6 +189,7 @@ model Doctor {
   education         String
   approach          String
   cedula            String
+  active            Boolean       @default(true)
   groupId           Int
   group             ServiceGroup  @relation(fields: [groupId], references: [id])
   serviceId         Int
@@ -209,6 +213,8 @@ model Slot {
   doctor       Doctor        @relation(fields: [doctorId], references: [id], onDelete: Cascade)
   startsAt     DateTime
   endsAt       DateTime
+  // Set when an admin removes the time. The row stays so the hourly top-up does not add it back.
+  closedAt     DateTime?
   appointments Appointment[]
 
   @@unique([doctorId, startsAt])

@@ -3,14 +3,19 @@ import { getDaily, getSession, logout } from './api.js'
 import AppointmentsScreen from './AppointmentsScreen.jsx'
 import DailyScreen from './DailyScreen.jsx'
 import DeniedScreen from './DeniedScreen.jsx'
+import DoctorsScreen from './DoctorsScreen.jsx'
 import LoginScreen from './LoginScreen.jsx'
+import PatientsScreen from './PatientsScreen.jsx'
+import { parseRoute } from './route.js'
+import ServicesScreen from './ServicesScreen.jsx'
+import Shell from './Shell.jsx'
 import TwoFactorScreen from './TwoFactorScreen.jsx'
 
 // Phases: checking, login, verify (two-factor code after sign-in), setup (two-factor required), denied, desk.
 export default function App() {
   const [phase, setPhase] = useState('checking')
   const [user, setUser] = useState(null)
-  const [tab, setTab] = useState('appointments')
+  const [route, setRoute] = useState(() => parseRoute(window.location.hash))
   const [unreachable, setUnreachable] = useState(false)
 
   const refresh = useCallback(async () => {
@@ -34,6 +39,12 @@ export default function App() {
   useEffect(() => {
     refresh()
   }, [refresh])
+
+  useEffect(() => {
+    const onChange = () => setRoute(parseRoute(window.location.hash))
+    window.addEventListener('hashchange', onChange)
+    return () => window.removeEventListener('hashchange', onChange)
+  }, [])
 
   const signOut = useCallback(async () => {
     try {
@@ -72,26 +83,17 @@ export default function App() {
       {phase === 'verify' || phase === 'setup' ? <TwoFactorScreen mode={phase} onDone={refresh} onSignOut={signOut} /> : null}
       {phase === 'denied' ? <DeniedScreen user={user} onSignOut={signOut} /> : null}
       {phase === 'desk' ? (
-        <div className="desk">
-          <header className="desk-bar">
-            <p className="wordmark">Carevia</p>
-            <nav className="tabs" aria-label="Operations">
-              <button type="button" className="tab" aria-current={tab === 'appointments' ? 'page' : undefined} onClick={() => setTab('appointments')}>
-                Appointments
-              </button>
-              <button type="button" className="tab" aria-current={tab === 'video' ? 'page' : undefined} onClick={() => setTab('video')}>
-                Video (Daily)
-              </button>
-            </nav>
-            <p className="desk-user">{user?.email || 'Admin'}</p>
-            <button className="button button-quiet" type="button" onClick={signOut}>Sign out</button>
-          </header>
-          <main className="desk-main" id="main">
-            {tab === 'appointments'
-              ? <AppointmentsScreen onAuthError={onAuthError} />
-              : <DailyScreen onSignOut={signOut} onDenied={refresh} />}
-          </main>
-        </div>
+        <Shell user={user} section={route.section} onSignOut={signOut}>
+          {route.section === 'appointments' ? (
+            <main className="page" id="main"><AppointmentsScreen onAuthError={onAuthError} /></main>
+          ) : null}
+          {route.section === 'patients' ? <PatientsScreen id={route.id} onSignOut={signOut} onDenied={refresh} /> : null}
+          {route.section === 'doctors' ? <DoctorsScreen id={route.id} onSignOut={signOut} onDenied={refresh} /> : null}
+          {route.section === 'services' ? <ServicesScreen id={route.id} onSignOut={signOut} onDenied={refresh} /> : null}
+          {route.section === 'daily' ? (
+            <main className="page" id="main"><DailyScreen onSignOut={signOut} onDenied={refresh} /></main>
+          ) : null}
+        </Shell>
       ) : null}
     </>
   )

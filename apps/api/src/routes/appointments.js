@@ -100,8 +100,8 @@ export async function appointmentRoutes(app) {
         ? 'This visit has started, so it can no longer be moved.'
         : 'Only a confirmed visit can be moved.')
     }
-    const slot = await prisma.slot.findUnique({ where: { id: request.body.slotId }, include: { doctor: true } })
-    if (!slot) return sendError(reply, 404, 'SLOT_NOT_FOUND', 'That time no longer exists. Choose another time.')
+    const slot = await prisma.slot.findUnique({ where: { id: request.body.slotId }, include: { doctor: { include: { group: true } } } })
+    if (!slot || slot.closedAt || !slot.doctor.active || !slot.doctor.group.active) return sendError(reply, 404, 'SLOT_NOT_FOUND', 'That time no longer exists. Choose another time.')
     if (slot.startsAt <= now) return sendError(reply, 400, 'VALIDATION', 'Choose a time that hasn’t passed.')
     if (slot.id === appointment.slotId) return sendError(reply, 400, 'VALIDATION', 'Your visit is already at that time.')
     if (slot.doctorId !== appointment.doctorId && slot.doctor.groupId !== appointment.service.groupId) {

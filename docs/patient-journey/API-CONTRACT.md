@@ -120,6 +120,10 @@ The join window opens 10 minutes before `startsAt` and closes 60 minutes after `
 
 - `GET /api/admin/appointments?date=&status=`: id, status, outcome, `startsAt`, service, doctor name, call state and payment status. No patient date of birth, phone or email.
 - `GET` and `PUT /api/admin/daily`: unchanged.
+- Patients: `GET /api/admin/patients?q=`, `GET /api/admin/patients/:id` (with their appointments, access-logged), `PATCH /api/admin/patients/:id` (name, email, phone; `409 EMAIL_IN_USE`).
+- Services: `GET /api/admin/service-groups`, `POST /api/admin/service-groups`, `PATCH /api/admin/service-groups/:id`, `POST /api/admin/services`, `PATCH /api/admin/services/:id`. `active: false` takes a group or service off the patient menu and blocks booking it (`404 SERVICE_NOT_FOUND`).
+- Doctors: `GET /api/admin/doctors?q=`, `GET`, `POST` and `PATCH /api/admin/doctors/:id`. `active: false` hides the doctor from patients, and their times can't be held (`409 SLOT_TAKEN`).
+- Schedule: `GET /api/admin/doctors/:id/slots` lists open future times. `POST` with `{ date, time }` (Lisbon) adds a time, or reopens one removed earlier (`400 SLOT_PAST`, `409 SLOT_EXISTS` if it overlaps). `DELETE /api/admin/doctors/:id/slots/:slotId` closes the time (`409 SLOT_BOOKED` while a live hold or visit is on it). Closed times keep their row, so the hourly top-up doesn't add them back.
 - Every admin or clinician read of an appointment writes an access-log row (who, which appointment, when, which endpoint).
 
 ## Demo mode (`DEMO_MODE=true` only)

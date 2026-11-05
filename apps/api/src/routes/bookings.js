@@ -113,15 +113,17 @@ export async function bookingRoutes(app) {
 
     const now = new Date()
     const [slot, service] = await Promise.all([
-      prisma.slot.findUnique({ where: { id: body.slotId }, include: { doctor: true } }),
+      prisma.slot.findUnique({ where: { id: body.slotId }, include: { doctor: { include: { group: true } } } }),
       prisma.service.findUnique({ where: { id: body.serviceId } }),
     ])
     if (!slot) return sendError(reply, 404, 'SLOT_NOT_FOUND', 'That time does not exist. Choose another time.')
-    if (!service) return sendError(reply, 404, 'SERVICE_NOT_FOUND', 'That service does not exist.')
+    if (!service || !service.active) return sendError(reply, 404, 'SERVICE_NOT_FOUND', 'That service does not exist.')
     if (service.groupId !== slot.doctor.groupId) {
       return sendError(reply, 400, 'SERVICE_MISMATCH', 'This doctor does not offer that service.')
     }
-    if (slot.startsAt <= now) return sendError(reply, 409, 'SLOT_TAKEN', 'That time is no longer available. Choose another time.')
+    if (slot.startsAt <= now || slot.closedAt || !slot.doctor.active || !slot.doctor.group.active) {
+      return sendError(reply, 409, 'SLOT_TAKEN', 'That time is no longer available. Choose another time.')
+    }
 
     // A signed-in patient owns the hold straight away; otherwise it belongs to this browser until claimed.
     const user = await sessionUser(request)
