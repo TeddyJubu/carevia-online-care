@@ -1,0 +1,62 @@
+[
+  {
+    "file": "doctor-emma-laurent-{w}.webp",
+    "widths": [
+      480,
+      960
+    ],
+    "alt": "Illustrative portrait of Dr Emma Laurent, a fictional general practitioner, smiling at her desk in front of a bright window",
+    "illustrative": true,
+    "prompt": "Cinematic 35mm film still, waist-up portrait of a fictional woman general practitioner in her early forties with an ordinary, kind face, calm warm expression and a gentle closed-mouth smile, looking softly toward the camera. Shoulder-length light brown hair loosely tied back, minimal makeup. She wears a deep navy fine-knit cardigan over an off-white linen shirt; no white coat, no stethoscope, no badge, no lanyard, no jewellery with text. She sits at a simple oak desk in a calm Lisbon apartment study in soft early morning light. Behind her, out of focus, a tall window with sheer white linen curtains and pale terracotta rooftops. Off-white walls, deep navy accents, natural fabric textures, shallow depth of field, soft window light on her face, fine film grain, muted palette of navy, oatmeal and warm ivory, photorealistic, natural skin texture. No text, no logos, no name badge, no documents, no screens, no medicine.",
+    "model": "bytedance/seedream/v5/pro/text-to-image",
+    "createdAt": "2026-11-05"
+  },
+  {
+    "file": "empty-no-visits-{w}.webp",
+    "widths": [
+      480,
+      960
+    ],
+    "alt": "A quiet corner with a linen armchair, a folded wool blanket and a cup on a small side table in morning light",
+    "illustrative": false,
+    "prompt": "Cinematic 35mm film still, a quiet corner of a calm Lisbon apartment in soft early morning light. A low linen armchair with an oatmeal wool blanket folded over its arm, and beside it a small round oak side table holding a pale ceramic cup and a single olive sprig in a clear glass of water. Sheer white linen curtains glow in a tall window, pale terracotta rooftops softly blurred outside. Wide calm negative space on the left, off-white plaster walls, deep navy shadows, gentle warm light, natural fabric textures, fine film grain, muted palette of navy, oatmeal and warm ivory, photorealistic. No people, no text, no logos, no screens, no paper, no books, no medicine.",
+    "model": "bytedance/seedream/v5/pro/text-to-image",
+    "createdAt": "2026-11-05"
+  },
+  {
+    "file": "empty-no-family-{w}.webp",
+    "widths": [
+      480,
+      960
+    ],
+    "alt": "An entryway with a row of wooden pegs, one navy coat hanging and the other pegs empty",
+    "illustrative": false,
+    "prompt": "Cinematic 35mm film still, the entryway of a calm Lisbon apartment in soft morning light. A row of five simple oak wall pegs above a low oak bench: a single deep navy wool coat hangs on one peg and the other pegs are empty. On the bench, an oatmeal wool scarf neatly folded beside a small woven basket. Off-white plaster wall, warm sunlight falling across it from a window out of frame, long soft shadows, wide calm negative space, natural textures, fine film grain, muted palette of navy, oatmeal and warm ivory, photorealistic. No people, no text, no logos, no screens, no paper, no medicine.",
+    "model": "bytedance/seedream/v5/pro/text-to-image",
+    "createdAt": "2026-11-05"
+  },
+  {
+    "file": "empty-video-off-{w}.webp",
+    "widths": [
+      480,
+      960
+    ],
+    "alt": "A desk by a window at dusk with a closed laptop and an unlit lamp",
+    "illustrative": false,
+    "prompt": "Cinematic 35mm film still, a simple oak desk by a tall window in a calm Lisbon apartment at blue hour. On the desk, a closed silver laptop with its lid shut, a small brass desk lamp switched off, and a ceramic cup. Sheer white linen curtains, outside a deep cobalt dusk sky over terracotta rooftops with a few warm lit windows. Deep navy shadows, cool quiet light, wide calm negative space above the desk, natural textures, fine film grain, muted navy and soft amber palette, photorealistic. No people, no text, no logos, no open screens, no paper, no medicine.\n\nThen edited to remove a logo-like mark from the laptop lid: Same image, same camera angle and exact same composition and lighting. The closed laptop lid is completely plain, smooth brushed aluminium with no logo, no emblem and no marks of any kind. Everything else stays identical. Photorealistic, cinematic 35mm film grain, no text, no logos.",
+    "model": "bytedance/seedream/v5/pro/text-to-image + bytedance/seedream/v5/pro/edit",
+    "createdAt": "2026-11-05"
+  },
+  {
+    "file": "waiting-room-{w}.webp",
+    "widths": [
+      480,
+      960
+    ],
+    "alt": "A window seat at dusk with a soft blanket and a cup of tea, a lamp glowing nearby",
+    "illustrative": false,
+    "prompt": "Edit of v5/film-src/night-keyframe.jpg: Same room, same camera angle and exact same composition, a few minutes before a video consultation at blue hour. The low linen sofa by the window is empty: the oatmeal wool blanket is draped loosely over the cushions, and a ceramic cup of tea with a thin wisp of steam rests on the window seat. There is no laptop and no screen. The small brass lamp still casts a warm amber pool of light on the left, the sheer linen curtains hang still, and outside the cobalt dusk sky over terracotta rooftops is calm. Quiet, expectant, reassuring mood, same cinematic 35mm film grain, deep navy shadows, photorealistic, no text, no logos, no people.",
+    "model": "bytedance/seedream/v5/pro/edit",
+    "createdAt": "2026-11-05"
+  }
+]
