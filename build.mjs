@@ -116,17 +116,19 @@ if(!v45.includes('hero-film')||!v45.includes('will <br>see you at home')||!v45.i
 // 4.5 About: a pinned horizontal story (scripts/about-hscroll.js); the "Your next chapter" banner is gone and Start your care moves up below Our care.
 const aboutStory=`<section class="about-h" id="about" aria-labelledby="about-title"><div class="ah-pin"><div class="ah-track">`
  +`<div class="ah-panel ah-title"><p class="mono">Your life, our starting point</p><h2 id="about-title">Online care that puts you first</h2></div>`
- +`<div class="ah-panel ah-image"><img src="assets/sea-1600.jpg" srcset="assets/sea-960.jpg 960w, assets/sea-1600.jpg 1600w" sizes="(max-width: 600px) 88vw, 72vw" alt="Friends enjoying a summer day by the sea" width="1600" height="1073" loading="lazy"></div>`
+ +`<div class="ah-panel ah-image"><div class="ah-glass"><img src="assets/sea-1600.jpg" srcset="assets/sea-960.jpg 960w, assets/sea-1600.jpg 1600w" sizes="(max-width: 600px) 88vw, 72vw" alt="Friends enjoying a summer day by the sea" width="1600" height="1073" loading="lazy"><span class="ah-frost" aria-hidden="true"></span></div></div>`
  +`<div class="ah-panel ah-copy"><p>Life doesn’t pause when you need care. We make it easier to speak to a doctor, understand your options, and get back to being you. A conversation that fits your life, wherever it finds you.</p><a class="button dark" href="#care">Explore your options</a></div>`
  +`<div class="ah-panel ah-facts"><div class="ah-fact"><strong>7</strong><span class="ah-fact-label">Areas of care</span><p>From everyday health and mental wellbeing to specialist support.</p></div><div class="ah-fact"><strong>€0</strong><span class="ah-fact-label">Monthly fees</span><p>Pay per consultation, with the price shown before you book.</p></div></div>`
  +`</div><div class="ah-progress" aria-hidden="true"><span></span></div></div></section>`;
 const aboutStyles=`<style>
 .about-h{position:relative;height:calc(var(--travel,0px) + 100vh)}
 .ah-pin{position:sticky;top:0;height:100vh;overflow:hidden}
-/* Frosted glass over the left 10% of the screen: a fixed pane that panels slide under on their way out. Blur plus a lift
-   in saturation and brightness, a soft white tint, fine frost grain (inline SVG noise) and a lit edge, so it reads as a
-   sheet of glass rather than a soft-focus vignette. Shown only while the panels travel. */
-.ah-pin::after{content:'';position:absolute;inset:0 auto 0 0;width:10vw;z-index:2;pointer-events:none;background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='f'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 .16 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23f)'/%3E%3C/svg%3E"),linear-gradient(90deg,#ffffff5c,#ffffff26);backdrop-filter:blur(18px) saturate(1.5) brightness(1.08);-webkit-backdrop-filter:blur(18px) saturate(1.5) brightness(1.08);box-shadow:inset -1px 0 0 #ffffffb3,inset -12px 0 18px -14px #ffffff,1px 0 0 #102d5014,8px 0 24px -12px #102d5026;opacity:0;transition:opacity .6s ease}.about-h.is-moving .ah-pin::after{opacity:1}
+/* Leaving the story: inside the left 10% of the screen the photo turns into a frosted-glass card (blur, a lift in
+   saturation and brightness, a milky tint, fine frost grain and a lit rim, all inside the card's own rounded shape),
+   and text softens. --z (set per panel by about-hscroll.js) is how far the panel has entered that zone, so the mask
+   runs from clear at the 10% line to fully frosted over the outer 5%. Only while the panels travel. */
+.ah-glass{position:relative;border-radius:16px;overflow:hidden}
+.ah-frost,.ah-copy::after,.ah-title::after,.ah-facts::after{position:absolute;inset:0;pointer-events:none;opacity:0;transition:opacity .5s ease;-webkit-mask-image:linear-gradient(90deg,#000 calc(var(--z,-100vw) - 5vw),transparent var(--z,-100vw));mask-image:linear-gradient(90deg,#000 calc(var(--z,-100vw) - 5vw),transparent var(--z,-100vw))}.ah-frost{border-radius:inherit;background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='f'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 .22 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23f)'/%3E%3C/svg%3E"),linear-gradient(115deg,#ffffffb3,#ffffff59 38%,#ffffff40 55%,#ffffff80);backdrop-filter:blur(26px) saturate(1.5) brightness(1.12);-webkit-backdrop-filter:blur(26px) saturate(1.5) brightness(1.12);box-shadow:inset 0 0 0 1.5px #ffffffd9,inset 0 2px 0 #fff,inset 0 -2px 0 #ffffffb3,inset 0 0 48px #ffffff73}.ah-panel{position:relative}.ah-copy::after,.ah-title::after,.ah-facts::after{content:'';backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px)}.about-h.is-moving .ah-frost,.about-h.is-moving .ah-copy::after,.about-h.is-moving .ah-title::after,.about-h.is-moving .ah-facts::after{opacity:1}
 .ah-track{display:flex;height:100%;will-change:transform}
 .ah-panel{flex:none;height:100%;display:flex;flex-direction:column;justify-content:center;padding:0 6vw}
 .ah-title{width:100vw;align-items:flex-start;text-align:left}
@@ -142,14 +144,14 @@ const aboutStyles=`<style>
 /* People cards: gentle lift and a slow photo push-in on hover. Uses translate/scale so it doesn't fight the reveal animation's transform. */
 .person{transition:translate .5s cubic-bezier(.2,.7,.2,1),box-shadow .5s}.person img{transition:scale .9s cubic-bezier(.2,.7,.2,1)}@media(hover:hover){.person:hover{translate:0 -6px;box-shadow:0 22px 40px -24px #102d5059}.person:hover img{scale:1.035}}
 @media(max-width:600px){.ah-image,.ah-copy{width:88vw}.ah-image img{height:56vh}.about-h .ah-title .mono{font-size:18px!important}.ah-facts{width:100vw;flex-direction:column;justify-content:center;gap:40px}.ah-fact{flex:none;max-width:none;width:100%}.ah-fact strong{font-size:96px}.ah-fact-label{font-size:20px;margin-top:16px}.ah-fact p{font-size:15px}}
-/* The last panel fills the screen at every width, so the story rests on the facts alone rather than beside a sliver of cut-off copy (the frosted pane is off at rest). The pair stays a centred block instead of spreading across wide screens. */
+/* The last panel fills the screen at every width, so the story rests on the facts alone rather than beside a sliver of cut-off copy (the frost is off at rest). The pair stays a centred block instead of spreading across wide screens. */
 .ah-facts{width:100vw;gap:clamp(40px,5vw,96px)}
 @media(min-width:601px){.ah-fact{max-width:min(30vw,440px)}}
 /* Progress line: a quiet hairline that fills as the story travels, so scrolling down reads as moving sideways. --p comes from about-hscroll.js. */
 .ah-progress{position:absolute;left:6vw;bottom:calc(clamp(24px,5vh,48px) + env(safe-area-inset-bottom,0px));width:min(320px,calc(100vw - 12vw));height:2px;border-radius:2px;background:#102d501f;overflow:hidden;z-index:3;pointer-events:none}
 .ah-progress span{display:block;height:100%;background:#b54e14;transform-origin:0 50%;transform:scaleX(var(--p,0))}
-/* Reduced motion: no pin, no sideways travel, no frosted pane, no progress line, just the panels stacked in normal flow. */
-@media(prefers-reduced-motion:reduce){.about-h{height:auto}.ah-pin{position:static;height:auto;overflow:visible}.ah-pin::after,.ah-progress{display:none}.ah-track{display:block;height:auto;transform:none!important;will-change:auto}.ah-panel{width:auto;height:auto;padding:clamp(40px,7vw,96px) 6vw}.ah-image img{height:auto;aspect-ratio:3/2;max-height:80vh}.ah-facts{justify-content:flex-start;padding-bottom:clamp(64px,10vw,140px)}}
+/* Reduced motion: no pin, no sideways travel, no frost, no progress line, just the panels stacked in normal flow. */
+@media(prefers-reduced-motion:reduce){.about-h{height:auto}.ah-pin{position:static;height:auto;overflow:visible}.ah-frost,.ah-panel::after,.ah-progress{display:none}.ah-track{display:block;height:auto;transform:none!important;will-change:auto}.ah-panel{width:auto;height:auto;padding:clamp(40px,7vw,96px) 6vw}.ah-image img{height:auto;aspect-ratio:3/2;max-height:80vh}.ah-facts{justify-content:flex-start;padding-bottom:clamp(64px,10vw,140px)}}
 </style>`;
 const v45Story=v45
  .replace(/<section class="about narrow section" id="about">[\s\S]*?<\/section>/,aboutStory)

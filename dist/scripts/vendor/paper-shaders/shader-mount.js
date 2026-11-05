@@ -3,7 +3,7 @@
  *       https://github.com/paper-design/shaders       *
  * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
-import { vertexShaderSource } from "./vertex-shader.js?v=78c1fd6251";
+import { vertexShaderSource } from "./vertex-shader.js?v=38715bffac";
 const DEFAULT_MAX_PIXEL_COUNT = 1920 * 1080 * 4;
 class ShaderMount {
   parentElement;
