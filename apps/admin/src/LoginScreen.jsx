@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { getDemoAdmin, login } from './api.js'
+import mark from './assets/carevia-mark.png'
 
 export default function LoginScreen({ unreachable, onSignedIn, onTwoFactor }) {
   const [demo, setDemo] = useState(null)
@@ -33,7 +34,7 @@ export default function LoginScreen({ unreachable, onSignedIn, onTwoFactor }) {
   return (
     <div className="split">
       <aside className="rail">
-        <p className="wordmark">Carevia</p>
+        <p className="wordmark"><img src={mark} alt="" width="32" height="32" />Carevia</p>
         <div className="rail-copy">
           <p className="eyebrow">Operations</p>
           <h1>Patients, doctors, and care.</h1>
