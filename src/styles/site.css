@@ -83,3 +83,5 @@
 /* Shared design navigation. */
 .design-dropdown>a+a{margin-top:6px}.design-dropdown>a:not([aria-current]){background:transparent}.design-dropdown>a:hover{background:var(--wash)}
 @media(max-width:809px){.mobile-nav{max-height:calc(100svh - 88px);overflow-y:auto;overscroll-behavior:contain}}
+/* Carousel controls are worded (no arrow glyphs), so they become small text pills. */
+.carousel-footer .icon-button:is(.carousel-prev,.carousel-next){width:auto;padding:0 16px;border-radius:18px;font-size:13px;white-space:nowrap}
