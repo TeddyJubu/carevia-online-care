@@ -1,66 +1,108 @@
 # Carevia API
 
-Node.js API for accounts, the service catalog, doctor search, video booking, and the Daily API key. It listens on `http://127.0.0.1:4000`.
+Node.js API (Fastify, Prisma, PostgreSQL, Better Auth) for the patient journey: accounts, the service catalog, doctor search, booking, demo payment, video visits with Daily, family members, the clinician agenda and the admin desk. The contract is [`docs/patient-journey/API-CONTRACT.md`](../../docs/patient-journey/API-CONTRACT.md).
 
-Clinical documents stay in iMED. This API does not create prescriptions, CIT certificates, test requests, or referrals. Doctor cédulas in the seed are fictional (`DEMO-CEDULA-*`). Recording is off. Room names and meeting tokens do not include the patient’s name, email, or phone.
+What it never does:
 
-Audio booking returns `AUDIO_DISABLED`. Video booking creates a confirmed appointment and does not call Daily until a join token is requested. A real launch still needs payment before a visit is confirmed; this demo confirms the video appointment at booking so the portal can continue.
+- **No clinical documents or clinical data.** No prescriptions, CIT, certificates, test requests, referrals, symptoms, diagnoses or medicines, not even in demo data. Those live in iMED; appointments carry `imed.status: "not_connected"`.
+- **No patient identifiers sent to Daily.** One private room per confirmed appointment, random room names from Daily, `user_name` is `Patient`, `Companion` or the doctor's professional name. Recording is never turned on.
+- **No names, emails, phones, birth dates, cookies or tokens in logs.** Requests are logged by method, path (no query string; reset tokens masked) and status.
+- **A dropped call keeps the same appointment.** Reconnect inside the join window (10 minutes before the start to 60 minutes after the end).
 
-The Daily API key is stored only in Postgres. It is never written to the repo. `GET /api/video/status` returns `{ enabled }` and nothing else. Admin reads return the last four characters, and only when the key is longer than four characters.
-
-## Commands
+## Setup
 
 From the repo root:
 
 ```sh
-npm install
-npm run db
-npm run db:setup
-npm run dev:api
+npm install                 # if ~/.npm is not writable: npm install --cache "$TMPDIR/npm-cache"
+cp apps/api/.env.example apps/api/.env   # then set BETTER_AUTH_SECRET
+npm run db                  # embedded Postgres on PGPORT (default 5432); leave it running
+npm run db:setup            # migrations, catalog, demo accounts, 21-day schedule, demo visits
+npm run dev:api             # API on 127.0.0.1:PORT (default 4000), restarts on change
 ```
 
-`npm run db` starts embedded Postgres (user `carevia`, password `carevia`, database `carevia`, port `5432`) and keeps it running. Data is stored in `apps/api/data/pg`, which is gitignored. Stop it with Ctrl+C in that terminal.
+If npm skips install scripts, run `npx prisma generate` in `apps/api` once.
 
-`npm run db:setup` applies Prisma migrations and seeds the catalog. Run it again only when you want to reset doctors, slots, and the Daily key.
+`npm run db:setup` resets the catalog, the schedule, demo data and the Daily key. `docker compose up -d` is the Docker alternative to `npm run db` (it also reads `PGPORT`).
 
-`npm run dev:api` starts the API with `node --watch`. `npm run start --prefix apps/api` starts it once.
+Every setting is in [`.env.example`](.env.example). The ones that matter most:
 
-`docker compose up -d` is the Docker alternative. Do not run it while embedded Postgres is using port 5432. Copy `apps/api/.env.example` to `apps/api/.env` if that file is missing. Both use:
+| Setting | Default | Meaning |
+|---|---|---|
+| `PORT` | `4000` | API port. The VPS uses `4100` behind nginx. |
+| `PGPORT` | `5432` | Port for `npm run db`. Keep `DATABASE_URL` in step. |
+| `PUBLIC_APP_URL` | `http://localhost:5180` | The origin patients use. Better Auth's `baseURL`, email links and trusted origin. On the VPS: `https://carevia.claudemod.tech`. |
+| `ADMIN_APP_URL` | `http://localhost:5174` | The admin app's origin (trusted). |
+| `DEMO_MODE` | off | Exactly `true` turns on demo logins, demo payment, `POST /api/demo/reset` and waives two-factor login for staff. |
+| `NODE_ENV` | | `development` shows the outbox without demo mode; `production` refuses changing requests that carry neither `Origin` nor `Sec-Fetch-Site`. |
+| `TRUST_PROXY` | `false` | `true` behind nginx, so the rate limiter sees the real client IP. |
 
-```
-DATABASE_URL=postgresql://carevia:carevia@127.0.0.1:5432/carevia
-```
-
-Portal and admin dev scripts are `npm run dev:portal` and `npm run dev:admin`. Those apps are not part of this package.
-
-Check the running API with:
-
-```sh
-npm run smoke --prefix apps/api
-```
+Ports per thread are in `docs/patient-journey/PLAN.md` (API thread: Postgres 5432, API 4000).
 
 ## Demo logins
 
-Patient: Demo Patient, born 1990-01-01, `patient@example.com`, `+00 000 000 000`, password `demo-password`.
+Seeded by `npm run db:setup`. All fictional.
 
-Admin: `admin@carevia.test`, password `admin-demo-password`, role `admin`.
+| Role | Email | Password | Notes |
+|---|---|---|---|
+| Patient | `patient@example.com` | `demo-password` | Demo Patient, born 1990-01-01, `+351900000000`. Child: Leo Patient (2018-03-14). |
+| Clinician | `doctor@carevia.test` | `doctor-demo-password` | Linked to doctor 0, Dr Emma Laurent. |
+| Admin | `admin@carevia.test` | `admin-demo-password` | |
 
-`POST /api/auth/login` returns `role`. `POST /api/admin/login` is the same login and rejects anyone who is not an admin.
+Demo visits, all with Dr Emma Laurent: today (about 15 minutes after seeding or reset), the child's visit in 3 days, and past completed, `needs_in_person` and cancelled visits.
 
-## HTTP
+## Auth
 
-Passwords are stored as bcrypt hashes (`bcryptjs`, the pure JavaScript implementation).
+Better Auth 1.7, mounted at `/api/auth/*`, stores users in the same Postgres through the Prisma adapter.
 
-Session cookie: `carevia_session`, httpOnly, SameSite `lax`, path `/`. Browsers on `http://localhost:5173` and `http://localhost:5174` can send it (`credentials: 'include'`).
+- Session cookie: `carevia.session_token` (httpOnly, SameSite Lax). With an https `PUBLIC_APP_URL` it is Secure and named `__Secure-carevia.session_token`.
+- Sign-up requires `firstName`, `lastName`, `phone` (E.164; spaces allowed, stored as `+351…`) and `dateOfBirth` (`YYYY-MM-DD`). Under-18s get `400 UNDERAGE`; a bad phone `400 INVALID_PHONE`. `role` cannot be set at sign-up.
+- 18+ rule: `isAdult()` in `src/rules.js`. Someone born on 29 February turns 18 on 1 March in a non-leap year.
+- Rate limiting is on in every environment (Better Auth defaults: 3 sign-ins or sign-ups per 10 s per IP; 100 requests per minute otherwise).
+- Breached passwords are refused (`PASSWORD_COMPROMISED`, "This password has appeared in a data breach. Choose a different one.").
+- Email verification, password reset (`/app/reset-password?token=…`) and change-email messages go to the outbox (`GET /api/dev/outbox`) in demo mode or development. No real email is sent in this build.
+- Two-factor login (TOTP and backup codes). Outside demo mode, clinician and admin routes return `403 TWO_FACTOR_REQUIRED` until it is on.
+- `/api/auth/update-user` is disabled; profile edits go through `PATCH /api/me`.
 
-- `POST /api/auth/register` with `firstName`, `lastName`, `email`, `phone`, `dateOfBirth`, `password`
-- `POST /api/auth/login`, `POST /api/auth/logout`, `GET /api/auth/me`
-- `GET /api/services`
-- `GET /api/doctors` with `q`, `language`, `specialty`, `maxFee`, `availability` (`any` or `0`/`1`/`2`), `service`, `group`
-- `GET /api/doctors/:id` and `GET /api/doctors/:id/slots`
-- `POST /api/appointments` with `doctorId`, `service`, `slot`, `channel`
-- `GET /api/video/status`
-- `POST /api/appointments/:id/video-token`
-- `GET /api/admin/daily` and `PUT /api/admin/daily` with `{ "apiKey": "" }` to clear the key
+**CSRF.** `POST`, `PUT`, `PATCH` and `DELETE` on `/api/*` (outside `/api/auth/*`, which Better Auth checks) need an `Origin` in the trusted list, or `Sec-Fetch-Site: same-origin` when there is no `Origin`. Neither header is allowed only outside production. Otherwise: `403 FORBIDDEN_ORIGIN`. SameSite Lax alone would let sibling `*.claudemod.tech` sites send cookie-carrying requests.
 
-Booking without a session returns `401` `{ "error": "AUTH_REQUIRED", "message": "Log in or register to book a consultation" }`. `channel: "audio"` returns `400` `{ "error": "AUDIO_DISABLED" }`. A video token with no key returns `409` `{ "error": "VIDEO_DISABLED" }`. A Daily failure returns `502` and the process keeps running.
+## Endpoints
+
+Errors are `{ "error": "CODE", "message": "…" }`. Better Auth's own endpoints answer `{ "code", "message" }` (the sign-up rules above also include `error`).
+
+**Catalog (public):** `GET /api/services`, `GET /api/doctors` (`q`, `language`, `specialty`, `maxFee`, `availability`, `service`, `group`, `groupSlug`, `sort=first-available`), `GET /api/doctors/:id`, `GET /api/doctors/:id/slots?from=YYYY-MM-DD&days=7`, `GET /api/slots/first-available?groupSlug=&serviceId=&language=&limit=6`. Service ids are stable (1–55). The schedule covers working days over the next 21 days at 09:00, 10:30, 12:00, 14:30, 16:00, 17:30 and 19:00 Lisbon time, 30 minutes each, topped up on start-up and hourly.
+
+**Booking:** `POST /api/bookings` (hold for 10 minutes; `carevia_hold` cookie), `POST /api/bookings/:id/claim`, `PUT /api/bookings/:id/patient`, `GET /api/consent/current`, `POST /api/bookings/:id/consent`, `POST /api/bookings/:id/pay` (`{ method: "demo" }`; `501 PAYMENT_UNAVAILABLE` outside demo mode), `DELETE /api/bookings/:id`. A signed-in patient's hold is theirs at once (claim is then a no-op). The database allows at most one held or confirmed appointment per slot (partial unique index `Appointment_active_slot_key`).
+
+**Appointments:** `GET /api/appointments?scope=upcoming|past`, `GET /api/appointments/:id`, `POST /api/appointments/:id/cancel`, `GET /api/appointments/:id/calendar.ics`, `POST /api/appointments/:id/pre-join`, `POST /api/appointments/:id/video-token` (`{ companion: true }` for the companion's token; `409 VIDEO_DISABLED`, `425 TOO_EARLY`, `410 WINDOW_CLOSED`, `409 PRE_JOIN_REQUIRED`), `POST /api/appointments/:id/call-events`, `GET /api/video/status`.
+
+**Family and profile:** `GET`/`POST /api/family`, `PATCH`/`DELETE /api/family/:id` (deleting archives, so past visits keep the name; `409 HAS_UPCOMING`), `PATCH /api/me`.
+
+**Clinician:** `GET /api/clinician/agenda?date=`, `POST /api/clinician/appointments/:id/outcome`, `GET /api/clinician/imed-link`.
+
+**Admin:** `GET /api/admin/appointments?date=&status=`, `GET /api/admin/access-log?appointmentId=`, `GET`/`PUT /api/admin/daily`. Admin and clinician reads of appointments write access-log rows. Those are the only writes made by `GET` requests.
+
+**Demo and development:** `GET /api/demo`, `POST /api/demo/reset` (admin; optional `{ startsInMinutes: 0–120 }`, default 15; keeps the catalog and Daily key), `GET /api/dev/outbox`.
+
+The Daily key is stored only in Postgres. `GET /api/video/status` returns `{ enabled }` only; admin reads return the last four characters.
+
+## Smoke and unit tests
+
+```sh
+npm test --prefix apps/api          # node --test: dates, DST, schedule, holds, join window, origin check, consent
+```
+
+The smoke script drives the running API, starts a fake Daily on `127.0.0.1:4090`, and uses Prisma once to backdate a hold. Start the API for it like this, then run `npm run smoke --prefix apps/api`:
+
+```sh
+# Demo mode (the full journey, 120 checks)
+DEMO_MODE=true NODE_ENV=development DAILY_API_URL=http://127.0.0.1:4090/v1 npm run start --prefix apps/api
+# Demo mode off (locks: 404 demo routes, 501 payment, two-factor required, CSRF in production; 27 checks)
+NODE_ENV=production DAILY_API_URL=http://127.0.0.1:4090/v1 npm run start --prefix apps/api
+```
+
+The demo run ends with a demo reset, so the database is left in its seeded state.
+
+## Admin app
+
+`npm run dev:admin` serves `apps/admin` on `http://localhost:5174` and proxies `/api` to `API_URL` (default `http://127.0.0.1:4000`). It signs in through Better Auth (with the two-factor step), lists appointments operationally (no patient details) and keeps the Daily settings screen. Demo logins appear only when built with `VITE_DEMO_MODE=true` and the API is in demo mode.
