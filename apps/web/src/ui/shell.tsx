@@ -64,11 +64,11 @@ function DemoBar() {
   const demo = useDemo()
   if (!demo && !MOCK) return null
   return (
-    <p className="demo-bar" role="note">
+    <aside className="demo-bar" aria-label="Demo notice">
       <strong className="font-medium">{content('demo-banner').title.replace(/\.$/, '')}.</strong>{' '}
       {plain(content('demo-banner').body)}{MOCK && ' Mock API: data lives in this tab only.'}
       {demo && <> <Link to="/dev/outbox" className="link ml-1">Outbox</Link></>}
-    </p>
+    </aside>
   )
 }
 

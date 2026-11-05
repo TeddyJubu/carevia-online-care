@@ -34,6 +34,7 @@ export function SignInForm({ onDone, submitLabel = 'Sign in' }: { onDone: (u: Us
   const { refresh } = useSession()
   const { pending, error, run } = useSubmit()
   const [twoFactor, setTwoFactor] = useState(false)
+  const [errors, setErrors] = useState<{ email?: string; password?: string }>({})
   const demo = useDemo()
 
   const finish = async () => {
@@ -69,7 +70,7 @@ export function SignInForm({ onDone, submitLabel = 'Sign in' }: { onDone: (u: Us
           <p className="fine mt-1">Fictional people. One click signs you in.</p>
           <div className="mt-4 grid gap-2">
             {demo.accounts.filter((a) => a.role !== 'admin').map((a) => (
-              <button key={a.email} type="button" className="btn btn-secondary btn-block justify-between" disabled={pending} onClick={() => signIn(a.email, a.password)}>
+              <button key={a.email} type="button" className="btn btn-secondary btn-block flex-wrap justify-between gap-y-0 py-2 text-left" disabled={pending} onClick={() => signIn(a.email, a.password)}>
                 <span>{a.label}</span><span className="fine">{a.email}</span>
               </button>
             ))}
@@ -79,10 +80,14 @@ export function SignInForm({ onDone, submitLabel = 'Sign in' }: { onDone: (u: Us
       <form noValidate className="grid gap-5" onSubmit={(e) => {
         e.preventDefault()
         const f = new FormData(e.currentTarget)
-        signIn(val(f, 'email'), String(f.get('password') ?? ''))
+        const email = val(f, 'email'), password = String(f.get('password') ?? '')
+        const errs = { email: email ? undefined : 'Enter your email address.', password: password ? undefined : 'Enter your password.' }
+        setErrors(errs)
+        if (errs.email || errs.password) return (e.currentTarget.elements.namedItem(errs.email ? 'email' : 'password') as HTMLElement).focus()
+        signIn(email, password)
       }}>
-        <Field label="Email" name="email" type="email" autoComplete="email" required />
-        <Field label="Password" name="password" type="password" autoComplete="current-password" required />
+        <Field label="Email" name="email" type="email" autoComplete="email" required error={errors.email} />
+        <Field label="Password" name="password" type="password" autoComplete="current-password" required error={errors.password} />
         <FormError error={error} />
         <button className="btn btn-primary btn-block" disabled={pending}>{pending ? 'Signing in…' : submitLabel}</button>
         <Link to="/forgot-password" className="link justify-self-start text-sm inline-flex min-h-11 items-center">Forgot your password?</Link>
