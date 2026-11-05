@@ -699,7 +699,7 @@ export function BookConsent() {
 
   return (
     <form noValidate onSubmit={accept}>
-      <PageTitle eyebrow="Before your consultation" lede="Please read this. It explains how the visit works and what to expect.">{consent.data?.title ?? 'How your visit works'}</PageTitle>
+      <PageTitle eyebrow="Consent">{consent.data?.title ?? 'How your visit works'}</PageTitle>
       {consent.error ? <div className="mt-6"><ErrorState error={consent.error} onRetry={consent.reload} /></div> : !consent.data ? <div className="mt-6"><Loading /></div> : (
         <>
           <div className="card mt-8 max-h-[min(60svh,560px)] overflow-auto" tabIndex={0} role="region" aria-label="Consultation terms">
