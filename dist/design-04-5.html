@@ -34,7 +34,7 @@
 .mono{color:#b54e14!important;font-family:"Geist Serif",Georgia,serif!important;font-weight:400!important;letter-spacing:.01em!important;text-transform:capitalize!important;font-size:13px!important}:is(.journey-heading,footer) .mono{color:#f59e5b!important}.wide-banner .mono{color:#ffc08f!important}
 @media(max-width:600px){.hero .hero-intro h1{font-size:34px}.topbar .nav-logo .carevia-mark{width:46px;height:46px}.liquid-logo{width:84px;height:84px}}.film-toggle{position:absolute;z-index:6;right:24px;bottom:calc(var(--hero-fade) + 20px);width:40px;height:40px;border-radius:50%;display:grid;place-items:center;color:#fff;background:#ffffff14;border:1px solid #ffffff38;backdrop-filter:blur(6px);cursor:pointer}.film-toggle .i-play,.film-toggle[aria-pressed=true] .i-pause{display:none}.film-toggle[aria-pressed=true] .i-play{display:inline}@media(max-width:600px){.hero-film{object-position:62% 50%}.film-toggle{right:16px}}
 /* Touch screens (desktop untouched): 44px tap targets, and the 112 notice at a readable size. */
-@media(max-width:1024px){.film-toggle{width:44px;height:44px}.care-open{min-height:46px;padding:12px 0 0;align-items:center}.emergency>p{font-size:14px}.emergency>a{display:inline-flex;align-items:center;min-height:44px;padding-inline:4px;font-size:14px;font-weight:500}.topbar :is(.menu-toggle,.nav-logo){flex:none;min-width:44px}.footer-info{gap:0}.footer-info a{display:inline-flex;align-items:center;min-height:44px}.footer-info .mono:not(:first-child){margin-top:24px}}
+@media(max-width:1024px){.film-toggle{width:44px;height:44px}.care-open{min-height:46px;padding:12px 0 0;align-items:center}.emergency>p{font-size:14px}.emergency>a{display:inline-flex;align-items:center;min-height:44px;padding-inline:4px;font-size:14px;font-weight:500}.topbar :is(.menu-toggle,.nav-logo){flex:none;min-width:44px}}
 /* Phones: the heading wraps freely (balanced, no orphaned "you"), and the film button sits above the wordmark instead of on its last letter. */
 @media(max-width:600px){.hero .hero-intro h1{text-wrap:balance}.hero .hero-intro h1 br{display:none}.film-toggle:not(.banner-toggle){bottom:calc(var(--hero-fade) + 17.7vw + 6px)}.emergency{gap:6px 12px}}
 /* Desktop gets the same accessible sizing as touch: 44px film toggles and price rows, and a 14px 112 notice. The link's negative margin keeps its text on the notice's first line while its tap area stays 44px. */
@@ -43,6 +43,10 @@
 @media(max-width:600px){.treatment-stack{grid-auto-rows:1fr}.treatment-card{height:auto;grid-template-rows:220px auto}.treatment-body>h3{margin-top:12px;padding-top:0}.treatment-body>p{min-height:0;margin:10px 0 15px}.treatment-body>.care-open{margin-top:auto}}
 /* Small laptops and 1024 landscape: the two-column footer from 4.2's 1000px breakpoint, so the heading keeps three lines. */
 @media(min-width:1001px) and (max-width:1100px){footer{padding-top:100px}.footer-grid{grid-template-columns:1fr 1fr;gap:65px}.footer-copyright{order:3}.footer-grid>div:nth-child(2){order:1}.footer-info{order:2}.footer-wordmark{margin-top:100px}}
+/* Footer links: 44px tap rows at every width (was touch-only). */
+.footer-info{gap:0}.footer-info a{display:inline-flex;align-items:center;min-height:44px}.footer-info .mono:not(:first-child){margin-top:24px}
+/* Touch: the WebGL rim no longer loads, so a tapped nav pill gets a plain CSS orange rim instead (same #ff9a4d as the shader). */
+@media(hover:none),(pointer:coarse){.topbar .nav-pill:active{box-shadow:inset 0 0 0 1.5px #ff9a4d}}
 </style><script type="module" src="scripts/about-hscroll.js"></script><style>
 .about-h{position:relative;height:calc(var(--travel,0px) + 100vh)}
 .ah-pin{position:sticky;top:0;height:100vh;overflow:hidden}
