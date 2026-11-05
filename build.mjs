@@ -85,7 +85,7 @@ const filmStyles=`<style>.hero-film{object-fit:cover;object-position:50% 50%}
 .hero .search-shell:hover{background:linear-gradient(180deg,#164572b3,#082546a1);border-color:#a9d4ff4d}
 .hero .search-trigger>span{color:#ffffffc7}
 /* Orange labels: one hue, three tints so 12px text keeps its contrast on each background. !important beats 4.2's per-section label colours. */
-.mono{color:#b54e14!important;font-family:"Geist Serif",Georgia,serif!important;font-weight:400!important;letter-spacing:.01em!important;text-transform:capitalize!important;font-size:13px!important}:is(.journey-heading,footer) .mono{color:#f59e5b!important}.wide-banner .mono{color:#ffc08f!important}
+.mono{color:#b54e14!important;font-family:"Geist Serif",Georgia,serif!important;font-weight:400!important;letter-spacing:.01em!important;text-transform:capitalize!important;font-size:13px!important}:is(.journey-heading,footer) .mono{color:#f59e5b!important}
 @media(max-width:600px){.hero>h1{font-size:34px}.topbar .nav-logo .carevia-mark{width:46px;height:46px}.liquid-logo{width:84px;height:84px}}.film-toggle{position:absolute;z-index:6;right:24px;bottom:calc(var(--hero-fade) + 20px);width:40px;height:40px;border-radius:50%;display:grid;place-items:center;color:#fff;background:#ffffff14;border:1px solid #ffffff38;backdrop-filter:blur(6px);cursor:pointer}.film-toggle .i-play,.film-toggle[aria-pressed=true] .i-pause{display:none}.film-toggle[aria-pressed=true] .i-play{display:inline}@media(max-width:600px){.hero-film{object-position:62% 50%}.film-toggle{right:16px}}
 /* Touch screens (desktop untouched): 44px tap targets, and the 112 notice at a readable size. */
 @media(max-width:1024px){.film-toggle{width:44px;height:44px}.care-open{min-height:46px;padding:12px 0 0;align-items:center}.emergency>p{font-size:14px}.emergency>a{display:inline-flex;align-items:center;min-height:44px;padding-inline:4px;font-size:14px;font-weight:500}.topbar :is(.menu-toggle,.nav-logo){flex:none;min-width:44px}}
@@ -114,7 +114,7 @@ const v45=clashEditorial
  .replace('<div class="hero-wordmark" aria-hidden="true">CAREVIA</div></section>','</section><div class="wordmark-band"><div class="hero-wordmark" aria-hidden="true">CAREVIA</div></div>')
  .replace('</head>',`<link rel="preload" href="assets/geist-serif-regular.woff2" as="font" type="font/woff2" crossorigin><script type="module" src="scripts/liquid-logo.js"></script><script type="module" src="scripts/specular-nav.js"></script>${filmStyles}</head>`);
 if(!v45.includes('hero-film')||!v45.includes('see you <br>at home')||!v45.includes('</section><div class="wordmark-band"><div class="hero-wordmark"'))throw new Error('Design 04.5 hero replacement failed');
-// 4.5 About: a pinned horizontal story (scripts/about-hscroll.js), and the "Your next chapter" banner moves below Our care.
+// 4.5 About: a pinned horizontal story (scripts/about-hscroll.js); the "Your next chapter" banner is gone and Start your care moves up below Our care.
 const aboutStory=`<section class="about-h" id="about" aria-labelledby="about-title"><div class="ah-pin"><div class="ah-track">`
  +`<div class="ah-panel ah-title"><p class="mono">Your life, our starting point</p><h2 id="about-title">Online care that puts you first</h2></div>`
  +`<div class="ah-panel ah-image"><img src="assets/sea-1600.jpg" srcset="assets/sea-960.jpg 960w, assets/sea-1600.jpg 1600w" sizes="(max-width: 600px) 88vw, 72vw" alt="Friends enjoying a summer day by the sea" width="1600" height="1073" loading="lazy"></div>`
@@ -138,11 +138,8 @@ const aboutStyles=`<style>
 .ah-fact strong{font-family:"Geist Serif",Georgia,serif;font-size:clamp(120px,15vw,240px);font-weight:400;line-height:.85;letter-spacing:-.04em;color:var(--ink,#102d50)}
 .ah-fact-label{margin-top:28px;font-family:"Geist Serif",Georgia,serif;font-size:24px;color:#b54e14}
 .ah-fact p{margin-top:10px;max-width:26ch;font-size:17px;line-height:1.5;color:#5c6d80}
-/* The banner now sits right above the navy journey section, so it brings its own gap (in step with the page's 100-200px section rhythm). */
-.wide-banner{margin-bottom:clamp(80px,10vw,160px)}
-.banner-film{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:50% 55%}
 /* People cards: gentle lift and a slow photo push-in on hover. Uses translate/scale so it doesn't fight the reveal animation's transform. */
-.person{transition:translate .5s cubic-bezier(.2,.7,.2,1),box-shadow .5s}.person img{transition:scale .9s cubic-bezier(.2,.7,.2,1)}@media(hover:hover){.person:hover{translate:0 -6px;box-shadow:0 22px 40px -24px #102d5059}.person:hover img{scale:1.035}}.wide-banner .banner-toggle{top:20px;right:20px;bottom:auto;z-index:2}
+.person{transition:translate .5s cubic-bezier(.2,.7,.2,1),box-shadow .5s}.person img{transition:scale .9s cubic-bezier(.2,.7,.2,1)}@media(hover:hover){.person:hover{translate:0 -6px;box-shadow:0 22px 40px -24px #102d5059}.person:hover img{scale:1.035}}
 @media(max-width:600px){.ah-image,.ah-copy{width:88vw}.ah-image img{height:56vh}.about-h .ah-title .mono{font-size:18px!important}.ah-facts{width:100vw;flex-direction:column;justify-content:center;gap:40px}.ah-fact{flex:none;max-width:none;width:100%}.ah-fact strong{font-size:96px}.ah-fact-label{font-size:20px;margin-top:16px}.ah-fact p{font-size:15px}}
 /* The last panel fills the screen at every width, so the story rests on the facts alone rather than beside a sliver of cut-off copy (the blur strip is off at rest). The pair stays a centred block instead of spreading across wide screens. */
 .ah-facts{width:100vw;gap:clamp(40px,5vw,96px)}
@@ -153,18 +150,15 @@ const aboutStyles=`<style>
 /* Reduced motion: no pin, no sideways travel, no blur, no progress line, just the panels stacked in normal flow. */
 @media(prefers-reduced-motion:reduce){.about-h{height:auto}.ah-pin{position:static;height:auto;overflow:visible}.ah-pin::after,.ah-progress{display:none}.ah-track{display:block;height:auto;transform:none!important;will-change:auto}.ah-panel{width:auto;height:auto;padding:clamp(40px,7vw,96px) 6vw}.ah-image img{height:auto;aspect-ratio:3/2;max-height:80vh}.ah-facts{justify-content:flex-start;padding-bottom:clamp(64px,10vw,140px)}}
 </style>`;
-// The "Your next chapter" banner plays the morning film instead of the nurse photo; it only loads and plays while on screen.
-const bannerFilm=`<video class="banner-film" muted loop playsinline preload="none" poster="assets/film/morning.webp" aria-hidden="true"><source src="assets/film/morning-720.mp4" type="video/mp4" media="(max-width: 767px)"><source src="assets/film/morning-1080.mp4" type="video/mp4"></video><button class="film-toggle banner-toggle" type="button" aria-label="Pause film" aria-pressed="false"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect class="i-pause" x="6" y="5" width="4" height="14" rx="1"/><rect class="i-pause" x="14" y="5" width="4" height="14" rx="1"/><path class="i-play" d="M8 5.5v13l10.5-6.5z"/></svg></button><script>{const v=document.querySelector('.banner-film'),b=v.nextElementSibling;let on=!matchMedia('(prefers-reduced-motion: reduce)').matches;const sync=()=>{b.setAttribute('aria-pressed',!on);b.setAttribute('aria-label',on?'Pause film':'Play film')};new IntersectionObserver(([e])=>{e.isIntersecting&&on?v.play().catch(()=>{}):v.pause()},{rootMargin:'200px'}).observe(v);b.onclick=()=>{on=!on;on?v.play().catch(()=>{}):v.pause();sync()};sync()}</script>`;
 const v45Story=v45
  .replace(/<section class="about narrow section" id="about">[\s\S]*?<\/section>/,aboutStory)
- .replace(/(<figure class="wide-banner[\s\S]*?<\/figure>)([\s\S]*?<section class="treatments[\s\S]*?<\/section>)/,'$2$1')
- .replace(/<div class="glass-image banner-glass"[^>]*>[\s\S]*?<\/div>/,bannerFilm)
- .replace('<span>Your health.<br>Your next chapter.</span>','<span>Wake up knowing<br>what comes next.</span>')
+ .replace(/<figure class="wide-banner[\s\S]*?<\/figure>/,'')
+ .replace(/(<section class="treatments[\s\S]*?<\/section>)([\s\S]*?)(<section class="start-steps[\s\S]*?<\/section>)/,'$1$3$2')
  .replace('<img src="assets/clinician-1.jpg" alt="A smiling clinician" width="600" height="800" loading="lazy">','<img src="assets/clinician-45-1.jpg" alt="A family doctor talking with a patient over a video call at her desk" width="900" height="1200" loading="lazy">')
  .replace('<img src="assets/clinician-2.jpg" alt="A smiling doctor in a white coat" width="600" height="800" loading="lazy">','<img src="assets/clinician-45-2.jpg" alt="A psychologist listening and taking notes in a quiet, lamp-lit room" width="900" height="1200" loading="lazy">')
  .replace('<img src="assets/clinician-3.jpg" alt="A smiling clinician" width="340" height="426" loading="lazy">','<img src="assets/clinician-45-3.jpg" alt="A specialist doctor in a white coat by a window at dusk" width="900" height="1200" loading="lazy">')
  .replace('</head>',`<script type="module" src="scripts/about-hscroll.js"></script>${aboutStyles}</head>`);
-if(!v45Story.includes('ah-track')||!v45Story.includes('clinician-45-3.jpg')||!v45Story.includes('Wake up knowing<br>what comes next.')||v45Story.indexOf('<figure class="wide-banner')<v45Story.indexOf('id="care"'))throw new Error('Design 04.5 about story or banner move failed');
+if(!v45Story.includes('ah-track')||!v45Story.includes('clinician-45-3.jpg')||v45Story.includes('wide-banner')||!/id="care"[\s\S]*?<\/section><section class="start-steps/.test(v45Story))throw new Error('Design 04.5 about story or Start your care move failed');
 
 await writeFile('dist/design-04-5.html',v45Story);
 

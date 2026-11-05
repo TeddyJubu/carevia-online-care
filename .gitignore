@@ -1,2 +1,3 @@
 # here.now local publish state (contains claim tokens)
 .herenow/
+.DS_Store
