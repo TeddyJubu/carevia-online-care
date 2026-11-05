@@ -104,6 +104,34 @@ export async function getSession() {
   }
 }
 
+/** Two-factor code after a sign-in that returned { twoFactorRedirect: true }, or to finish turning it on. */
+export function verifyTotp(code) {
+  return request('/api/auth/two-factor/verify-totp', { method: 'POST', body: { code } })
+}
+
+/** Starts two-factor setup. Returns { totpURI, backupCodes }; it is on once a code is verified. */
+export function enableTwoFactor(password) {
+  return request('/api/auth/two-factor/enable', { method: 'POST', body: { password } })
+}
+
+/** Demo logins are shown only when this build has demo mode on AND the API says demo mode is on. */
+export async function getDemoAdmin() {
+  if (import.meta.env.VITE_DEMO_MODE !== 'true') return null
+  try {
+    const data = await request('/api/demo')
+    return data?.accounts?.find((account) => account.role === 'admin') || null
+  } catch {
+    return null
+  }
+}
+
+export function getAppointments({ date, status }) {
+  const query = new URLSearchParams()
+  if (date) query.set('date', date)
+  if (status) query.set('status', status)
+  return request(`/api/admin/appointments?${query}`)
+}
+
 export function login(email, password) {
   return request('/api/auth/sign-in/email', {
     method: 'POST',

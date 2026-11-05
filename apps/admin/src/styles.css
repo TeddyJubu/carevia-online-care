@@ -382,3 +382,58 @@ h1, h2 {
 @media (prefers-reduced-motion: reduce) {
   .rail h1 { animation: none; }
 }
+
+/* Appointments tab and two-factor screens */
+.tabs { display: flex; gap: 6px; }
+
+.tab {
+  min-height: 44px;
+  padding: 0 16px;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  font-size: 14px;
+}
+
+.tab[aria-current="page"] { background: var(--wash); font-weight: 500; }
+
+.tab:focus-visible, .field select:focus-visible { outline: 2px solid var(--green); outline-offset: 2px; }
+
+.card.wide { width: 100%; }
+
+.filters { display: flex; flex-wrap: wrap; gap: 16px; }
+
+.filters .field { flex: 1 1 200px; }
+
+.field select {
+  width: 100%;
+  min-height: 52px;
+  padding: 0 16px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: var(--surface);
+  font: inherit;
+}
+
+.table-wrap { overflow-x: auto; }
+
+table { width: 100%; border-collapse: collapse; font-size: 14px; }
+
+th, td { padding: 10px 12px; text-align: left; border-bottom: 1px solid var(--line); white-space: nowrap; }
+
+th { color: var(--secondary); font-weight: 500; font-size: 13px; }
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+.gate-card form { display: grid; gap: 18px; }
+
+.gate-card .field input[readonly] { font-family: "Geist Mono", monospace; font-size: 12px; }
+
+.card > form { display: grid; gap: 14px; }

@@ -53,12 +53,14 @@ export async function upsertAccount(prisma, account) {
     dateOfBirth: account.dateOfBirth,
     role: account.role,
     emailVerified: true,
+    twoFactorEnabled: false,
   }
   const user = await prisma.user.upsert({
     where: { email: account.email },
     update: data,
     create: { id: randomUUID(), email: account.email, ...data },
   })
+  await prisma.twoFactor.deleteMany({ where: { userId: user.id } })
   const password = await hashPassword(account.password)
   await prisma.account.deleteMany({ where: { userId: user.id, providerId: 'credential' } })
   await prisma.account.create({
