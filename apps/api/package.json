@@ -1,0 +1,33 @@
+{
+  "name": "@carevia/api",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "db": "node scripts/db.mjs",
+    "db:setup": "prisma migrate deploy && prisma db seed",
+    "dev": "node --watch src/server.js",
+    "start": "node src/server.js",
+    "smoke": "node scripts/smoke.mjs",
+    "postinstall": "prisma generate"
+  },
+  "prisma": {
+    "seed": "node prisma/seed.js"
+  },
+  "dependencies": {
+    "@fastify/cookie": "^11.0.2",
+    "@fastify/cors": "^11.1.0",
+    "@prisma/client": "^6.16.3",
+    "bcryptjs": "^3.0.2",
+    "dotenv": "^17.2.3",
+    "embedded-postgres": "18.6.0-beta.19",
+    "pg": "^8.16.3",
+    "fastify": "^5.6.1"
+  },
+  "devDependencies": {
+    "prisma": "^6.16.3"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

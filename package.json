@@ -1,0 +1,19 @@
+{
+  "name": "carevia",
+  "private": true,
+  "workspaces": [
+    "apps/api",
+    "apps/portal",
+    "apps/admin"
+  ],
+  "scripts": {
+    "db": "npm --prefix apps/api run db",
+    "db:setup": "npm --prefix apps/api run db:setup",
+    "dev:api": "npm --prefix apps/api run dev",
+    "dev:portal": "npm --prefix apps/portal run dev",
+    "dev:admin": "npm --prefix apps/admin run dev"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

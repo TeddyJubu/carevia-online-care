@@ -1,2 +1,7 @@
 # here.now local publish state (contains claim tokens)
 .herenow/
+node_modules/
+apps/api/.env
+apps/api/data/
+.DS_Store
+npm-debug.log*

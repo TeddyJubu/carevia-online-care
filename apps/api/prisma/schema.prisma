@@ -1,0 +1,132 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  patient
+  admin
+}
+
+enum AppointmentStatus {
+  confirmed
+}
+
+enum Channel {
+  video
+  audio
+}
+
+model User {
+  id           String        @id @default(cuid())
+  firstName    String
+  lastName     String
+  email        String        @unique
+  phone        String
+  dateOfBirth  DateTime      @db.Date
+  passwordHash String
+  role         Role          @default(patient)
+  createdAt    DateTime      @default(now())
+  sessions     Session[]
+  appointments Appointment[]
+}
+
+model Session {
+  id        String   @id @default(cuid())
+  tokenHash String   @unique
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+}
+
+model ServiceGroup {
+  id        Int       @id
+  name      String
+  blurb     String
+  icon      String
+  sortOrder Int
+  services  Service[]
+  doctors   Doctor[]
+}
+
+model Service {
+  id        Int          @id @default(autoincrement())
+  groupId   Int
+  group     ServiceGroup @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  name      String
+  sortOrder Int
+  doctors   Doctor[]
+
+  @@unique([groupId, name])
+}
+
+model Doctor {
+  id                Int           @id
+  name              String
+  initials          String
+  specialty         String
+  languages         String
+  fee               Int
+  availabilityIndex Int
+  experience        String
+  education         String
+  approach          String
+  cedula            String
+  groupId           Int
+  group             ServiceGroup  @relation(fields: [groupId], references: [id])
+  serviceId         Int
+  service           Service       @relation(fields: [serviceId], references: [id])
+  slots             Slot[]
+  appointments      Appointment[]
+
+  @@index([specialty])
+  @@index([fee])
+  @@index([availabilityIndex])
+  @@index([groupId])
+}
+
+model Slot {
+  id        Int      @id @default(autoincrement())
+  doctorId  Int
+  doctor    Doctor   @relation(fields: [doctorId], references: [id], onDelete: Cascade)
+  label     String
+  day       String
+  time      String
+  startsAt  DateTime
+
+  @@unique([doctorId, label])
+  @@index([doctorId, startsAt])
+}
+
+model Appointment {
+  id            String            @id @default(cuid())
+  patientId     String
+  patient       User              @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  doctorId      Int
+  doctor        Doctor            @relation(fields: [doctorId], references: [id])
+  service       String
+  slot          String
+  channel       Channel
+  status        AppointmentStatus @default(confirmed)
+  fee           Int
+  dailyRoomName String?
+  dailyRoomUrl  String?
+  createdAt     DateTime          @default(now())
+
+  @@unique([doctorId, slot])
+  @@index([patientId])
+  @@index([doctorId])
+}
+
+model DailySettings {
+  id        Int      @id @default(1)
+  apiKey    String   @default("")
+  updatedAt DateTime @updatedAt
+}
