@@ -1,6 +1,9 @@
 // Fictional demo accounts and data. No clinical content, no documents.
 import { randomUUID } from 'node:crypto'
 import { hashPassword } from 'better-auth/crypto'
+import { topUpSlots } from './schedule.js'
+
+export const DEMO_DOCTOR_ID = 0
 
 export const DEMO_ACCOUNTS = [
   {
@@ -60,4 +63,31 @@ export async function upsertAccount(prisma, account) {
     data: { id: randomUUID(), accountId: user.id, providerId: 'credential', userId: user.id, password },
   })
   return user
+}
+
+/**
+ * Resets everything except the catalog and the Daily key: removes appointments, family members, consent,
+ * payments, call events, access logs, the outbox and every non-demo account, then recreates the demo data.
+ * Demo accounts keep their ids (so a signed-in admin stays signed in after a reset).
+ */
+export async function seedDemo(prisma, { now = new Date() } = {}) {
+  await prisma.$transaction([
+    prisma.callEvent.deleteMany(),
+    prisma.accessLog.deleteMany(),
+    prisma.payment.deleteMany(),
+    prisma.consentRecord.deleteMany(),
+    prisma.appointment.deleteMany(),
+    prisma.familyMember.deleteMany(),
+    prisma.outboxMessage.deleteMany(),
+    prisma.user.deleteMany({ where: { email: { notIn: DEMO_ACCOUNTS.map((account) => account.email) } } }),
+    prisma.slot.deleteMany(),
+  ])
+
+  const users = {}
+  for (const account of DEMO_ACCOUNTS) users[account.role] = await upsertAccount(prisma, account)
+  await prisma.doctor.updateMany({ where: { clinicianUserId: { not: null } }, data: { clinicianUserId: null } })
+  await prisma.doctor.update({ where: { id: DEMO_DOCTOR_ID }, data: { clinicianUserId: users.clinician.id } })
+
+  await topUpSlots(now, prisma)
+  return { appointments: 0 }
 }
