@@ -1,4 +1,4 @@
-import {services as originalServices} from './content.js?v=a2d47525d7';
+import {services as originalServices} from './content.js?v=cca28bc34e';
 
 // Design 04.2's service labels and summaries, supplied in the service reference.
 const copy={
@@ -12,4 +12,15 @@ const copy={
 };
 
 const blueImages={"general": "general-urgent-care", "mental": "mental-health", "nutrition": "weight-management", "specialist": "specialist-care", "certificates": "certificates-assessments", "treatments": "treatments", "renewals": "test-requests-renewals"};
-export const services=originalServices.map(service=>({...service,...copy[service.id],image:`premium-blue/${blueImages[service.id]}`}));
+// The services inside each area, shown when its folder opens in the all-care popup.
+// ponytail: copied from GROUPS in apps/api/src/catalog.js; read /api/catalog instead once the homepage fetches live data.
+const categories={
+ general:['Adult urgent care','Paediatric urgent care','Adult check-up','Child consultation','Respiratory infections','Urinary infections','Skin consultation','Hair loss','Pain','Allergies','Hypertension','Contraception','Men\u2019s health','Sexology'],
+ mental:['Adult psychology','Child psychology','Psychiatry','Child psychiatry','Adult ADHD','Child ADHD','Autism','Couples and family therapy','Eating disorders','Screen and gaming dependency','Substance and behavioural dependencies','Smoking cessation'],
+ nutrition:['Nutrition','Weight-loss consultation'],
+ specialist:['Gynaecology','Neurology','Endocrinology','Rheumatology','Paediatrics','Migraine','Menopause','Breastfeeding','Travel medicine'],
+ certificates:['Sick leave assessment','Illness assessment','Nursery and school fitness assessment','Occupational fitness assessment','Driving fitness assessment','Driving fitness with psychotechnical assessment','In-person psychotechnical assessment','Hunting or firearms fitness assessment','Diving fitness assessment','Boating licence fitness assessment'],
+ treatments:['Skin treatment','Hair-loss treatment','Pain management','Allergies treatment','Hypertension treatment','Smoking cessation'],
+ renewals:['Tests and laboratory investigations','Treatment renewal review']
+};
+export const services=originalServices.map(service=>({...service,...copy[service.id],categories:categories[service.id],image:`premium-blue/${blueImages[service.id]}`}));
