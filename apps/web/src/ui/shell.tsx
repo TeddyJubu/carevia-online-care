@@ -1,5 +1,5 @@
 import { useEffect, type ReactNode } from 'react'
-import { Link, Navigate, Outlet, useLocation } from 'react-router'
+import { Link, Navigate, NavLink, Outlet, useLocation } from 'react-router'
 import { MOCK } from '../lib/api'
 import { content, plain } from '../lib/content'
 import { DEMO_BUILD, useDemo } from '../lib/demo'
@@ -22,6 +22,7 @@ export function Header() {
         </a>
         <span className="flex-1" />
         <a href="tel:112" className="call-112"><span className="hidden sm:inline">Emergency?&nbsp;</span>Call 112</a>
+        <NavLink to="/doctors" className="nav-pill nav-link">Doctors</NavLink>
         {user
           ? <Link to={account} className="nav-pill glass">{user.role === 'clinician' ? 'Your agenda' : 'Your account'}</Link>
           : <Link to="/signin" className="nav-pill glass">Sign in</Link>}

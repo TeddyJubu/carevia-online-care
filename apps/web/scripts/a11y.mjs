@@ -77,6 +77,9 @@ for (const width of widths.length ? widths.map(Number) : [390, 1280]) {
   await go('/app/forgot-password', 'forgot-password')
   await go('/app/reset-password?token=x', 'reset-password')
   await go('/app/nope', '404')
+  await go('/app/doctors', 'doctors')
+  await go('/app/doctors?language=French&group=general', 'doctors-filtered')
+  await go('/app/doctors?q=zzzz', 'doctors-empty')
   // Booking (services, doctors, profile, times, checkout).
   await go('/app/book', 'S1-services')
   await go('/app/book/doctors?group=general', 'S2-doctors')
@@ -164,7 +167,7 @@ for (const width of widths.length ? widths.map(Number) : [390, 1280]) {
   // Reflow: 1280 at 200% zoom is 640 CSS px; WCAG 1.4.10 is 320 CSS px.
   for (const zw of width === 1280 ? [640, 320] : []) {
     await p.setViewportSize({ width: zw, height: 800 })
-    for (const path of ['/', '/app/book', '/app/book/doctors?group=general', '/app/signin', '/app/signup']) {
+    for (const path of ['/', '/app/book', '/app/book/doctors?group=general', '/app/doctors', '/app/signin', '/app/signup']) {
       await p.goto((path === '/' ? home : base) + path); await p.waitForLoadState('networkidle').catch(() => {})
       const o = await p.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)
       console.log(`${width} reflow ${zw}px ${path}: ${o > 0 ? `OVERFLOW ${o}px` : 'ok'}`)
