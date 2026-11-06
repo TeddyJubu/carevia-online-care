@@ -114,6 +114,8 @@ export const api = {
   preJoin: (id: string, companion: boolean) =>
     post<A>(`/api/appointments/${id}/pre-join`, { emailConfirmed: true, mobileConfirmed: true, companion }),
   videoToken: (id: string, companion = false) => post<VideoToken>(`/api/appointments/${id}/video-token`, companion ? { companion: true } : {}),
+  // TEMPORARY, demo only: moves the visit to start now. Remove with the test button on the appointments page.
+  testJoin: (id: string) => post<A>(`/api/appointments/${id}/test-join`),
   callEvent: (id: string, type: CallEvent) => post<unknown>(`/api/appointments/${id}/call-events`, { type }),
   videoStatus: () => get<{ enabled: boolean }>('/api/video/status'),
 

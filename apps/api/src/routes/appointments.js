@@ -292,6 +292,32 @@ export async function appointmentRoutes(app) {
     }
   })
 
+  // TEMPORARY test-only shortcut (DEMO_MODE only): moves a confirmed visit to start now, so the patient and the
+  // doctor can join straight away without waiting for the slot. Delete this route and the "Join now (test)"
+  // button in apps/web/src/pages/appointments.tsx before real patients use the service.
+  app.post('/api/appointments/:id/test-join', { schema: { params: idParams } }, async (request, reply) => {
+    if (!DEMO_MODE) return sendError(reply, 404, 'NOT_FOUND', 'Not found.')
+    const { appointment } = await accessible(request, reply, ['patient'])
+    if (!appointment) return
+    if (appointment.status !== 'confirmed') return sendError(reply, 409, 'NOT_CONFIRMED', 'This visit is not confirmed.')
+    const startsAt = new Date()
+    await prisma.appointment.update({
+      where: { id: appointment.id },
+      data: {
+        startsAt,
+        endsAt: new Date(startsAt.getTime() + (appointment.endsAt - appointment.startsAt)),
+        preJoinConfirmedAt: appointment.preJoinConfirmedAt ?? startsAt,
+        // A fresh room: the old one may have expired with the old time.
+        dailyRoomName: null,
+        dailyRoomUrl: null,
+        outcome: null,
+        callState: 'not_started',
+        reconnects: 0,
+      },
+    })
+    return { appointment: toAppointment(await load(appointment.id), 'patient') }
+  })
+
   app.post('/api/appointments/:id/call-events', {
     schema: {
       params: idParams,

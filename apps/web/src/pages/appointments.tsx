@@ -1,6 +1,7 @@
-import type { ReactNode } from 'react'
-import { Link } from 'react-router'
+import { useState, type ReactNode } from 'react'
+import { Link, useNavigate } from 'react-router'
 import { api } from '../lib/api'
+import { useDemo } from '../lib/demo'
 import { useLoad, useNow, type Load } from '../lib/load'
 import { fullDate, hhmm, minutes } from '../lib/time'
 import type { Appointment } from '../lib/types'
@@ -17,11 +18,43 @@ function visitStatus(a: Appointment, now: number): [label: string, tone: string]
   return now < Date.parse(a.call.joinClosesAt) ? ['Check-in open', 'badge-ok'] : ['Awaiting outcome', '']
 }
 
+/**
+ * TEMPORARY, for testing and client demos only (needs a demo build and DEMO_MODE=true on the API).
+ * Moves the visit to start now and opens the call, skipping the wait for the join window.
+ * Delete this, api.testJoin and POST /api/appointments/:id/test-join before real patients use the service.
+ */
+function TestJoinButton({ id }: { id: string }) {
+  const navigate = useNavigate()
+  const [busy, setBusy] = useState(false)
+  const [failed, setFailed] = useState('')
+  const join = async () => {
+    setBusy(true)
+    setFailed('')
+    try {
+      await api.testJoin(id)
+      navigate(`/visits/${id}/call`)
+    } catch (e) {
+      setFailed(e instanceof Error ? e.message : 'Could not start the test call.')
+      setBusy(false)
+    }
+  }
+  return (
+    <span className="relative grid justify-self-start sm:justify-self-end">
+      <span className="absolute -top-2 -right-2 z-10 rounded-full bg-amber-400 px-1.5 py-px text-[10px] font-bold uppercase tracking-wide text-black">Test only</span>
+      <button type="button" className="btn btn-sm border-2 border-dashed border-amber-400" onClick={join} disabled={busy} title="Temporary test button: joins the video call now, ignoring the visit time">
+        {busy ? 'Joining…' : 'Join now (test)'}
+      </button>
+      {failed && <span role="alert" className="fine mt-1 text-red-600">{failed}</span>}
+    </span>
+  )
+}
+
 function Row({ a, now }: { a: Appointment; now: number }) {
   const [label, tone] = visitStatus(a, now)
+  const demo = useDemo()
   const forWhom = a.patient?.kind === 'family' ? a.patient.displayName : 'you'
   return (
-    <li className="appt-row grid gap-x-6 gap-y-2 px-5 py-4 sm:grid-cols-[150px_minmax(0,1fr)_auto] sm:items-center">
+    <li className="appt-row grid gap-x-6 gap-y-2 px-5 py-4 sm:grid-cols-[150px_minmax(0,1fr)_auto_auto] sm:items-center">
       <time dateTime={a.startsAt} className="grid">
         <span className="font-medium">{fullDate(a.startsAt)}</span>
         <span className="fine">{hhmm(a.startsAt)} · {minutes(a.startsAt, a.endsAt)} min</span>
@@ -34,6 +67,7 @@ function Row({ a, now }: { a: Appointment; now: number }) {
         </span>
       </span>
       <span className={`badge ${tone} justify-self-start`}>{label}</span>
+      {demo && a.status === 'confirmed' ? <TestJoinButton id={a.id} /> : <span />}
     </li>
   )
 }
