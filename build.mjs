@@ -51,11 +51,20 @@ const filmStyles=`<style>.hero-film{object-fit:cover;object-position:50% 50%}
 .topbar .nav-logo:focus-visible .nav-emblem-hover{opacity:1;transform:none;transition-duration:.48s;transition-timing-function:cubic-bezier(.22,1,.36,1)}
 @media(hover:hover){.topbar .nav-logo:hover .nav-emblem-hover{opacity:1;transform:none;transition-duration:.48s;transition-timing-function:cubic-bezier(.22,1,.36,1)}}
 @media(prefers-reduced-motion:reduce){.topbar .nav-logo .nav-emblem-hover{transition:none;transform:none}}
-/* Past the hero, the three nav pieces share one frosted bar so they stay readable over the page (scripts/design-04.js sets .is-docked). */
-.topbar::before{content:'';position:absolute;inset:-8px -6px;z-index:-1;border:1px solid #d5eaff40;border-radius:16px;background:linear-gradient(180deg,#3d6ea326,#04142326),#071e35f2;box-shadow:0 10px 24px -12px #051a33a6,inset 0 1px #ffffff26;backdrop-filter:blur(24px) saturate(160%);-webkit-backdrop-filter:blur(24px) saturate(160%);pointer-events:none;opacity:0;transform:scale(.97);transition:opacity .22s cubic-bezier(.4,0,1,1),transform .22s cubic-bezier(.4,0,1,1)}
+/* Nav: a three-column grid keeps the emblem dead centre; on desktop both pills share the wider width. */
+.topbar{display:grid;grid-template-columns:1fr auto 1fr;align-items:center}
+.topbar .nav-pill{justify-content:center}
+.topbar .nav-logo{place-items:center;grid-template-rows:minmax(0,1fr)}
+@media(max-width:600px){.topbar>.menu-toggle{justify-self:start}.topbar>.nav-book{justify-self:end}}
+/* Past the hero, the three pieces share one frosted capsule so they stay readable over the page (scripts/design-04.js sets .is-docked). */
+.topbar::before{content:'';position:absolute;inset:-5px -7px;z-index:-1;border:1px solid #ffffff1f;border-radius:999px;background:linear-gradient(180deg,#25476fe6,#0b2140eb);box-shadow:inset 0 1px #ffffff29,inset 0 -1px #00000033,0 18px 40px -18px #0a1e3aa6,0 2px 8px -2px #0a1e3a40;backdrop-filter:blur(20px) saturate(170%);-webkit-backdrop-filter:blur(20px) saturate(170%);pointer-events:none;opacity:0;transform:scale(.97);transition:opacity .22s cubic-bezier(.4,0,1,1),transform .22s cubic-bezier(.4,0,1,1)}
 .topbar.is-docked::before{opacity:1;transform:none;transition-duration:.48s;transition-timing-function:cubic-bezier(.22,1,.36,1)}
 .topbar.is-docked .nav-pill{background:transparent;border-color:transparent;box-shadow:none;backdrop-filter:none;-webkit-backdrop-filter:none}
-@media(prefers-reduced-motion:reduce){.topbar::before{transition:none}}
+/* Docked, the emblem settles to about 42px so it sits inside the capsule. */
+.topbar .nav-logo{transition:transform .22s cubic-bezier(.4,0,1,1)}
+.topbar.is-docked .nav-logo{transform:scale(.72);transition:transform .48s cubic-bezier(.22,1,.36,1)}
+@media(max-width:600px){.topbar.is-docked .nav-logo{transform:scale(.8)}}
+@media(prefers-reduced-motion:reduce){.topbar::before,.topbar .nav-logo{transition:none}}
 /* Orange specular rim (scripts/specular-nav.js): canvas spills 24px past each pill and sits at z-index -1 inside the pill's isolated stack (above its fill, below its text); 4.2's blue chroma rim is retired on the pills. */
 .specular-light{position:absolute;inset:-24px;width:calc(100% + 48px);height:calc(100% + 48px);z-index:-1;pointer-events:none;opacity:0;transition:opacity .35s}.topbar .nav-pill:is(:hover,:focus-visible) .specular-light,.hero .search-shell:hover .specular-light{opacity:1}.topbar .nav-pill::after{display:none}
 /* Calm load: everything in the hero clears from a light blur, one after another.
