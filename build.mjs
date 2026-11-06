@@ -45,13 +45,12 @@ const filmStyles=`<style>.hero-film{object-fit:cover;object-position:50% 50%}
 .topbar .nav-logo,.topbar .nav-logo:is(:hover,:active,:focus-visible){width:auto;padding:0 6px;background:none!important;border-color:transparent!important;box-shadow:none!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important}.topbar .nav-logo::before,.topbar .nav-logo::after{display:none}.topbar .nav-logo .carevia-mark{width:58px;height:58px}
 /* Nav emblem: the glossy white cross mark, shown in its own colours (the 04.2 nav whitens the plain mark). */
 .topbar .nav-logo .carevia-mark.nav-emblem{filter:none}
-/* Hover or keyboard focus: the white cross turns out as the blue-orange ring turns in (same grid cell). */
-.topbar .nav-logo .nav-emblem{grid-area:1/1;transition:opacity .22s cubic-bezier(.4,0,1,1),transform .22s cubic-bezier(.4,0,1,1)}
-.topbar .nav-logo .nav-emblem-hover{opacity:0;transform:scale(.9) rotate(-45deg)}
-.topbar .nav-logo:focus-visible .nav-emblem{opacity:0;transform:scale(.9) rotate(45deg);transition-duration:.48s;transition-timing-function:cubic-bezier(.22,1,.36,1)}
-.topbar .nav-logo:focus-visible .nav-emblem-hover{opacity:1;transform:none}
-@media(hover:hover){.topbar .nav-logo:hover .nav-emblem{opacity:0;transform:scale(.9) rotate(45deg);transition-duration:.48s;transition-timing-function:cubic-bezier(.22,1,.36,1)}.topbar .nav-logo:hover .nav-emblem-hover{opacity:1;transform:none}}
-@media(prefers-reduced-motion:reduce){.topbar .nav-logo .nav-emblem{transition:opacity .2s linear;transform:none!important}}
+/* Hover or keyboard focus: the white cross crossfades into the blue-orange ring (same grid cell, no movement). */
+.topbar .nav-logo .nav-emblem{grid-area:1/1;transition:opacity .3s ease}
+.topbar .nav-logo .nav-emblem-hover{opacity:0}
+.topbar .nav-logo:focus-visible .nav-emblem{opacity:0;transition-duration:.45s}
+.topbar .nav-logo:focus-visible .nav-emblem-hover{opacity:1}
+@media(hover:hover){.topbar .nav-logo:hover .nav-emblem{opacity:0;transition-duration:.45s}.topbar .nav-logo:hover .nav-emblem-hover{opacity:1}}
 /* Nav: a three-column grid keeps the emblem dead centre; on desktop both pills share the wider width. */
 .topbar{display:grid;grid-template-columns:1fr auto 1fr;align-items:center}
 .topbar .nav-pill{justify-content:center}
