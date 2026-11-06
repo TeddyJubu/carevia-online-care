@@ -4,9 +4,9 @@ import { api, ApiError } from '../lib/api'
 import { content } from '../lib/content'
 import { useLoad, useNow } from '../lib/load'
 import { useSession } from '../lib/session'
-import { age, birthDate, dayMonth, fullDate, hhmm, lisbonDay, longDate, minutes, relDay, shortDate } from '../lib/time'
+import { age, birthDate, dayMonth, fullDate, hhmm, lisbonDay, longDate, minutes, relDay, shortDate, TZ } from '../lib/time'
 import type { Appointment, FamilyMember } from '../lib/types'
-import { Dialog, Empty, ErrorState, euro, Field, FormError, Loading, Markdown, Notice, PageTitle, paymentStatus, Still } from '../ui/kit'
+import { Dialog, Empty, ErrorState, euro, euroCents, Field, FormError, Loading, Markdown, Notice, PageTitle, paymentStatus, Still } from '../ui/kit'
 import { toE164 } from './auth'
 import { setBookFor } from './book'
 import { checkInSteps, phaseOf } from './visit'
@@ -740,7 +740,25 @@ export function SecurityPage() {
   )
 }
 
-// ---------- Payments and refunds: every paid visit, and the refund terms from content/patient-journey/cancellation.md ----------
+// ---------- Payments and refunds: a statement ticket, then the refund terms from content/patient-journey/cancellation.md ----------
+const pIco = (d: ReactNode, size = 14) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">{d}</svg>
+const P_ICONS = {
+  receipt: <><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7z" /><path d="M14 2v5h5M16 13H8M16 17H8M10 9H8" /></>,
+  download: <path d="M12 15V3M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5" />,
+  check: <><rect x="3" y="4" width="18" height="18" rx="2" /><path d="M16 2v4M8 2v4M3 10h18M9 16l2 2 4-4" /></>,
+  late: <><circle cx="12" cy="12" r="9" /><path d="M12 7v5l3 2" /></>,
+  video: <><path d="m16 13 5.2 3.1a.5.5 0 0 0 .8-.4V8.3a.5.5 0 0 0-.8-.4L16 11" /><rect x="2" y="6" width="14" height="12" rx="2" /></>,
+  drop: <><path d="M12 20h.01M8.5 16.4a5 5 0 0 1 7 0M5 12.9a10 10 0 0 1 5.2-2.7M19 12.9a10 10 0 0 0-2-1.4M2 8.8a15 15 0 0 1 4.2-2.7M22 8.8a15 15 0 0 0-11.3-3.8M2 2l20 20" /></>,
+  move: <><rect x="3" y="4" width="18" height="18" rx="2" /><path d="M16 2v4M8 2v4M3 10h18M12 14v3l2 1" /></>,
+  ended: <path d="M10.7 13.3a16 16 0 0 0 3.4 2.6l1.3-1.3a2 2 0 0 1 2.1-.4c.9.3 1.8.6 2.7.7a2 2 0 0 1 1.7 2v3a2 2 0 0 1-2.2 2A19.8 19.8 0 0 1 3.1 4.2 2 2 0 0 1 5.1 2h3a2 2 0 0 1 2 1.7c.1.9.4 1.8.7 2.7a2 2 0 0 1-.4 2.1L9 9.8M22 2 2 22" />,
+  alert: <><circle cx="12" cy="12" r="9" /><path d="M12 8v4M12 16h.01" /></>,
+  wallet: <><path d="M19 7V5a2 2 0 0 0-2-2H5a2 2 0 0 0 0 4h15a1 1 0 0 1 1 1v4h-3a2 2 0 0 0 0 4h3a1 1 0 0 0 1-1v-2" /><path d="M3 5v14a2 2 0 0 0 2 2h15a1 1 0 0 0 1-1v-4" /></>,
+}
+/** "23 Oct – 9 Nov 2026", in Lisbon. */
+const period = (a: string, b: string) => new Intl.DateTimeFormat('en-GB', { timeZone: TZ, day: 'numeric', month: 'short', year: 'numeric' }).formatRange(new Date(a), new Date(b))
+/** The body of one "## Title" section of a content file. */
+const section = (body: string, title: string) => body.split(/^##\s+/m).find((s) => s.startsWith(title))?.slice(title.length).trim() ?? ''
+
 export function PaymentsPage() {
   const upcoming = useLoad(() => api.appointments('upcoming'), [])
   const past = useLoad(() => api.appointments('past'), [])
@@ -750,41 +768,133 @@ export function PaymentsPage() {
   // replace this if a patient ever has hundreds of visits.
   const paid = [...(upcoming.data?.appointments ?? []), ...(past.data?.appointments ?? [])]
     .filter((a) => a.payment)
-    .sort((x, y) => y.payment!.paidAt.localeCompare(x.payment!.paidAt))
+    .sort((x, y) => y.startsAt.localeCompare(x.startsAt))
+  const charged = paid.filter((a) => paymentStatus(a).label === 'Paid')
+  const refunded = paid.filter((a) => paymentStatus(a).label === 'Refunded')
+  const cancelled = paid.length - charged.length - refunded.length
+  const total = charged.reduce((n, a) => n + a.payment!.amount, 0)
+
+  // ponytail: a CSV built in the browser; a signed PDF statement can come from the API once real payments exist.
+  function download() {
+    const rows = [['Visit date', 'Service', 'Doctor', 'For', 'Status', 'Paid on', 'Amount (EUR)'],
+      ...paid.map((a) => [fullDate(a.startsAt), a.service.groupName, a.doctor.name, a.patient?.displayName ?? 'You', paymentStatus(a).label, shortDate(a.payment!.paidAt), paymentStatus(a).label === 'Paid' ? a.payment!.amount.toFixed(2) : '0.00'])]
+    const csv = rows.map((r) => r.map((c) => `"${String(c).replace(/"/g, '""')}"`).join(',')).join('\r\n')
+    const url = URL.createObjectURL(new Blob([csv], { type: 'text/csv' }))
+    Object.assign(document.createElement('a'), { href: url, download: 'carevia-statement.csv' }).click()
+    URL.revokeObjectURL(url)
+  }
+
+  const terms = content('cancellation')
+  const cancelRules = section(terms.body, 'Cancelling').split(/\r?\n/).filter((l) => l.startsWith('- ')).map((l) => l.slice(2))
+  const steps = [
+    { tick: 'Booking confirmed', title: 'Free cancellation', icon: P_ICONS.check, tone: 'ok', body: `${cancelRules[0] ?? ''} The time is released for other patients.` },
+    { tick: '[X hours] before', title: 'Late cancellation', icon: P_ICONS.late, tone: 'late', body: cancelRules.slice(1).join(' ') },
+    { tick: 'Start', title: 'Consultation', icon: P_ICONS.video, tone: 'now', body: 'Join from 10 minutes before the start time.' },
+    { tick: 'Up to 60 min after the end', title: 'Reconnect window', icon: P_ICONS.drop, tone: 'after', body: section(terms.body, 'If the call drops') },
+  ]
+  const situations = [
+    { title: 'Changing the time', icon: P_ICONS.move },
+    { title: 'If your doctor ends the call', icon: P_ICONS.ended },
+    { title: 'If we cancel', icon: P_ICONS.alert },
+  ]
+
   return (
     <>
-      <PageTitle title="Payments & refunds" lede="Every visit you’ve paid for. In this demo no money is taken, so there is nothing to refund.">Payments &amp; refunds</PageTitle>
-      <section aria-labelledby="payments-title" className="mt-8">
+      <PageTitle title="Payments & refunds" lede="Every visit you’ve paid for. In this demo no money is taken, so there is nothing to refund."
+        eyebrow={<span className="k" style={{ color: 'var(--color-accent)', fontSize: 13 }}>Billing</span>}>Payments &amp; refunds</PageTitle>
+      <section aria-labelledby="payments-title" className="mt-9">
         <h2 id="payments-title" className="sr-only">Your payments</h2>
         {error ? <ErrorState error={error} onRetry={() => { upcoming.reload(); past.reload() }} title="We couldn’t load your payments" />
           : loading ? <Loading label="Loading your payments" lines={3} />
           : paid.length === 0 ? <Empty title="No payments yet" art="caught-up" action={<Link to="/book" className="btn btn-primary btn-sm">Book new care</Link>}>When you pay for a visit, it appears here with its receipt.</Empty>
           : (
-            <ul className="card card-tight rows">
-              {paid.map((a) => {
-                const s = paymentStatus(a)
-                return (
-                  <li key={a.id} className="grid items-center gap-x-6 gap-y-1 py-3 sm:grid-cols-[minmax(0,1fr)_auto_auto]">
-                    <div className="min-w-0">
-                      <Link to={`/visits/${a.id}`} className="link inline-flex min-h-11 items-center font-medium">Visit on {fullDate(a.startsAt)}</Link>
-                      <p className="fine">{a.service.groupName} · {a.doctor.name}{a.patient?.kind === 'family' ? ` · for ${a.patient.displayName}` : ''}</p>
-                      {a.status === 'cancelled' && <p className="fine">Cancelled. No money was taken in this demo.</p>}
-                    </div>
-                    <p className="flex flex-wrap items-center gap-x-3 gap-y-1">
-                      <span className="font-medium tabular-nums">{euro(a.payment!.amount)}</span>
-                      <span className={`badge ${s.tone}`}>{s.label}</span>
-                      <span className="fine">Paid {shortDate(a.payment!.paidAt)}</span>
-                    </p>
-                    <Link to={`/visits/${a.id}/receipt`} className="btn btn-quiet btn-sm justify-self-start">Receipt<span className="sr-only"> for the visit on {fullDate(a.startsAt)}</span></Link>
-                  </li>
-                )
-              })}
-            </ul>
+            <div className="bp statement">
+              <div className="bp-body gap-0 pb-5">
+                <div className="ledger-head">
+                  <div>
+                    <p className="k">Statement</p>
+                    <p className="mt-0.5 font-serif text-[22px] leading-[26px] text-ink">{period(paid[paid.length - 1].startsAt, paid[0].startsAt)}</p>
+                  </div>
+                  <p className="flex items-center gap-5"><span className="text-[13px] text-muted">{paid.length} visit{paid.length === 1 ? '' : 's'}</span><span className="k max-sm:hidden">Amount</span></p>
+                </div>
+                <ul>
+                  {paid.map((a) => {
+                    const s = paymentStatus(a)
+                    const [day, month] = dayMonth(a.startsAt)
+                    const off = s.label !== 'Paid'
+                    return (
+                      <li key={a.id} className={`ledger-row${off ? ' is-off' : ''}`}>
+                        <span className="ledger-date"><span className="font-serif text-[24px] leading-6">{day}</span><span className="text-[10px] font-medium tracking-[0.12em] text-muted">{month}</span></span>
+                        <span className="min-w-0">
+                          <span className="block text-[15px] leading-[23px]"><span className="ledger-service font-medium">{a.service.groupName}</span> <span className="text-muted">· {a.doctor.name}</span></span>
+                          <span className="flex flex-wrap items-center gap-x-1.5 text-[13px] leading-5">
+                            <span className={`ledger-dot${off ? '' : ' ok'}`} aria-hidden="true" />
+                            <span className={off ? 'text-muted' : 'text-ok'}>{s.label === 'Paid' ? `Paid ${shortDate(a.payment!.paidAt)}` : s.label === 'Refunded' ? 'Refunded' : 'Cancelled · no money taken'}</span>
+                            {a.patient?.kind === 'family' && <span className="font-medium text-accent">· For {a.patient.displayName}</span>}
+                          </span>
+                        </span>
+                        <Link to={`/visits/${a.id}/receipt`} className="ledger-receipt">{pIco(P_ICONS.receipt)}Receipt<span className="sr-only"> for the visit on {fullDate(a.startsAt)}</span></Link>
+                        <span className="ledger-amount">
+                          <span className="font-serif text-[18px] leading-[22px] tabular-nums">{euroCents(off ? 0 : a.payment!.amount)}</span>
+                          {off && <span className="block text-[11px] text-muted"><s>{euro(a.payment!.amount)}</s> {s.label === 'Refunded' ? 'refunded' : 'voided'}</span>}
+                        </span>
+                      </li>
+                    )
+                  })}
+                </ul>
+              </div>
+              <div className="bp-perf" aria-hidden="true" />
+              <div className="bp-stub">
+                <div>
+                  <p className="k">Total paid</p>
+                  <p className="mt-1.5 font-serif text-[72px] leading-[72px] tracking-[-0.03em] tabular-nums">{euro(total)}</p>
+                  <p className="mt-1.5 text-[13px] text-[#b9c7d8]">{charged.length} paid visit{charged.length === 1 ? '' : 's'}{cancelled ? ` · ${cancelled} cancelled` : ''}{refunded.length ? ` · ${refunded.length} refunded` : ''}</p>
+                </div>
+                <dl className="stub-figures">
+                  <div><dt>Refunded</dt><dd>{euroCents(refunded.reduce((n, a) => n + a.payment!.amount, 0))}</dd></div>
+                  <div><dt>Pending refunds</dt><dd>None</dd></div>
+                  <div><dt>Paid with</dt><dd>Demo payment</dd></div>
+                </dl>
+                <button type="button" className="btn btn-sm bp-cta w-full" onClick={download}>{pIco(P_ICONS.download)}Download statement</button>
+              </div>
+            </div>
           )}
       </section>
-      <section aria-labelledby="refund-title" className="mt-10">
-        <h2 id="refund-title">{content('cancellation').title}</h2>
-        <div className="card mt-4"><Markdown source={content('cancellation').body} /></div>
+
+      <section aria-labelledby="refund-title" className="mt-20 grid gap-7">
+        <div>
+          <p className="k" style={{ color: 'var(--color-accent)', fontSize: 12 }}>When plans change</p>
+          <h2 id="refund-title" className="mt-2.5">{terms.title}</h2>
+          <p className="muted mt-2.5">What happens depends on when it happens. Find your moment on the timeline.</p>
+        </div>
+        <div className="card p-6 sm:p-8">
+          <ol className="tl">
+            {steps.map((st) => (
+              <li key={st.title} className={`tl-step tl-${st.tone}`}>
+                <span className="tl-tick">{st.tick}</span>
+                <span className="tl-track" aria-hidden="true"><span className="tl-node" /><span className="tl-bar" /></span>
+                <h3 className="tl-title">{pIco(st.icon)}{st.title}</h3>
+                <p className="tl-body">{st.body}</p>
+              </li>
+            ))}
+            <li className="tl-cap" aria-hidden="true" />
+          </ol>
+          <div className="situations">
+            {situations.map((x) => (
+              <div key={x.title}>
+                <h3 className="flex items-center gap-2.5 text-[15px] font-medium leading-5 text-ink"><span className="sit-ico">{pIco(x.icon)}</span>{x.title}</h3>
+                <div className="sit-body"><Markdown source={section(terms.body, x.title)} /></div>
+              </div>
+            ))}
+          </div>
+        </div>
+        <div className="refund-band">
+          <span className="grid size-10 flex-none place-items-center rounded-full bg-ink text-white">{pIco(P_ICONS.wallet, 18)}</span>
+          <div className="min-w-0">
+            <h3 className="text-[15px] font-medium leading-5 text-ink">How refunds are paid</h3>
+            <div className="sit-body mt-0.5"><Markdown source={section(terms.body, 'How refunds are paid')} /></div>
+          </div>
+        </div>
       </section>
     </>
   )

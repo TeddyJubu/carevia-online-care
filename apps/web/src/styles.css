@@ -258,6 +258,60 @@
     .bp-stub { width: auto; padding: 24px 20px; }
   }
 
+  /* Payments: the statement as a ticket (reuses .bp), then the cancellation timeline. */
+  .statement { min-height: 0; box-shadow: 0 8px 24px #102d5012; }
+  .statement .bp-stub { background: var(--color-ink); }
+  .statement .bp-stub .k { color: #8fa6c2; }
+  .ledger-head { display: flex; justify-content: space-between; align-items: flex-end; gap: 16px; padding-bottom: 16px; border-bottom: 1.5px solid var(--color-ink); }
+  .ledger-row { display: grid; grid-template-columns: 44px minmax(0, 1fr) auto 96px; align-items: center; gap: 20px; padding: 16px 0; color: var(--color-ink); }
+  .ledger-row + .ledger-row { border-top: 1px solid #102d501a; }
+  .ledger-row.is-off .ledger-date > :first-child, .ledger-row.is-off .ledger-amount, .ledger-row.is-off .ledger-service { color: #8a97a6; }
+  .ledger-date { display: grid; gap: 1px; }
+  .ledger-dot { width: 6px; height: 6px; border-radius: 50%; background: #8a97a6; }
+  .ledger-dot.ok { background: #2e9e66; }
+  .ledger-receipt { display: inline-flex; align-items: center; gap: 5px; min-height: 32px; padding: 6px 10px; border-radius: 8px; color: var(--color-muted); font-size: 13px; font-weight: 500; text-decoration: none; transition: background 0.2s, color 0.2s; }
+  .ledger-receipt:hover { background: #f1f4f8; color: var(--color-ink); }
+  .ledger-amount { text-align: right; }
+  .stub-figures { display: grid; gap: 12px; margin: 0; padding: 20px 0; border-block: 1px solid #ffffff26; font-size: 13px; line-height: 20px; }
+  .stub-figures div { display: flex; justify-content: space-between; gap: 12px; }
+  .stub-figures dt { color: #b9c7d8; }
+  .stub-figures dd { margin: 0; font-weight: 500; }
+  .tl { display: grid; grid-template-columns: 28fr 20fr 15fr 33fr 14px; margin: 0; padding: 0; list-style: none; }
+  .tl-step { --c: #2e9e66; display: flex; flex-direction: column; min-width: 0; }
+  .tl-late { --c: var(--color-accent); }
+  .tl-now { --c: var(--color-ink); }
+  .tl-after { --c: #8fa6c2; }
+  .tl-tick { padding: 0 16px 10px 0; color: var(--color-muted); font-size: 12px; line-height: 18px; font-weight: 500; }
+  .tl-track { display: flex; align-items: center; height: 14px; }
+  .tl-node { width: 14px; height: 14px; flex: none; border-radius: 50%; background: #fff; box-shadow: inset 0 0 0 3px var(--c); }
+  .tl-bar { flex: 1; height: 6px; background: var(--c); opacity: 0.85; }
+  .tl-after .tl-bar { border-radius: 0 3px 3px 0; }
+  .tl-title { display: flex; align-items: center; gap: 8px; padding: 20px 20px 0 0; font-family: var(--font-sans); font-size: 15px; line-height: 23px; font-weight: 500; color: var(--color-ink); }
+  .tl-title svg { color: var(--c); }
+  .tl-body { margin-top: 8px; padding-right: 20px; font-size: 13px; line-height: 20px; color: #2e4560; }
+  .tl-cap { align-self: start; width: 14px; height: 14px; margin-top: 28px; border-radius: 50%; background: #8fa6c2; }
+  .situations { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); margin-top: 32px; padding-top: 28px; border-top: 1px solid #102d501a; }
+  .situations > div { display: grid; align-content: start; gap: 10px; padding: 0 28px; }
+  .situations > div:first-child { padding-left: 0; }
+  .situations > div + div { border-left: 1px solid #102d501a; }
+  .sit-ico { display: grid; place-items: center; width: 30px; height: 30px; flex: none; border-radius: 8px; background: var(--color-mist); }
+  .sit-body .prose { font-size: 14px; line-height: 22px; color: #2e4560; }
+  .refund-band { display: flex; align-items: center; gap: 16px; padding: 20px 24px; border-radius: 14px; background: var(--color-mist); }
+  @media (max-width: 767px) {
+    .ledger-row { grid-template-columns: 40px minmax(0, 1fr) auto; gap: 4px 14px; }
+    .ledger-receipt { grid-column: 2; grid-row: 2; justify-self: start; margin-left: -10px; }
+    .ledger-amount { grid-column: 3; grid-row: 1; }
+    .tl { grid-template-columns: 1fr; gap: 22px; }
+    .tl-step { padding-left: 16px; border-left: 4px solid var(--c); }
+    .tl-track, .tl-cap { display: none; }
+    .tl-tick { padding-bottom: 0; }
+    .tl-title { padding-top: 4px; }
+    .situations { grid-template-columns: 1fr; gap: 24px; }
+    .situations > div { padding: 0; }
+    .situations > div + div { border-left: 0; padding-top: 24px; border-top: 1px solid #102d501a; }
+    .refund-band { align-items: flex-start; padding: 18px; }
+  }
+
   /* Booked > Check in > Waiting room > Visit > Summary. Vertical on phones. */
   .progress { list-style: none; margin: 24px 0 0; padding: 4px 4px 0; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); animation: pop 0.5s var(--ease) 0.08s both; }
   .progress li { position: relative; padding-right: 8px; color: var(--color-muted); }
