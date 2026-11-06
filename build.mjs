@@ -218,8 +218,8 @@ if(!v45Story.includes('ah-track')||!v45Story.includes('clinician-45-3.jpg')||v45
 // (patient account, doctor agenda or admin), and the menu swaps Sign in / Create an account for that home
 // (hiding For clinicians when that is already the user's home). The pill's label is its text node:
 // .nav-book span is hidden, and specular-nav.js adds a canvas inside the pill.
-// Signed in, the homepage always opens that home. Only a "Site" link (/?site) shows the marketing page; its logo and
-// in-page links are #hash links, so ?site stays in the URL while you read.
+// Signed in, the homepage always opens that home. Only a "Site" link (/?site) shows the marketing page; its in-page
+// links are #hash links, so ?site stays in the URL while you read. Its logo, like every Carevia logo, opens your home.
 // get-session is not rate limited (apps/api/src/auth.js). No API (a static preview): it stays signed out.
 const authScript=`<script type="module">const P=document.documentElement.dataset.portal||'/app';
 const pill=document.querySelector('[data-auth-pill]'),menu=document.querySelector('[data-auth-menu]');
@@ -228,6 +228,7 @@ number();
 fetch('/api/auth/get-session',{credentials:'same-origin'}).then(r=>r.ok?r.json():null).then(s=>{const u=s&&s.user;if(!u)return;
 const home=u.role==='clinician'?P+'/doctor':u.role==='admin'?'/admin/':P+'/account';
 if(!new URLSearchParams(location.search).has('site'))return location.replace(home);
+const logo=document.querySelector('.nav-logo');if(logo)logo.href=home;
 if(pill){pill.href=home;const t=[...pill.childNodes].find(n=>n.nodeType===3&&n.textContent.trim());if(t)t.textContent=u.role==='patient'?'Your account':u.role==='clinician'?'Your agenda':'Admin'}
 menu&&menu.querySelectorAll('[data-auth]').forEach(a=>{a.hidden=a.dataset.auth!=='in'});menu&&menu.querySelectorAll('[data-role]').forEach(a=>{a.hidden=a.dataset.role===u.role});
 const acct=menu&&menu.querySelector('[data-auth=in]');if(acct){acct.href=home;acct.firstChild.textContent=u.role==='patient'?'Your account ':u.role==='clinician'?'Your agenda ':'Admin desk '}

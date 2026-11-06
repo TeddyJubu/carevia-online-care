@@ -3,13 +3,16 @@ import { Link, Navigate, NavLink, Outlet, useLocation, useNavigate } from 'react
 import { MOCK } from '../lib/api'
 import { content, plain } from '../lib/content'
 import { DEMO_BUILD, useDemo } from '../lib/demo'
-import { SITE, useSession } from '../lib/session'
-import type { Role } from '../lib/types'
+import { ADMIN_HOME, homeFor, SITE, useSession } from '../lib/session'
+import type { Role, User } from '../lib/types'
 import { Loading } from './kit'
 
 // The homepage (Design 04.5) lives at the site root, outside /app/. Signed in, it sends visitors to their home
 // unless the link says ?site.
 const homepage = (signedIn: boolean) => (signedIn ? SITE : '/')
+// The logo opens your own home when signed in (patient account, doctor agenda, admin desk), else the homepage.
+// A plain <a> outside the router, so /app/ paths carry the basename and the admin app gets a full load.
+const logoHref = (user: User | null) => (!user ? '/' : user.role === 'admin' ? ADMIN_HOME : `/app${homeFor(user)}`)
 
 export function Header() {
   const { user, signOut } = useSession()
@@ -17,7 +20,7 @@ export function Header() {
   return (
     <header className="app-header on-navy">
       <div className="app-header-inner">
-        <a href={homepage(!!user)} className="brand" aria-label="Carevia home">
+        <a href={logoHref(user)} className="brand" aria-label="Carevia home">
           <img src="/app/brand/carevia-mark.png" alt="" width={34} height={34} />
           <span>Carevia</span>
         </a>

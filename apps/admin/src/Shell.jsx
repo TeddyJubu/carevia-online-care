@@ -41,10 +41,10 @@ export default function Shell({ user, section, onSignOut, children }) {
             <span className="menu-lines" aria-hidden="true" />
             Menu
           </button>
-          <p className="nav-pill nav-brand">
+          <a className="nav-pill nav-brand" href="#/" aria-label="Carevia admin home">
             <img src={mark} alt="" width="28" height="28" />
             <span>Carevia</span>
-          </p>
+          </a>
           <nav id="admin-menu" className="nav-pill nav-sections" aria-label="Admin" data-open={menu}>
             <p className="menu-label">Operations</p>
             {NAV.map((item) => (
