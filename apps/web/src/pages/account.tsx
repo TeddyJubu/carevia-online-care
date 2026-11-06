@@ -221,17 +221,12 @@ function BoardRow({ a, r, i }: { a: Appointment; r: Row; i: number }) {
 const EARLIER = 5
 
 function CareBoard({ upcoming, past, now }: { upcoming: Appointment[]; past: Appointment[]; now: number }) {
-  const [all, setAll] = useState(false)
-  const earlier = all ? past : past.slice(0, EARLIER)
+  const earlier = past.slice(0, EARLIER)
   return (
     <section aria-labelledby="board-title" className="mt-12">
       <div className="mb-4 flex items-end justify-between gap-4">
         <h2 id="board-title">Your care board</h2>
-        {past.length > EARLIER && (
-          <button type="button" className="inline-flex min-h-11 items-center text-[14px] font-medium hover:underline" aria-expanded={all} aria-controls="board-earlier" onClick={() => setAll(!all)}>
-            {all ? 'Show fewer' : `All records (${past.length})`}
-          </button>
-        )}
+        <Link to="/appointments" className="inline-flex min-h-11 items-center text-[14px] font-medium hover:underline">All records</Link>
       </div>
       <div className="cb on-navy">
         <table>
