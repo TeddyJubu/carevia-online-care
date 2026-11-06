@@ -421,6 +421,8 @@ export function ServicesTimes() {
   const { service } = d ? serviceOf(catalog.data?.groups ?? [], d) : { service: undefined }
   const staff = !!user && user.role !== 'patient'
 
+  // Continue waits (disabled, a fraction of a second) until the catalog has said which service this doctor offers.
+  const waiting = !service && !catalog.error
   async function go() {
     if (!picked) return setError('Choose a time to continue.')
     // The service comes from the catalog, which can still be loading; never let Continue do nothing.
@@ -495,7 +497,7 @@ export function ServicesTimes() {
           <p className="mt-3 font-medium">{picked ? when(picked.startsAt) : 'Choose an available time'}</p>
           <p className="mt-3 font-medium">Fee {euro(d.fee)}</p>
           <FormError error={error} />
-          <button type="button" className="btn btn-primary btn-block mt-4" disabled={pending || staff} onClick={go}>{pending ? 'Holding your time…' : 'Continue'}</button>
+          <button type="button" className="btn btn-primary btn-block mt-4" disabled={pending || staff || waiting} onClick={go}>{pending ? 'Holding your time…' : 'Continue'}</button>
         </aside>
       </div>
       {/* Phones and tablets: the choice and Continue stay in reach while scrolling the times. */}
@@ -506,7 +508,7 @@ export function ServicesTimes() {
             <span className="block font-medium">{picked ? when(picked.startsAt) : 'Choose a time'}</span>
             <span className="fine">{d.name} · {euro(d.fee)}</span>
           </p>
-          <button type="button" className="btn btn-primary shrink-0" disabled={pending || staff} onClick={go}>{pending ? 'Holding…' : 'Continue'}</button>
+          <button type="button" className="btn btn-primary shrink-0" disabled={pending || staff || waiting} onClick={go}>{pending ? 'Holding…' : 'Continue'}</button>
         </div>
       </div>
     </div>
