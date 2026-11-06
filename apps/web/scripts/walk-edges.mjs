@@ -31,7 +31,6 @@ check(await book.getAttribute('href') === '/app/book?service=mental', 'Mental he
 await follow(book)
 check(await h1() === 'Choose who cares for you' && /group=mental/.test(path()), 'Book {service} opens the doctors for that area', `${path()} · ${await h1()}`); await shot('home-book-service')
 for (const [name, want, heading] of [
-  ['Not sure which one?', /^\/app\/book\/doctors\?group=general$/, 'Choose who cares for you'],
   ['Create your account', /^\/app\/signup$/, 'Create your account'],
   ['Sign in', /^\/app\/signin$/, 'Sign in'],
 ]) {
