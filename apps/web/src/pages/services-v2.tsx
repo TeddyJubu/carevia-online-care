@@ -1,147 +1,332 @@
-import { useEffect, useRef, useState, type FormEvent } from 'react'
-import { Link, useNavigate } from 'react-router'
+import { useMemo, useRef, useState, type FormEvent } from 'react'
+import { Link, useLocation, useNavigate, useParams, useSearchParams } from 'react-router'
 import { api, ApiError } from '../lib/api'
 import { useLoad } from '../lib/load'
 import { useSession } from '../lib/session'
-import { lisbonDay, when } from '../lib/time'
-import type { Appointment, ServiceGroup, SlotWithDoctor } from '../lib/types'
-import { Emergency, ErrorState, euro, Field, FormError, HoldTimer, Loading, Markdown, Notice, PageTitle } from '../ui/kit'
+import { addDays, dayLabel, hhmm, lisbonDay, when } from '../lib/time'
+import type { Appointment, Doctor, GroupSlug, ServiceGroup, Slot } from '../lib/types'
+import { DoctorAvatar, Emergency, ErrorState, euro, Field, FormError, HoldTimer, Loading, Markdown, Notice, PageTitle } from '../ui/kit'
 import { validateSignUp } from './auth'
 
-// Services v2: one page of services with their next times, one tap holds a time, one checkout confirms it.
-// Defaults instead of questions: video, for the account holder ("Me"), the earliest doctor at each time.
-// The full flow (/book) stays for someone else, another doctor or another day.
+// Services v2, following the patient-booking wireframe's service flow:
+// services home (search + areas) > choose who cares for you (service, filters, doctors) > doctor profile >
+// the doctor's times > checkout (details if signed out, consent, demo payment). Video, for the account holder.
+// The full flow (/book) stays for booking for someone else.
 
-type Service = { id: number; name: string }
-const SHOWN = 4
+const STEPS = ['Service and doctor', 'Date and time', 'Confirm and pay']
+function Steps({ at }: { at: number }) {
+  return (
+    <ol className="mb-6 flex flex-wrap gap-x-5 gap-y-1 text-sm" aria-label="Booking steps">
+      {STEPS.map((label, i) => (
+        <li key={label} aria-current={i === at ? 'step' : undefined} className={i === at ? 'font-medium text-ink' : 'muted'}>{i + 1}. {label}</li>
+      ))}
+    </ol>
+  )
+}
 
-export function ServicesV2() {
+const useCatalog = () => useLoad(() => api.services(), [])
+const serviceOf = (groups: ServiceGroup[], d: Pick<Doctor, 'service' | 'group'>) => {
+  const g = groups.find((x) => x.id === d.group) ?? groups.find((x) => x.services.some((s) => s.name === d.service))
+  return { group: g, service: g?.services.find((s) => s.name === d.service) }
+}
+
+// ---------- 1. services home ----------
+export function ServicesHome() {
   const { user } = useSession()
-  const services = useLoad(() => api.services(), [])
-  const [held, setHeld] = useState<Appointment>()
-  const [notice, setNotice] = useState<string | null>(null)
-  // A failed hold is explained in the row the patient tapped, where they are looking.
-  const [rowNotice, setRowNotice] = useState<{ serviceId: number; text: string } | null>(null)
-  const [busy, setBusy] = useState<string | null>(null)
-  const [reload, setReload] = useState(0)
-  const staff = !!user && user.role !== 'patient'
+  const catalog = useCatalog()
+  const [q, setQ] = useState('')
+  const term = q.trim().toLowerCase()
+  const groups = (catalog.data?.groups ?? []).map((g) => ({ g, match: term ? g.services.find((s) => s.name.toLowerCase().includes(term)) : undefined }))
+    .filter(({ g, match }) => !term || match || `${g.name} ${g.blurb}`.toLowerCase().includes(term))
 
-  async function hold(slot: SlotWithDoctor, service: Service) {
-    setBusy(String(slot.id))
-    setNotice(null)
-    setRowNotice(null)
-    try {
-      setHeld((await api.hold({ slotId: slot.id, serviceId: service.id, for: 'self' })).appointment)
-      window.scrollTo({ top: 0 })
-    } catch (e) {
-      setRowNotice({ serviceId: service.id, text: (e as ApiError).code === 'SLOT_TAKEN' ? 'Someone has just booked that time. Here are the times still free.' : (e as ApiError).message })
-      setReload((n) => n + 1)
-    } finally {
-      setBusy(null)
-    }
-  }
-
-  /** Back to the list, giving the held time back so others can book it. */
-  function pickAgain(message: string | null) {
-    if (held) void api.release(held.id).catch(() => {}) // already expired or released: nothing to do
-    setHeld(undefined)
-    setNotice(message)
-    setReload((n) => n + 1)
-    window.scrollTo({ top: 0 })
-  }
-
-  if (held) return <div className="page"><Checkout appt={held} pickAgain={pickAgain} /></div>
-
-  const groups = services.data?.groups ?? []
   return (
     <div className="page">
-      <PageTitle eyebrow="Book a video visit" lede="Tap a time under the care you need. We hold it for 10 minutes while you check out. Prices are per visit, with no subscription.">
-        Choose a time
+      <PageTitle eyebrow={user ? 'Your patient home' : 'Book a video visit'} title="Find the right care" lede="Choose a service, meet your doctor and book a time that suits you.">
+        {user ? `Welcome back, ${user.firstName}` : 'Find the right care'}
       </PageTitle>
       <div className="mt-6"><Emergency compact /></div>
-      {staff && <Notice tone="warn" className="mt-6"><span>Doctor and admin accounts can’t book visits. Sign out, then book as a patient.</span></Notice>}
-      <div role="status" aria-live="polite">{notice && <Notice tone="warn" className="mt-6"><span>{notice}</span></Notice>}</div>
-
-      {services.error ? <div className="mt-8"><ErrorState error={services.error} onRetry={services.reload} /></div>
-        : !services.data ? <div className="mt-8"><Loading label="Loading services" /></div> : (
-          <>
-            <nav className="mt-8 flex flex-wrap gap-2" aria-label="Areas of care">
-              {groups.map((g) => <a key={g.slug} href={`#area-${g.slug}`} className="chip">{g.name}</a>)}
-            </nav>
-            {groups.map((g) => <Area key={g.slug} group={g} reload={reload} busy={busy} disabled={staff || busy !== null} onPick={hold} notice={rowNotice} />)}
-          </>
+      <div className="mt-8 max-w-[700px]">
+        <Field label="Search services" type="search" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Service, specialty or health concern" hint="Video consultations" />
+      </div>
+      <h2 className="mt-12">Explore your services</h2>
+      <p className="muted mt-2">Choose a service to see doctors and available appointments.</p>
+      {catalog.error ? <div className="mt-6"><ErrorState error={catalog.error} onRetry={catalog.reload} /></div>
+        : !catalog.data ? <div className="mt-6"><Loading label="Loading services" /></div>
+        : !groups.length ? <p className="mt-6" role="status">No matching services. Try another search.</p> : (
+          <ul className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3" aria-label="Areas of care">
+            {groups.map(({ g, match }) => (
+              <li key={g.slug}>
+                <Link to={`/services-v2/doctors?group=${g.slug}${match ? `&service=${match.id}` : ''}`} className="card flex h-full flex-col gap-2 no-underline transition-colors hover:border-ink">
+                  <span className="text-[18px] font-medium">{g.name}</span>
+                  <span className="muted">{g.blurb}</span>
+                  {match && <span className="fine">Matches: {match.name}</span>}
+                  <span className="mt-auto pt-2 font-medium">From {euro(g.fromFee)}</span>
+                </Link>
+              </li>
+            ))}
+          </ul>
         )}
       <p className="fine mt-10">Booking for your child or someone you care for? <Link to="/book" className="link">Use the full booking</Link>.</p>
     </div>
   )
 }
 
-function Area({ group, ...rest }: { group: ServiceGroup } & Omit<RowProps, 'group' | 'service'>) {
+// ---------- 2. choose who cares for you ----------
+const LANGUAGES = ['English', 'French', 'German', 'Portuguese', 'Spanish', 'Italian']
+const AVAILABILITY: [string, string][] = [['', 'Any date'], ['0', 'Today'], ['3', 'Within 3 days'], ['7', 'Within a week']]
+const PRICES: [string, string][] = [['', 'Any price'], ['60', 'Up to €60'], ['80', 'Up to €80'], ['100', 'Up to €100'], ['150', 'Up to €150']]
+
+export function ServicesDoctors() {
+  const catalog = useCatalog()
+  const [params, setParams] = useSearchParams()
+  const groups = catalog.data?.groups ?? []
+  const group = groups.find((g) => g.slug === params.get('group')) ?? groups[0]
+  const service = group?.services.find((s) => String(s.id) === params.get('service')) ?? group?.services[0]
+  const f = { language: params.get('language') ?? '', specialty: params.get('specialty') ?? '', available: params.get('available') ?? '', maxFee: params.get('maxFee') ?? '' }
+  const set = (patch: Record<string, string>) => {
+    const next = new URLSearchParams(params)
+    for (const [k, v] of Object.entries(patch)) v ? next.set(k, v) : next.delete(k)
+    setParams(next, { replace: true })
+  }
+
+  const doctors = useLoad(
+    () => (group && service ? api.doctors({ groupSlug: group.slug as GroupSlug, service: service.name, language: f.language || undefined, sort: 'first-available' }).then((r) => r.doctors) : Promise.resolve([])),
+    [group?.slug, service?.name, f.language],
+  )
+  const specialties = [...new Set((doctors.data ?? []).map((d) => d.specialty))]
+  const shown = (doctors.data ?? []).filter((d) =>
+    (!f.specialty || d.specialty === f.specialty) &&
+    (!f.maxFee || d.fee <= Number(f.maxFee)) &&
+    (!f.available || (!!d.nextAvailableAt && lisbonDay(d.nextAvailableAt) <= addDays(lisbonDay(), Number(f.available)))))
+
+  if (catalog.error) return <div className="page"><ErrorState error={catalog.error} onRetry={catalog.reload} /></div>
+  if (!group || !service) return <div className="page"><Loading /></div>
   return (
-    <section id={`area-${group.slug}`} aria-labelledby={`h-${group.slug}`} className="mt-12 scroll-mt-[calc(var(--header-h)+16px)]">
-      <h2 id={`h-${group.slug}`}>{group.name}</h2>
-      <p className="muted mt-2 max-w-[60ch]">{group.blurb}</p>
+    <div className="page">
+      <Steps at={0} />
+      <PageTitle eyebrow="Find your care" title={`${service.name} doctors`}>Choose who cares for you</PageTitle>
+      <div className="mt-6"><Emergency compact /></div>
+      <div className="mt-8 grid gap-4 sm:grid-cols-2">
+        <Field as="select" label="Area of care" value={group.slug} onChange={(e) => set({ group: e.target.value, service: '', specialty: '' })}>
+          {groups.map((g) => <option key={g.slug} value={g.slug}>{g.name}</option>)}
+        </Field>
+        <Field as="select" label="Service" value={service.id} onChange={(e) => set({ service: e.target.value, specialty: '' })}>
+          {group.services.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
+        </Field>
+      </div>
       {/* These services are named after documents; booking one must not read as a promise of it (PLAN.md). */}
       {(group.slug === 'certificates' || group.slug === 'renewals') && (
         <Notice className="mt-4"><span>Your doctor decides, after assessing you, whether anything needs to be issued. Booking a visit doesn’t guarantee a certificate, a test request or a renewal. Anything issued comes through iMED.</span></Notice>
       )}
-      <ul className="mt-5 grid gap-3">
-        {group.services.map((s) => <ServiceRow key={s.id} group={group} service={s} {...rest} />)}
-      </ul>
-    </section>
+      <section className="card mt-6" aria-labelledby="fit-h">
+        <h2 id="fit-h" className="font-sans text-[18px] font-medium">Find the right fit</h2>
+        <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <Field as="select" label="Language" value={f.language} onChange={(e) => set({ language: e.target.value })}>
+            <option value="">Any language</option>{LANGUAGES.map((l) => <option key={l}>{l}</option>)}
+          </Field>
+          <Field as="select" label="Specialty" value={f.specialty} onChange={(e) => set({ specialty: e.target.value })}>
+            <option value="">Any specialty</option>{specialties.map((s) => <option key={s}>{s}</option>)}
+          </Field>
+          <Field as="select" label="Availability" value={f.available} onChange={(e) => set({ available: e.target.value })}>
+            {AVAILABILITY.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
+          </Field>
+          <Field as="select" label="Consultation price" value={f.maxFee} onChange={(e) => set({ maxFee: e.target.value })}>
+            {PRICES.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
+          </Field>
+        </div>
+        <button type="button" className="btn btn-secondary btn-sm mt-4" onClick={() => set({ language: '', specialty: '', available: '', maxFee: '' })}>Clear filters</button>
+      </section>
+
+      <p className="muted mt-6" role="status">{doctors.loading && !doctors.data ? 'Loading doctors' : `${shown.length} ${shown.length === 1 ? 'doctor' : 'doctors'} for ${service.name}`}</p>
+      <div className="mt-4 grid gap-4" aria-busy={doctors.loading}>
+        {doctors.error ? <ErrorState error={doctors.error} onRetry={doctors.reload} />
+          : !doctors.data ? <Loading label="Loading doctors" />
+          : !shown.length ? (
+            <div className="card text-center">
+              <h2 className="text-[22px]">No doctors match these filters</h2>
+              <button type="button" className="btn btn-secondary btn-sm mt-4" onClick={() => set({ language: '', specialty: '', available: '', maxFee: '' })}>Clear filters</button>
+            </div>
+          ) : shown.map((d) => (
+            <article key={d.id} className="card grid gap-5 md:grid-cols-[minmax(0,1fr)_220px]">
+              <div className="flex min-w-0 gap-4">
+                <DoctorAvatar doctor={d} />
+                <div className="min-w-0">
+                  <h3>{d.name}</h3>
+                  <p>{d.specialty}</p>
+                  <p className="fine">{d.languages}{d.experience && ` · ${d.experience} experience`}</p>
+                  {d.approach && <p className="muted mt-3">{d.approach}</p>}
+                  <Link to={`/services-v2/doctors/${d.id}`} className="link mt-2 inline-flex min-h-11 items-center text-sm">View doctor profile<span className="sr-only">: {d.name}</span></Link>
+                </div>
+              </div>
+              <div className="grid content-start gap-1 md:border-l md:border-[#102d5014] md:pl-5">
+                <p className="text-[22px] font-medium">{euro(d.fee)}</p>
+                <p className="fine">Per video consultation</p>
+                <p className="mt-2">Next available<br /><strong className="font-medium">{d.nextAvailableAt ? when(d.nextAvailableAt) : 'No times in the next 3 weeks'}</strong></p>
+                {d.nextAvailableAt && <Link to={`/services-v2/doctors/${d.id}/times`} className="btn btn-primary btn-sm mt-3">Choose a time<span className="sr-only"> with {d.name}</span></Link>}
+              </div>
+            </article>
+          ))}
+      </div>
+    </div>
   )
 }
 
-type RowProps = { group: ServiceGroup; service: Service; reload: number; busy: string | null; disabled: boolean; notice: { serviceId: number; text: string } | null; onPick: (s: SlotWithDoctor, sv: Service) => void }
-
-function ServiceRow({ group, service, reload, busy, disabled, notice, onPick }: RowProps) {
-  // Times load when the row comes near the screen: 55 services would otherwise mean 55 requests on open.
-  const ref = useRef<HTMLLIElement>(null)
-  const [near, setNear] = useState(false)
-  useEffect(() => {
-    const el = ref.current
-    if (!el || near) return
-    const io = new IntersectionObserver(([e]) => { if (e.isIntersecting) setNear(true) }, { rootMargin: '600px 0px' })
-    io.observe(el)
-    return () => io.disconnect()
-  }, [near])
-
-  const times = useLoad(async () => {
-    if (!near) return null
-    // Several doctors often share the earliest time; show distinct times, each with its earliest-listed doctor.
-    const { slots } = await api.firstAvailable({ serviceId: service.id, limit: 20 })
-    const seen = new Set<string>()
-    return { from: Math.min(...slots.map((s) => s.doctor.fee)), slots: slots.filter((s) => !seen.has(s.startsAt) && !!seen.add(s.startsAt)).slice(0, SHOWN) }
-  }, [near, service.id, reload])
-
-  const label = `${service.name}, times`
+// ---------- 3. doctor profile ----------
+export function ServicesDoctor() {
+  const { id } = useParams()
+  const catalog = useCatalog()
+  const doctor = useLoad(() => api.doctor(Number(id)).then((r) => r.doctor), [id])
+  if (doctor.error) return <div className="page"><ErrorState error={doctor.error} onRetry={doctor.reload} /></div>
+  const d = doctor.data
+  if (!d) return <div className="page"><Loading /></div>
+  const { group, service } = serviceOf(catalog.data?.groups ?? [], d)
   return (
-    <li ref={ref} className="card card-tight">
-      <div className="flex flex-wrap items-baseline justify-between gap-x-4">
-        <h3>{service.name}</h3>
-        <span className="font-medium">{times.data?.slots.length ? `From ${euro(times.data.from)}` : `From ${euro(group.fromFee)}`}</span>
+    <div className="page">
+      <Link to={group ? `/services-v2/doctors?group=${group.slug}&service=${service?.id ?? ''}` : '/services-v2'} className="link inline-flex min-h-11 items-center text-sm">Back to doctors</Link>
+      <div className="mt-4 grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_320px]">
+        <section className="card">
+          <div className="flex items-center gap-4">
+            <DoctorAvatar doctor={d} size={64} />
+            <div className="min-w-0">
+              <PageTitle title={d.name}>{d.name}</PageTitle>
+              <p className="mt-1">{d.specialty} · Video consultations</p>
+            </div>
+          </div>
+          <hr className="rule my-6" />
+          <dl className="summary">
+            {d.approach && <><dt>About your doctor</dt><dd>{d.approach}</dd></>}
+            <dt>Languages</dt><dd>{d.languages}</dd>
+            {d.experience && <><dt>Experience</dt><dd>{d.experience}</dd></>}
+            {d.education && <><dt>Training <span className="badge ml-1">Illustrative</span></dt><dd>{d.education}</dd></>}
+            <dt>Services</dt><dd>{d.service}{d.groupName && ` · ${d.groupName}`}</dd>
+            <dt>Professional registration</dt><dd>Ordem dos Médicos cédula {d.cedula}</dd>
+          </dl>
+        </section>
+        <aside className="card" aria-label={`Book with ${d.name}`}>
+          <h2 className="text-[24px]">Book with {d.name}</h2>
+          <p className="mt-2">{d.service}</p>
+          <p className="mt-4 text-[22px] font-medium">{euro(d.fee)}</p>
+          <p className="fine">Per video consultation</p>
+          <Link to={`/services-v2/doctors/${d.id}/times`} className="btn btn-primary btn-block mt-6">Choose a time</Link>
+        </aside>
       </div>
-      <div role="status" aria-live="polite">{notice?.serviceId === service.id && <Notice tone="warn" className="mt-3"><span>{notice.text}</span></Notice>}</div>
-      <div className="mt-3 min-h-[60px]" aria-busy={times.loading}>
-        {times.error ? <p className="fine">We couldn’t load times. <button type="button" className="link min-h-11" onClick={times.reload}>Try again</button></p>
-          : !times.data ? <div className="skeleton h-[60px]" aria-hidden="true" />
-          : !times.data.slots.length ? <p className="fine">No free times in the next three weeks.</p>
-          : (
-            <ul className="flex flex-wrap gap-2" aria-label={label}>
-              {times.data.slots.map((s) => (
-                <li key={String(s.id)}>
-                  <button type="button" className="chip h-auto min-h-[60px] flex-col items-start rounded-[12px] py-2 text-left disabled:cursor-not-allowed disabled:opacity-60" disabled={disabled} onClick={() => onPick(s, service)}>
-                    <span className="font-medium">{busy === String(s.id) ? 'Holding…' : when(s.startsAt)}</span>
-                    <span className="fine">{s.doctor.name} · {euro(s.doctor.fee)}</span>
-                  </button>
-                </li>
-              ))}
-            </ul>
-          )}
-      </div>
-      <Link to={`/book?service=${group.slug}`} className="link mt-2 inline-flex min-h-11 items-center text-sm">More times or choose a doctor<span className="sr-only"> for {service.name}</span></Link>
-    </li>
+    </div>
   )
+}
+
+// ---------- 4. the doctor's times ----------
+const DAYS = 3
+
+export function ServicesTimes() {
+  const { id } = useParams()
+  const { user } = useSession()
+  const navigate = useNavigate()
+  const { state } = useLocation()
+  const catalog = useCatalog()
+  const doctor = useLoad(() => api.doctor(Number(id)).then((r) => r.doctor), [id])
+  const slots = useLoad(() => api.slots(Number(id), lisbonDay(), 21).then((r) => r.slots), [id])
+  const [picked, setPicked] = useState<Slot | null>(null)
+  const [allDays, setAllDays] = useState(false)
+  const [error, setError] = useState<string | null>((state as { notice?: string } | null)?.notice ?? null)
+  const [pending, setPending] = useState(false)
+  const days = useMemo(() => {
+    const m = new Map<string, Slot[]>()
+    for (const s of slots.data ?? []) m.set(dayLabel(s.startsAt), [...(m.get(dayLabel(s.startsAt)) ?? []), s])
+    return [...m]
+  }, [slots.data])
+
+  const d = doctor.data
+  const { service } = d ? serviceOf(catalog.data?.groups ?? [], d) : { service: undefined }
+  const staff = !!user && user.role !== 'patient'
+
+  async function go() {
+    if (!picked) return setError('Choose a time to continue.')
+    if (!service) return
+    setPending(true)
+    setError(null)
+    try {
+      const { appointment } = await api.hold({ slotId: picked.id, serviceId: service.id, for: 'self' })
+      navigate('/services-v2/checkout', { state: { appt: appointment } })
+    } catch (e) {
+      const x = e as ApiError
+      setError(x.code === 'SLOT_TAKEN' ? 'Someone has just booked that time. Choose another time.' : x.message)
+      if (x.code === 'SLOT_TAKEN') { setPicked(null); slots.reload() }
+    } finally {
+      setPending(false)
+    }
+  }
+
+  if (doctor.error) return <div className="page"><ErrorState error={doctor.error} onRetry={doctor.reload} /></div>
+  if (!d) return <div className="page"><Loading /></div>
+  return (
+    <div className="page">
+      <Steps at={1} />
+      <PageTitle eyebrow={`${d.name} · ${d.service}`} lede="Times are in Lisbon time. We hold your time for 10 minutes while you finish.">Choose your appointment</PageTitle>
+      <div className="mt-6"><Emergency compact /></div>
+      {staff && <Notice tone="warn" className="mt-6"><span>Doctor and admin accounts can’t book visits. Sign out, then book as a patient.</span></Notice>}
+      <div className="mt-8 grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_320px]">
+        <div className="grid min-w-0 gap-6">
+          <section className="card">
+            <div className="flex items-center gap-4">
+              <DoctorAvatar doctor={d} />
+              <div className="min-w-0"><h2 className="font-sans text-[18px] font-medium">{d.name}</h2><p className="fine">{d.languages} · Video consultation</p></div>
+            </div>
+            <p className="mt-4">{d.specialty} · {euro(d.fee)} · <Link to={`/services-v2/doctors/${d.id}`} className="link">View profile</Link></p>
+          </section>
+          <section className="card" aria-labelledby="times-h" aria-busy={slots.loading}>
+            <h2 id="times-h" className="font-sans text-[20px] font-medium">Available times</h2>
+            {slots.error ? <div className="mt-4"><ErrorState error={slots.error} onRetry={slots.reload} /></div>
+              : !slots.data ? <div className="mt-4"><Loading lines={2} label="Loading times" /></div>
+              : !days.length ? <p className="muted mt-4">No free times in the next three weeks. <Link to="/services-v2" className="link">Choose another doctor</Link>.</p> : (
+                <>
+                  {(allDays ? days : days.slice(0, DAYS)).map(([label, list]) => (
+                    <div key={label} className="mt-5">
+                      <h3 className="mb-2 text-[16px]">{label}</h3>
+                      <div className="flex flex-wrap gap-2" role="radiogroup" aria-label={`${label}, times`}>
+                        {list.map((s) => (
+                          <button key={String(s.id)} type="button" role="radio" aria-checked={picked?.id === s.id} className="chip" disabled={staff}
+                            onClick={() => { setPicked(s); setError(null) }}>{hhmm(s.startsAt)}</button>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                  {days.length > DAYS && <button type="button" className="btn btn-secondary btn-sm mt-6" onClick={() => setAllDays(!allDays)}>{allDays ? 'Fewer days' : 'More days'}</button>}
+                </>
+              )}
+          </section>
+        </div>
+        <aside className="card lg:sticky lg:top-[calc(var(--header-h)+16px)]" aria-label="Your visit">
+          <h2 className="font-sans text-[18px] font-medium">{d.service}</h2>
+          <p className="mt-2">{d.name}<br />Video consultation</p>
+          <p className="mt-3 font-medium">{picked ? when(picked.startsAt) : 'Choose an available time'}</p>
+          <p className="mt-3 font-medium">Fee {euro(d.fee)}</p>
+          <FormError error={error} />
+          <button type="button" className="btn btn-primary btn-block mt-4" disabled={pending || staff} onClick={go}>{pending ? 'Holding your time…' : 'Continue'}</button>
+        </aside>
+      </div>
+    </div>
+  )
+}
+
+// ---------- 5. checkout ----------
+export function ServicesCheckout() {
+  const { state } = useLocation()
+  const navigate = useNavigate()
+  const appt = (state as { appt?: Appointment } | null)?.appt
+  if (!appt) {
+    return (
+      <div className="page">
+        <PageTitle lede="If you’ve just paid, your visit is in your account.">No booking in progress</PageTitle>
+        <div className="mt-8 flex flex-wrap gap-3"><Link to="/services-v2" className="btn btn-primary">Choose care</Link><Link to="/account" className="btn btn-secondary">Your visits</Link></div>
+      </div>
+    )
+  }
+  /** Back to this doctor's times, giving the held time back so others can book it. */
+  const pickAgain = (notice: string | null) => {
+    void api.release(appt.id).catch(() => {}) // already expired or released: nothing to do
+    navigate(`/services-v2/doctors/${appt.doctor.id}/times`, { replace: true, state: notice ? { notice } : null })
+  }
+  return <div className="page"><Steps at={2} /><Checkout appt={appt} pickAgain={pickAgain} /></div>
 }
 
 // ---------- checkout: details (if signed out), consent, demo payment ----------

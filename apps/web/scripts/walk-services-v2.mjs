@@ -1,7 +1,7 @@
-// Services v2 walk: BASE_URL=http://localhost:5180 node scripts/walk-services-v2.mjs <outDir> [width...]
-// Per width: (a) the demo patient books signed in, counting clicks; (b) a new patient signs up at checkout;
-// (c) someone else holds the time first (SLOT_TAKEN), then the patient picks another. Needs the API in demo mode.
-// On localhost (or RESET=1) it resets the demo first; the second width then meets TIME_CLASH on the first time.
+// Services v2 walk (the wireframe's service flow): BASE_URL=http://localhost:5180 node scripts/walk-services-v2.mjs <outDir> [width...]
+// Per width: search and filters; (a) the demo patient books signed in, counting clicks; (b) a new patient signs up
+// at checkout; (c) someone else holds the chosen time first (SLOT_TAKEN). Needs the API in demo mode.
+// On localhost (or RESET=1) it resets the demo first, so earlier runs' bookings don't clash.
 import { mkdirSync } from 'node:fs'
 import { launch } from './browser.mjs'
 
@@ -13,7 +13,6 @@ let failed = 0
 const check = (ok, what, got = '') => { console.log(ok ? 'ok  ' : 'FAIL', what, got !== '' ? `(${got})` : ''); if (!ok) failed++ }
 
 const b = await launch()
-// Local runs start from the seeded demo, so earlier walks' bookings don't clash. Never against another host.
 if (/^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(base) || process.env.RESET === '1') {
   const admin = await b.newContext({ extraHTTPHeaders: { Origin: base } })
   await admin.request.post(`${base}/api/auth/sign-in/email`, { data: { email: 'admin@carevia.test', password: 'admin-demo-password' } })
@@ -27,116 +26,132 @@ async function page(width) {
   p.on('pageerror', (e) => { console.log('  pageerror', e.message); failed++ })
   return p
 }
-const firstTime = (p, service) => p.getByRole('list', { name: `${service}, times` }).getByRole('button').first()
 const noOverflow = async (p, what) => check(await p.evaluate(() => document.documentElement.scrollWidth <= innerWidth), `${what}: no sideways scroll`)
+const heading = (p, name) => p.getByRole('heading', { level: 1, name }).waitFor()
+const times = (p) => p.locator('[role=radiogroup] [role=radio]')
+
+/** Services home > area > first doctor's Choose a time > a time > Continue. Returns the clicks made. */
+async function toCheckout(p, { width, area = 'General & urgent care', shots = false, timeIndex = 0 }) {
+  let clicks = 0
+  const click = async (l) => { await l.click(); clicks++ }
+  await p.goto(base + '/app/services-v2')
+  const card = p.getByRole('list', { name: 'Areas of care' }).getByRole('link', { name: new RegExp(area) })
+  await card.waitFor()
+  if (shots) {
+    check(await p.getByText('Not an emergency service.').first().isVisible(), 'Emergency notice on the services home')
+    await noOverflow(p, 'services home'); await p.screenshot({ path: `${out}/v2-1-services-${width}.png`, fullPage: true })
+  }
+  await click(card)
+  await heading(p, 'Choose who cares for you')
+  await p.getByRole('link', { name: /^Choose a time/ }).first().waitFor()
+  if (shots) { await noOverflow(p, 'doctors'); await p.screenshot({ path: `${out}/v2-2-doctors-${width}.png` }) }
+  await click(p.getByRole('link', { name: /^Choose a time/ }).first())
+  await heading(p, 'Choose your appointment')
+  await times(p).first().waitFor()
+  if (shots) { await noOverflow(p, 'times'); await p.screenshot({ path: `${out}/v2-3-times-${width}.png`, fullPage: true }) }
+  await click(times(p).nth(timeIndex))
+  await click(p.getByRole('button', { name: 'Continue' }))
+  await heading(p, 'Confirm your visit')
+  return clicks
+}
+async function pay(p) {
+  await p.getByLabel('I’ll be in mainland Portugal during the visit.').click()
+  await p.getByLabel('I’ve read these terms. I agree to a video consultation on them.').click()
+  await p.getByRole('button', { name: /^Pay €\d+ \(demo\)$/ }).click()
+  return 3
+}
 
 for (const width of widths) {
   console.log(`-- ${width}px`)
 
-  // (a) signed in: time, mainland, consent, pay.
+  // Search narrows the areas and opens the matching service; filters and the doctor profile work.
+  {
+    const p = await page(width)
+    await p.goto(base + '/app/services-v2')
+    await p.getByLabel('Search services').fill('migraine')
+    const cards = p.getByRole('list', { name: 'Areas of care' }).getByRole('link')
+    check(await cards.count() === 1 && /Matches: Migraine/.test(await cards.first().textContent()), 'Search "migraine" finds Specialist care, Migraine', await cards.count())
+    await cards.first().click(); await heading(p, 'Choose who cares for you')
+    check(await p.getByLabel('Service').locator('option:checked').textContent() === 'Migraine', 'The search result opens that service')
+    await p.getByLabel('Consultation price').selectOption('60')
+    await p.getByRole('status').filter({ hasText: /doctors? for Migraine/ }).waitFor()
+    check(await p.getByRole('article').count() >= 1, 'The price filter keeps the €45 doctors', await p.getByRole('article').count())
+    await p.getByRole('link', { name: /^View doctor profile/ }).first().click()
+    await p.getByText('Professional registration').waitFor()
+    check(await p.getByText(/Ordem dos Médicos cédula/).isVisible(), 'Doctor profile shows the cédula')
+    await noOverflow(p, 'doctor profile'); await p.screenshot({ path: `${out}/v2-doctor-profile-${width}.png` })
+    await p.context().close()
+  }
+
+  // (a) signed in.
   {
     const p = await page(width)
     await p.goto(base + '/app/signin')
     await p.getByLabel('Email').fill('patient@example.com'); await p.getByLabel('Password').fill('demo-password')
     await p.getByRole('button', { name: 'Sign in', exact: true }).click(); await p.waitForURL(/\/app\/account/)
     check(await p.getByRole('link', { name: 'Quick book' }).waitFor().then(() => true, () => false), 'Account links to Services v2')
-    await p.goto(base + '/app/services-v2')
     let clicks = 0
-    const click = async (l) => { await l.click(); clicks++ }
-    // Third service: the demo patient's seeded visit can overlap the earliest general times (TIME_CLASH).
-    const service = 'Adult check-up'
-    await firstTime(p, service).waitFor()
-    check(await p.getByText('Not an emergency service.').first().isVisible(), 'Emergency notice on the list')
-    await noOverflow(p, 'list')
-    await p.screenshot({ path: `${out}/v2-list-${width}.png`, fullPage: false })
-    // The demo patient may already have a visit at a shown time (the seeded one, or an earlier walk): the API
-    // refuses it with TIME_CLASH. Then check the message, choose another time and try the next one.
-    // Rows in order; when all four times in a row clash, move to the next service.
-    const rows = ['Adult check-up', 'Respiratory infections', 'Urinary infections', 'Skin consultation', 'Hair loss', 'Pain', 'Allergies']
+    // The demo patient may already have a visit at a time (TIME_CLASH): check the message, then try the next time.
     for (let i = 0; ; i++) {
-      clicks = 0
-      const row = rows[Math.floor(i / 4)]
-      if (!row) throw new Error('Every tried time clashes with an existing visit; reset the demo')
-      await p.getByRole('heading', { name: row, exact: true }).scrollIntoViewIfNeeded()
-      const time = p.getByRole('list', { name: `${row}, times` }).getByRole('button').nth(i % 4)
-      await time.waitFor()
-      await click(time)
-      await p.getByRole('heading', { name: 'Confirm your visit' }).waitFor()
+      clicks = await toCheckout(p, { width, shots: i === 0, timeIndex: i })
       if (i === 0) {
         check(!(await p.getByLabel('First name').count()), 'Signed in: no details form')
         check(!(await p.getByRole('checkbox').first().isChecked()), 'Nothing pre-ticked')
-        await noOverflow(p, 'checkout signed in')
-        await p.screenshot({ path: `${out}/v2-checkout-signed-in-${width}.png`, fullPage: true })
+        await noOverflow(p, 'checkout signed in'); await p.screenshot({ path: `${out}/v2-4-checkout-signed-in-${width}.png`, fullPage: true })
       }
-      await click(p.getByLabel('I’ll be in mainland Portugal during the visit.'))
-      await click(p.getByLabel('I’ve read these terms. I agree to a video consultation on them.'))
-      await click(p.getByRole('button', { name: /^Pay €\d+ \(demo\)$/ }))
+      clicks += await pay(p)
       const clash = p.getByText('There’s already a visit for this person at this time.')
       const outcome = await Promise.race([p.waitForURL(/\/app\/visits\/[^/]+\?booked=1/, { timeout: 15000 }).then(() => 'booked'), clash.waitFor({ timeout: 15000 }).then(() => 'clash')])
       if (outcome === 'booked') break
-      check(await p.getByRole('button', { name: 'Choose another time' }).last().isVisible(), 'TIME_CLASH: message and a way to choose another time')
       await p.screenshot({ path: `${out}/v2-time-clash-${width}.png`, fullPage: true })
       await p.getByRole('button', { name: 'Choose another time' }).last().click()
-      await p.getByRole('heading', { name: 'Choose a time' }).waitFor()
+      await heading(p, 'Choose your appointment')
+      check(true, 'TIME_CLASH: message, then Choose another time returns to the doctor’s times')
     }
     check(true, `(a) signed-in booking lands on the visit page in ${clicks} clicks`, clicks)
-    await p.screenshot({ path: `${out}/v2-booked-${width}.png` })
+    await p.screenshot({ path: `${out}/v2-5-booked-${width}.png` })
     await p.context().close()
   }
 
-  // (b) new patient, signed out: time, five fields and a date, two boxes, pay.
+  // (b) new patient, signed out.
   {
     const p = await page(width)
-    await p.goto(base + '/app/services-v2')
-    let clicks = 0
-    const click = async (l) => { await l.click(); clicks++ }
-    const service = 'Adult urgent care'
-    await firstTime(p, service).waitFor()
-    await click(firstTime(p, service))
-    await p.getByRole('heading', { name: 'Confirm your visit' }).waitFor()
-    // Empty submit: errors, nothing booked.
+    let clicks = await toCheckout(p, { width, area: 'Mental health' })
     await p.getByRole('button', { name: /^Pay / }).click()
     check(await p.getByText('Enter your first name.').isVisible(), 'Empty submit shows field errors')
-    check(await p.getByText('Confirm you’ll be in mainland Portugal').isVisible(), 'Empty submit asks for mainland')
     check(!(await p.getByLabel(/Sex|Número de Utente|NIF|Address/i).count()), 'No sex, utente, NIF or address fields')
     await p.getByLabel('First name').fill('Ana'); await p.getByLabel('Last name').fill('Walker')
     await p.getByLabel('Email').fill(`v2-${Date.now()}-${width}@example.com`); await p.getByLabel('Mobile number').fill('912 345 678')
     await p.getByLabel('Date of birth').fill('1988-04-02'); await p.getByLabel('Password').fill('a-long-demo-pass-2026')
-    await noOverflow(p, 'checkout signed out')
-    await p.screenshot({ path: `${out}/v2-checkout-new-${width}.png`, fullPage: true })
-    await click(p.getByLabel('I’ll be in mainland Portugal during the visit.'))
-    await click(p.getByLabel('I’ve read these terms. I agree to a video consultation on them.'))
-    await click(p.getByRole('button', { name: /^Pay €\d+ \(demo\)$/ }))
+    check(!(await p.getByText('Enter your first name.').count()), 'Errors clear as fields are filled')
+    await noOverflow(p, 'checkout signed out'); await p.screenshot({ path: `${out}/v2-4-checkout-new-${width}.png`, fullPage: true })
+    clicks += await pay(p)
     await p.waitForURL(/\/app\/visits\/[^/]+\?booked=1/, { timeout: 20000 })
     check(true, `(b) new-patient booking lands on the visit page in ${clicks} clicks and 6 fields`, clicks)
     await p.context().close()
   }
 
-  // (c) someone else holds the time between the list loading and the tap.
+  // (c) someone else holds the chosen time before Continue.
   {
     const p = await page(width)
-    await p.goto(base + '/app/services-v2')
-    const service = 'Skin consultation', serviceId = 7
-    await p.getByRole('heading', { name: service, exact: true }).scrollIntoViewIfNeeded()
-    const btn = firstTime(p, service)
-    await btn.waitFor()
-    const { slots } = await (await p.request.get(`${base}/api/slots/first-available?serviceId=${serviceId}&limit=1`)).json()
+    await p.goto(base + '/app/services-v2/doctors?group=general&service=7')
+    await p.getByRole('link', { name: /^Choose a time/ }).first().click()
+    await heading(p, 'Choose your appointment')
+    const doctorId = p.url().match(/doctors\/(\d+)\/times/)[1]
+    await times(p).first().click()
+    const { slots } = await (await p.request.get(`${base}/api/doctors/${doctorId}/slots?days=21`)).json()
     const other = await b.newContext()
-    const r = await other.request.post(`${base}/api/bookings`, { headers: { Origin: base }, data: { slotId: slots[0].id, serviceId, channel: 'video', for: 'self', inMainlandPortugal: true } })
-    check(r.status() === 201, 'Another browser holds the first time', r.status())
-    await btn.click()
+    const r = await other.request.post(`${base}/api/bookings`, { headers: { Origin: base }, data: { slotId: slots[0].id, serviceId: 7, channel: 'video', for: 'self', inMainlandPortugal: true } })
+    check(r.status() === 201, 'Another browser holds that time', r.status())
+    await p.getByRole('button', { name: 'Continue' }).click()
     const msg = p.getByText('Someone has just booked that time.')
     await msg.waitFor()
-    check(await msg.isVisible(), '(c) SLOT_TAKEN shows a clear message on the list')
-    check(!(await p.getByRole('heading', { name: 'Confirm your visit' }).count()), 'Stays on the list to pick again')
-    await firstTime(p, service).waitFor()
+    check(await msg.isVisible(), '(c) SLOT_TAKEN shows a clear message beside Continue')
+    check(!(await p.locator('[role=radio][aria-checked=true]').count()), 'The taken time is unselected and the times reload')
     await p.screenshot({ path: `${out}/v2-slot-taken-${width}.png` })
-    await firstTime(p, service).click()
-    await p.getByRole('heading', { name: 'Confirm your visit' }).waitFor()
+    await times(p).first().click(); await p.getByRole('button', { name: 'Continue' }).click()
+    await heading(p, 'Confirm your visit')
     check(true, 'Another time can be held straight after')
-    await p.getByRole('button', { name: 'Choose another time' }).first().click()
-    await p.getByRole('heading', { name: 'Choose a time' }).waitFor()
-    check(true, 'Choose another time returns to the list')
     await other.close(); await p.context().close()
   }
 }
