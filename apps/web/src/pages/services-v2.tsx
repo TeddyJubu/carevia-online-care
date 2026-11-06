@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState, type FormEvent } from 'react'
+import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react'
 import { Link, useLocation, useNavigate, useParams, useSearchParams } from 'react-router'
 import { api, ApiError } from '../lib/api'
 import { useLoad } from '../lib/load'
@@ -59,7 +59,8 @@ export function ServicesHome() {
                 <Link to={`/services-v2/doctors?group=${g.slug}${match ? `&service=${match.id}` : ''}`} className="card flex h-full flex-col gap-2 no-underline transition-colors hover:border-ink">
                   <span className="text-[18px] font-medium">{g.name}</span>
                   <span className="muted">{g.blurb}</span>
-                  {match && <span className="fine">Matches: {match.name}</span>}
+                  {match ? <span className="fine">Matches: {match.name}</span>
+                    : <span className="fine">{g.services.slice(0, 3).map((x) => x.name).join(' · ')}{g.services.length > 3 && ` and ${g.services.length - 3} more`}</span>}
                   <span className="mt-auto pt-2 font-medium">From {euro(g.fromFee)}</span>
                 </Link>
               </li>
@@ -98,6 +99,9 @@ export function ServicesDoctors() {
     (!f.specialty || d.specialty === f.specialty) &&
     (!f.maxFee || d.fee <= Number(f.maxFee)) &&
     (!f.available || (!!d.nextAvailableAt && lisbonDay(d.nextAvailableAt) <= addDays(lisbonDay(), Number(f.available)))))
+  const [more, setMore] = useState(!!(f.specialty || f.available))
+  const filtered = Object.values(f).some(Boolean)
+  const clear = () => set({ language: '', specialty: '', available: '', maxFee: '' })
 
   if (catalog.error) return <div className="page"><ErrorState error={catalog.error} onRetry={catalog.reload} /></div>
   if (!group || !service) return <div className="page"><Loading /></div>
@@ -118,56 +122,81 @@ export function ServicesDoctors() {
       {(group.slug === 'certificates' || group.slug === 'renewals') && (
         <Notice className="mt-4"><span>Your doctor decides, after assessing you, whether anything needs to be issued. Booking a visit doesn’t guarantee a certificate, a test request or a renewal. Anything issued comes through iMED.</span></Notice>
       )}
-      <section className="card mt-6" aria-labelledby="fit-h">
-        <h2 id="fit-h" className="font-sans text-[18px] font-medium">Find the right fit</h2>
-        <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          <Field as="select" label="Language" value={f.language} onChange={(e) => set({ language: e.target.value })}>
-            <option value="">Any language</option>{LANGUAGES.map((l) => <option key={l}>{l}</option>)}
-          </Field>
-          <Field as="select" label="Specialty" value={f.specialty} onChange={(e) => set({ specialty: e.target.value })}>
+      {/* One compact row so the first doctors show without scrolling; the rarer filters fold under More filters. */}
+      <div className="mt-4 flex flex-wrap items-end gap-3">
+        <Field as="select" label="Language" className="min-w-[150px] flex-1 sm:flex-none" value={f.language} onChange={(e) => set({ language: e.target.value })}>
+          <option value="">Any language</option>{LANGUAGES.map((l) => <option key={l}>{l}</option>)}
+        </Field>
+        <Field as="select" label="Price" className="min-w-[150px] flex-1 sm:flex-none" value={f.maxFee} onChange={(e) => set({ maxFee: e.target.value })}>
+          {PRICES.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
+        </Field>
+        <button type="button" className="chip mb-[22px]" aria-expanded={more} aria-controls="more-filters" onClick={() => setMore(!more)}>
+          {more ? 'Fewer filters' : `More filters${f.specialty || f.available ? ' (on)' : ''}`}
+        </button>
+        {filtered && <button type="button" className="link mb-[22px] min-h-11 text-sm" onClick={clear}>Clear filters</button>}
+      </div>
+      {more && (
+        <div id="more-filters" className="mt-1 flex flex-wrap gap-3 animate-[pop_0.45s_cubic-bezier(.22,1,.36,1)]">
+          <Field as="select" label="Specialty" className="min-w-[180px] flex-1 sm:flex-none" value={f.specialty} onChange={(e) => set({ specialty: e.target.value })}>
             <option value="">Any specialty</option>{specialties.map((s) => <option key={s}>{s}</option>)}
           </Field>
-          <Field as="select" label="Availability" value={f.available} onChange={(e) => set({ available: e.target.value })}>
+          <Field as="select" label="Availability" className="min-w-[180px] flex-1 sm:flex-none" value={f.available} onChange={(e) => set({ available: e.target.value })}>
             {AVAILABILITY.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
           </Field>
-          <Field as="select" label="Consultation price" value={f.maxFee} onChange={(e) => set({ maxFee: e.target.value })}>
-            {PRICES.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
-          </Field>
         </div>
-        <button type="button" className="btn btn-secondary btn-sm mt-4" onClick={() => set({ language: '', specialty: '', available: '', maxFee: '' })}>Clear filters</button>
-      </section>
+      )}
 
-      <p className="muted mt-6" role="status">{doctors.loading && !doctors.data ? 'Loading doctors' : `${shown.length} ${shown.length === 1 ? 'doctor' : 'doctors'} for ${service.name}`}</p>
+      <p className="muted mt-4" role="status">{doctors.loading && !doctors.data ? 'Loading doctors' : `${shown.length} ${shown.length === 1 ? 'doctor' : 'doctors'} for ${service.name}, earliest first`}</p>
       <div className="mt-4 grid gap-4" aria-busy={doctors.loading}>
         {doctors.error ? <ErrorState error={doctors.error} onRetry={doctors.reload} />
           : !doctors.data ? <Loading label="Loading doctors" />
           : !shown.length ? (
             <div className="card text-center">
               <h2 className="text-[22px]">No doctors match these filters</h2>
-              <button type="button" className="btn btn-secondary btn-sm mt-4" onClick={() => set({ language: '', specialty: '', available: '', maxFee: '' })}>Clear filters</button>
+              <p className="muted mt-2">Try any language or any price.</p>
+              <button type="button" className="btn btn-secondary btn-sm mt-4" onClick={clear}>Clear filters</button>
             </div>
-          ) : shown.map((d) => (
-            <article key={d.id} className="card grid gap-5 md:grid-cols-[minmax(0,1fr)_220px]">
-              <div className="flex min-w-0 gap-4">
-                <DoctorAvatar doctor={d} />
-                <div className="min-w-0">
-                  <h3>{d.name}</h3>
-                  <p>{d.specialty}</p>
-                  <p className="fine">{d.languages}{d.experience && ` · ${d.experience} experience`}</p>
-                  {d.approach && <p className="muted mt-3">{d.approach}</p>}
-                  <Link to={`/services-v2/doctors/${d.id}`} className="link mt-2 inline-flex min-h-11 items-center text-sm">View doctor profile<span className="sr-only">: {d.name}</span></Link>
-                </div>
-              </div>
-              <div className="grid content-start gap-1 md:border-l md:border-[#102d5014] md:pl-5">
-                <p className="text-[22px] font-medium">{euro(d.fee)}</p>
-                <p className="fine">Per video consultation</p>
-                <p className="mt-2">Next available<br /><strong className="font-medium">{d.nextAvailableAt ? when(d.nextAvailableAt) : 'No times in the next 3 weeks'}</strong></p>
-                {d.nextAvailableAt && <Link to={`/services-v2/doctors/${d.id}/times`} className="btn btn-primary btn-sm mt-3">Choose a time<span className="sr-only"> with {d.name}</span></Link>}
-              </div>
-            </article>
-          ))}
+          ) : shown.map((d) => <DoctorCard key={d.id} doctor={d} />)}
       </div>
     </div>
+  )
+}
+
+/** A doctor with their next three times: tapping a time opens their times with it already chosen. */
+function DoctorCard({ doctor: d }: { doctor: Doctor }) {
+  const next = useLoad(() => (d.nextAvailableAt ? api.slots(d.id, lisbonDay(d.nextAvailableAt), 7).then((r) => r.slots.slice(0, 3)) : Promise.resolve([])), [d.id])
+  const times = `/services-v2/doctors/${d.id}/times`
+  return (
+    <article className="card card-tight" aria-labelledby={`doc-${d.id}`}>
+      <div className="flex gap-4">
+        <DoctorAvatar doctor={d} />
+        <div className="min-w-0 flex-1">
+          <div className="flex flex-wrap items-baseline justify-between gap-x-4">
+            <h3 id={`doc-${d.id}`}>{d.name}</h3>
+            <span className="text-[18px] font-medium">{euro(d.fee)}</span>
+          </div>
+          <p className="fine">{d.specialty} · {d.languages}{d.experience && ` · ${d.experience}`}</p>
+          {d.approach && <p className="muted mt-2 line-clamp-2 max-w-[60ch] text-[15px]">{d.approach}</p>}
+        </div>
+      </div>
+      <div className="mt-4 flex flex-wrap items-center gap-2" aria-busy={next.loading}>
+        {!d.nextAvailableAt ? <p className="fine">No times in the next three weeks.</p>
+          : !next.data ? <div className="skeleton h-11 w-64" aria-hidden="true" />
+          : (
+            <>
+              <span className="fine mr-1">{dayLabel(next.data[0]?.startsAt ?? d.nextAvailableAt)}</span>
+              {next.data.map((s) => (
+                <Link key={String(s.id)} to={`${times}?slot=${s.id}`} className="chip no-underline">
+                  {lisbonDay(s.startsAt) === lisbonDay(next.data![0].startsAt) ? hhmm(s.startsAt) : when(s.startsAt)}
+                  <span className="sr-only"> with {d.name}</span>
+                </Link>
+              ))}
+              <Link to={times} className="link ml-1 inline-flex min-h-11 items-center text-sm">More times<span className="sr-only"> with {d.name}</span></Link>
+            </>
+          )}
+        <Link to={`/services-v2/doctors/${d.id}`} className="link ml-auto inline-flex min-h-11 items-center text-sm">Profile<span className="sr-only"> of {d.name}</span></Link>
+      </div>
+    </article>
   )
 }
 
@@ -234,6 +263,15 @@ export function ServicesTimes() {
     for (const s of slots.data ?? []) m.set(dayLabel(s.startsAt), [...(m.get(dayLabel(s.startsAt)) ?? []), s])
     return [...m]
   }, [slots.data])
+  // Arrived from a time on a doctor card: that time is already chosen (if still free).
+  const [params] = useSearchParams()
+  useEffect(() => {
+    const want = params.get('slot')
+    const s = want && slots.data?.find((x) => String(x.id) === want)
+    if (!s) return
+    setPicked(s)
+    if (days.findIndex(([, list]) => list.includes(s)) >= DAYS) setAllDays(true)
+  }, [slots.data]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const d = doctor.data
   const { service } = d ? serviceOf(catalog.data?.groups ?? [], d) : { service: undefined }
@@ -295,7 +333,7 @@ export function ServicesTimes() {
               )}
           </section>
         </div>
-        <aside className="card lg:sticky lg:top-[calc(var(--header-h)+16px)]" aria-label="Your visit">
+        <aside className="card max-lg:hidden lg:sticky lg:top-[calc(var(--header-h)+16px)]" aria-label="Your visit">
           <h2 className="font-sans text-[18px] font-medium">{d.service}</h2>
           <p className="mt-2">{d.name}<br />Video consultation</p>
           <p className="mt-3 font-medium">{picked ? when(picked.startsAt) : 'Choose an available time'}</p>
@@ -303,6 +341,17 @@ export function ServicesTimes() {
           <FormError error={error} />
           <button type="button" className="btn btn-primary btn-block mt-4" disabled={pending || staff} onClick={go}>{pending ? 'Holding your time…' : 'Continue'}</button>
         </aside>
+      </div>
+      {/* Phones and tablets: the choice and Continue stay in reach while scrolling the times. */}
+      <div className="sticky bottom-0 z-10 -mx-4 mt-6 border-t border-[#102d5014] bg-paper/95 px-4 py-3 backdrop-blur lg:hidden">
+        <FormError error={error} />
+        <div className="flex items-center justify-between gap-3">
+          <p className="min-w-0 leading-tight" aria-live="polite">
+            <span className="block font-medium">{picked ? when(picked.startsAt) : 'Choose a time'}</span>
+            <span className="fine">{d.name} · {euro(d.fee)}</span>
+          </p>
+          <button type="button" className="btn btn-primary shrink-0" disabled={pending || staff} onClick={go}>{pending ? 'Holding…' : 'Continue'}</button>
+        </div>
       </div>
     </div>
   )
@@ -484,10 +533,19 @@ function Checkout({ appt, pickAgain }: { appt: Appointment; pickAgain: (message:
           <div>
             <FormError error={error} />
             {clash && <button type="button" className="btn btn-secondary mt-3" onClick={() => pickAgain(null)}>Choose another time</button>}
-            <button className="btn btn-primary btn-block mt-3" disabled={pending || expired || !consent.data}>
-              {pending ? 'Confirming…' : `Pay ${euro(appt.fee)} (demo)`}
-            </button>
-            <p className="fine mt-2 text-center">Demo payment: no card is needed and no money is taken. Your visit is confirmed once paid.</p>
+            <p className="fine mt-3">Demo payment: no card is needed and no money is taken. Your visit is confirmed once paid.</p>
+          </div>
+          {/* Pinned on phones and tablets: the total, the hold and Pay stay in reach through the form. */}
+          <div className="max-lg:sticky max-lg:bottom-0 max-lg:z-10 max-lg:-mx-4 max-lg:border-t max-lg:border-[#102d5014] max-lg:bg-paper/95 max-lg:px-4 max-lg:py-3 max-lg:backdrop-blur">
+            <div className="flex items-center justify-between gap-3 lg:block">
+              <p className="min-w-0 leading-tight lg:hidden">
+                <span className="block font-medium">{euro(appt.fee)} · {when(appt.startsAt)}</span>
+                {appt.holdExpiresAt && !expired && <span className="fine">Held for you <HoldTimer expiresAt={appt.holdExpiresAt} onExpire={() => setExpired(true)} /></span>}
+              </p>
+              <button className="btn btn-primary shrink-0 lg:w-full" disabled={pending || expired || !consent.data}>
+                {pending ? 'Confirming…' : `Pay ${euro(appt.fee)} (demo)`}
+              </button>
+            </div>
           </div>
         </form>
       </div>

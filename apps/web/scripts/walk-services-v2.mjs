@@ -30,7 +30,7 @@ const noOverflow = async (p, what) => check(await p.evaluate(() => document.docu
 const heading = (p, name) => p.getByRole('heading', { level: 1, name }).waitFor()
 const times = (p) => p.locator('[role=radiogroup] [role=radio]')
 
-/** Services home > area > first doctor's Choose a time > a time > Continue. Returns the clicks made. */
+/** Services home > area > a time on a doctor card > Continue. Returns the clicks made. */
 async function toCheckout(p, { width, area = 'General & urgent care', shots = false, timeIndex = 0 }) {
   let clicks = 0
   const click = async (l) => { await l.click(); clicks++ }
@@ -43,13 +43,16 @@ async function toCheckout(p, { width, area = 'General & urgent care', shots = fa
   }
   await click(card)
   await heading(p, 'Choose who cares for you')
-  await p.getByRole('link', { name: /^Choose a time/ }).first().waitFor()
+  await p.locator('article a.chip').first().waitFor()
   if (shots) { await noOverflow(p, 'doctors'); await p.screenshot({ path: `${out}/v2-2-doctors-${width}.png` }) }
-  await click(p.getByRole('link', { name: /^Choose a time/ }).first())
+  // A time on a doctor card opens that doctor's times with it already chosen.
+  const cardTime = p.locator('article a.chip').nth(timeIndex)
+  const label = (await cardTime.textContent()).replace(/ with .*/, '')
+  await click(cardTime)
   await heading(p, 'Choose your appointment')
   await times(p).first().waitFor()
+  check(/\d\d:\d\d/.test(await p.locator('[role=radio][aria-checked=true]').first().textContent().catch(() => '')), `The tapped time (${label}) arrives chosen`)
   if (shots) { await noOverflow(p, 'times'); await p.screenshot({ path: `${out}/v2-3-times-${width}.png`, fullPage: true }) }
-  await click(times(p).nth(timeIndex))
   await click(p.getByRole('button', { name: 'Continue' }))
   await heading(p, 'Confirm your visit')
   return clicks
@@ -73,10 +76,13 @@ for (const width of widths) {
     check(await cards.count() === 1 && /Matches: Migraine/.test(await cards.first().textContent()), 'Search "migraine" finds Specialist care, Migraine', await cards.count())
     await cards.first().click(); await heading(p, 'Choose who cares for you')
     check(await p.getByLabel('Service').locator('option:checked').textContent() === 'Migraine', 'The search result opens that service')
-    await p.getByLabel('Consultation price').selectOption('60')
+    await p.getByLabel('Price', { exact: true }).selectOption('60')
+    check(!(await p.getByLabel('Specialty').count()), 'Specialty and availability start folded')
+    await p.getByRole('button', { name: 'More filters' }).click()
+    check(await p.getByLabel('Specialty').isVisible() && await p.getByLabel('Availability').isVisible(), 'More filters shows specialty and availability')
     await p.getByRole('status').filter({ hasText: /doctors? for Migraine/ }).waitFor()
     check(await p.getByRole('article').count() >= 1, 'The price filter keeps the €45 doctors', await p.getByRole('article').count())
-    await p.getByRole('link', { name: /^View doctor profile/ }).first().click()
+    await p.getByRole('link', { name: /^Profile/ }).first().click()
     await p.getByText('Professional registration').waitFor()
     check(await p.getByText(/Ordem dos Médicos cédula/).isVisible(), 'Doctor profile shows the cédula')
     await noOverflow(p, 'doctor profile'); await p.screenshot({ path: `${out}/v2-doctor-profile-${width}.png` })
@@ -135,7 +141,7 @@ for (const width of widths) {
   {
     const p = await page(width)
     await p.goto(base + '/app/services-v2/doctors?group=general&service=7')
-    await p.getByRole('link', { name: /^Choose a time/ }).first().click()
+    await p.getByRole('link', { name: /^More times/ }).first().click()
     await heading(p, 'Choose your appointment')
     const doctorId = p.url().match(/doctors\/(\d+)\/times/)[1]
     await times(p).first().click()
@@ -144,7 +150,7 @@ for (const width of widths) {
     const r = await other.request.post(`${base}/api/bookings`, { headers: { Origin: base }, data: { slotId: slots[0].id, serviceId: 7, channel: 'video', for: 'self', inMainlandPortugal: true } })
     check(r.status() === 201, 'Another browser holds that time', r.status())
     await p.getByRole('button', { name: 'Continue' }).click()
-    const msg = p.getByText('Someone has just booked that time.')
+    const msg = p.getByText('Someone has just booked that time.').filter({ visible: true })
     await msg.waitFor()
     check(await msg.isVisible(), '(c) SLOT_TAKEN shows a clear message beside Continue')
     check(!(await p.locator('[role=radio][aria-checked=true]').count()), 'The taken time is unselected and the times reload')
