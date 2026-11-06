@@ -43,14 +43,15 @@ const filmStyles=`<style>.hero-film{object-fit:cover;object-position:50% 50%}
 .hero .hero-shade{background:radial-gradient(ellipse 72% 68% at 50% 50%,#0a274d00 30%,#0a274d8c 72%,#061c3ad9 100%),linear-gradient(180deg,#061c3a73,#061c3a00 22%,#061c3a00 78%,#061c3a73)}
 /* Logo only: no card, larger mark. */
 .topbar .nav-logo,.topbar .nav-logo:is(:hover,:active,:focus-visible){width:auto;padding:0 6px;background:none!important;border-color:transparent!important;box-shadow:none!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important}.topbar .nav-logo::before,.topbar .nav-logo::after{display:none}.topbar .nav-logo .carevia-mark{width:58px;height:58px}
-/* Nav emblem: the frosted-glass blue-orange mark, shown in its own colours (the 04.2 nav whitens the plain mark). */
+/* Nav emblem: the glossy white cross mark, shown in its own colours (the 04.2 nav whitens the plain mark). */
 .topbar .nav-logo .carevia-mark.nav-emblem{filter:none}
-/* Hover or keyboard focus: the neon emblem fades in over the midnight one (same shape, same grid cell). */
-.topbar .nav-logo .nav-emblem{grid-area:1/1}
-.topbar .nav-logo .nav-emblem-hover{opacity:0;transform:scale(.96);transition:opacity .22s cubic-bezier(.4,0,1,1),transform .22s cubic-bezier(.4,0,1,1)}
-.topbar .nav-logo:focus-visible .nav-emblem-hover{opacity:1;transform:none;transition-duration:.48s;transition-timing-function:cubic-bezier(.22,1,.36,1)}
-@media(hover:hover){.topbar .nav-logo:hover .nav-emblem-hover{opacity:1;transform:none;transition-duration:.48s;transition-timing-function:cubic-bezier(.22,1,.36,1)}}
-@media(prefers-reduced-motion:reduce){.topbar .nav-logo .nav-emblem-hover{transition:none;transform:none}}
+/* Hover or keyboard focus: the white cross turns out as the blue-orange ring turns in (same grid cell). */
+.topbar .nav-logo .nav-emblem{grid-area:1/1;transition:opacity .22s cubic-bezier(.4,0,1,1),transform .22s cubic-bezier(.4,0,1,1)}
+.topbar .nav-logo .nav-emblem-hover{opacity:0;transform:scale(.9) rotate(-45deg)}
+.topbar .nav-logo:focus-visible .nav-emblem{opacity:0;transform:scale(.9) rotate(45deg);transition-duration:.48s;transition-timing-function:cubic-bezier(.22,1,.36,1)}
+.topbar .nav-logo:focus-visible .nav-emblem-hover{opacity:1;transform:none}
+@media(hover:hover){.topbar .nav-logo:hover .nav-emblem{opacity:0;transform:scale(.9) rotate(45deg);transition-duration:.48s;transition-timing-function:cubic-bezier(.22,1,.36,1)}.topbar .nav-logo:hover .nav-emblem-hover{opacity:1;transform:none}}
+@media(prefers-reduced-motion:reduce){.topbar .nav-logo .nav-emblem{transition:opacity .2s linear;transform:none!important}}
 /* Nav: a three-column grid keeps the emblem dead centre; on desktop both pills share the wider width. */
 .topbar{display:grid;grid-template-columns:1fr auto 1fr;align-items:center}
 .topbar .nav-pill{justify-content:center}
@@ -234,7 +235,7 @@ const v45Home=v45Story
  .replaceAll('src="assets/carevia-mark.png"','src="assets/carevia-mark-192.webp"')
  .replaceAll('href="assets/carevia-mark.png"','href="assets/carevia-mark-192.png"')
  .replaceAll('src="assets/carevia-iridescent.png"','src="assets/carevia-iridescent-400.webp"')
- .replace('aria-label="Carevia home"><img class="carevia-mark" src="assets/carevia-mark-192.webp" alt="" width="40" height="40">','aria-label="Carevia home"><img class="carevia-mark nav-emblem" src="assets/carevia-emblem-midnight-192.webp" alt="" width="40" height="40"><img class="carevia-mark nav-emblem nav-emblem-hover" src="assets/carevia-emblem-neon-192.webp" alt="" width="40" height="40">');
+ .replace('aria-label="Carevia home"><img class="carevia-mark" src="assets/carevia-mark-192.webp" alt="" width="40" height="40">','aria-label="Carevia home"><img class="carevia-mark nav-emblem" src="assets/carevia-emblem-white-192.webp" alt="" width="40" height="40"><img class="carevia-mark nav-emblem nav-emblem-hover" src="assets/carevia-emblem-ring-192.webp" alt="" width="40" height="40">');
 // The old prototype site is no longer linked from this page.
 if(!v45Home.includes('/book">Find a consultation</a>')||v45Home.includes('class="care-open" data-service')||!v45Home.includes('class="care-open" href=')||!v45Home.includes('data-portal=')||!v45Home.includes('/signin" data-auth-pill>Sign in</a>')||!v45Home.includes('data-auth-menu')||!v45Home.includes('/doctors">Doctors <span>')||v45Home.includes('<a href="#about">Our approach')||!v45Home.includes('/book">Explore your options</a>')||!v45Home.includes('/book">View all care options</a>')||!v45Home.includes('disabled>Not sure which one?</button>')||v45Home.includes('Not sure which one?</a>')||v45Home.includes('Example prices are confirmed per country before launch.')||!v45Home.includes('/signup">Create your account')||v45Home.includes(external)||v45Home.includes('>Visit Carevia</a>')||v45Home.includes('care-faq-contact"')||!v45Home.includes('/book">Find your care</a>')||!v45Home.includes('/doctors">Find your clinician</a>')||v45Home.includes('data-role="admin"'))throw new Error('Design 04.5 portal links failed');
 await writeFile('dist/design-04-5.html',v45Home);
