@@ -41,6 +41,13 @@ export function dayLabel(iso: string, now = new Date()): string {
   return longDay.format(new Date(iso))
 }
 
+const weekdayF = fmt({ weekday: 'long' }), dd = fmt({ day: '2-digit' }), mon = fmt({ month: 'short' })
+/** "Friday 6 November". */
+export const longDate = (iso: string | Date) => longDay.format(new Date(iso))
+/** "Today", "Tomorrow" or the weekday ("Monday"). */
+export const relDay = (iso: string, now = new Date()) => { const d = dayLabel(iso, now); return d === 'Today' || d === 'Tomorrow' ? d : weekdayF.format(new Date(iso)) }
+/** ['06', 'NOV'] in Lisbon, for date tiles. */
+export const dayMonth = (iso: string): [string, string] => [dd.format(new Date(iso)), mon.format(new Date(iso)).slice(0, 3).toUpperCase()]
 export const when = (iso: string) => `${dayLabel(iso)}, ${hhmm(iso)}`
 export const shortDate = (iso: string) => shortDay.format(new Date(iso))
 export const fullDate = (iso: string) => dateOnly.format(new Date(iso))

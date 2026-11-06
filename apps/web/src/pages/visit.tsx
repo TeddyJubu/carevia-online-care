@@ -4,7 +4,7 @@ import { api, ApiError } from '../lib/api'
 import { content } from '../lib/content'
 import { DEMO_BUILD, useDemo } from '../lib/demo'
 import { useLoad, useNow } from '../lib/load'
-import { useQuestions } from '../lib/questions'
+import { readQuestions, useQuestions } from '../lib/questions'
 import { useSession } from '../lib/session'
 import { countdown, fullDate, hhmm, minutes, when } from '../lib/time'
 import type { Appointment } from '../lib/types'
@@ -71,7 +71,7 @@ function CalendarLink({ a }: { a: Appointment }) {
   return <a href={href} download="carevia-visit.ics" className="btn btn-secondary">Add to calendar</a>
 }
 
-const PREP = ['Write down what you’d like to discuss', 'Have a list of any medicines you take nearby', 'Find a quiet, private place with good light', 'Charge your device and check your internet']
+export const PREP = ['Write down what you’d like to discuss', 'Have a list of any medicines you take nearby', 'Find a quiet, private place with good light', 'Charge your device and check your internet']
 
 // ---------- J7: booked, and how to prepare ----------
 // Two columns on desktop: the visit and what to do with it on the left; reminders and payment on the right.
@@ -296,6 +296,14 @@ function RedirectTo({ to }: { to: string }) {
   const navigate = useNavigate()
   useEffect(() => { navigate(to, { replace: true }) }, [navigate, to])
   return null
+}
+
+/** The three check-in steps before the waiting room: the "Before your visit" list fully ticked and at least one
+ * question (both on this device only), then "Confirm it's you" (pre-join, on the server). */
+export function checkInSteps(a: Appointment): [boolean, boolean, boolean] {
+  let ticks: boolean[] = []
+  try { ticks = JSON.parse(localStorage.getItem(`carevia-prep-${a.id}`) ?? '[]') } catch { /* unreadable: none ticked */ }
+  return [PREP.every((_, i) => ticks[i]), readQuestions(a.id).length > 0, !!a.preJoin?.confirmedAt]
 }
 
 function Preparation({ a }: { a: Appointment }) {
