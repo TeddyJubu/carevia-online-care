@@ -54,9 +54,19 @@ const files = {
   call: () => import('./pages/call'), dev: () => import('./pages/dev'), doctors: () => import('./pages/doctors'), doctor: () => import('./pages/doctor'),
   visit: () => import('./pages/visit'), waiting: () => import('./pages/waiting'),
 }
+// A deploy replaces the hashed page chunks, so a tab opened before it can ask for a file that is gone.
+// Reload once to pick up the new build; a second failure within a minute is a real error and is shown.
+const reloadForNewBuild = (error: unknown): Promise<never> => {
+  const last = Number(sessionStorage.getItem('carevia-chunk-reload')) || 0
+  if (Date.now() - last < 60_000) throw error
+  sessionStorage.setItem('carevia-chunk-reload', String(Date.now()))
+  window.location.reload()
+  return new Promise<never>(() => {})
+}
+
 const page = (file: keyof typeof files, name: string, wrap = (el: ReactNode) => el) => ({
   lazy: async () => {
-    const C = ((await files[file]()) as unknown as Mod)[name]
+    const C = ((await files[file]().catch(reloadForNewBuild)) as unknown as Mod)[name]
     return { element: wrap(<C />) }
   },
 })
