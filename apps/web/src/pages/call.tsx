@@ -8,7 +8,7 @@ import { hhmm } from '../lib/time'
 import { Dialog, ErrorState, Notice, Still } from '../ui/kit'
 import { phaseOf, useAppointment, VisitGate } from './visit'
 
-type State = { kind: 'loading' } | { kind: 'error'; error: ApiError } | { kind: 'joined'; since: number } | { kind: 'dropped' }
+type State = { kind: 'loading' } | { kind: 'ready' } | { kind: 'error'; error: ApiError } | { kind: 'joined'; since: number } | { kind: 'dropped' }
 
 /**
  * Daily Prebuilt embedded in Carevia. The server issues a short-lived token (owner for the doctor, not for
@@ -39,6 +39,8 @@ export function DailyRoom({ appointmentId, who, onEnded, onJoined }: { appointme
         iframeStyle: { width: '100%', height: '100%', border: '0', borderRadius: '14px', background: '#061c3a' },
       })
       call.current = frame
+      // Prebuilt shows its own device check with a Join button, so the loading cover must go once it has loaded.
+      frame.on('loaded', () => setState((s) => (s.kind === 'loading' ? { kind: 'ready' } : s)))
       frame.on('joined-meeting', () => { const at = Date.now(); setState({ kind: 'joined', since: at }); onJoined?.(at); void api.callEvent(appointmentId, 'joined').catch(() => {}) })
       frame.on('network-connection', (e) => setUnstable(e?.event === 'interrupted'))
       frame.on('error', () => { dropped.current = true; setState({ kind: 'dropped' }); void api.callEvent(appointmentId, 'error').catch(() => {}) })
@@ -79,7 +81,7 @@ export function DailyRoom({ appointmentId, who, onEnded, onJoined }: { appointme
         )}
       </div>
       <div ref={host} className="h-[min(70svh,720px)] min-h-[420px] overflow-hidden rounded-[14px] bg-navy-3" aria-label="Video call" role="region" />
-      {state.kind === 'loading' && <div className="absolute inset-0 grid place-items-center text-white"><span className="inline-flex items-center gap-3"><span className="spinner border-white/30 border-t-white" aria-hidden="true" /><span role="status">Connecting to the call…</span></span></div>}
+      {state.kind === 'loading' && <div className="pointer-events-none absolute inset-0 grid place-items-center text-white"><span className="inline-flex items-center gap-3"><span className="spinner border-white/30 border-t-white" aria-hidden="true" /><span role="status">Connecting to the call…</span></span></div>}
     </div>
   )
 }
