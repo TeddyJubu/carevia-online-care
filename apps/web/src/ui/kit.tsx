@@ -50,17 +50,6 @@ export function FormError({ error }: { error?: string | null }) {
   return <div role="alert" aria-live="assertive">{error ? <p className="notice notice-danger">{error}</p> : null}</div>
 }
 
-export function Emergency({ compact }: { compact?: boolean }) {
-  return (
-    <aside className="emergency" aria-label="Emergencies">
-      <p>
-        {compact ? 'Not an emergency service. ' : <><strong className="font-medium">Is this an emergency?</strong> Carevia is not an emergency service. </>}
-        In an emergency, <a href="tel:112">call 112</a>.
-      </p>
-    </aside>
-  )
-}
-
 export function Notice({ tone = 'info', children, className = '' }: { tone?: 'info' | 'warn' | 'danger' | 'ok'; children: ReactNode; className?: string }) {
   return <div className={`notice ${tone === 'info' ? '' : `notice-${tone}`} ${className}`}>{children}</div>
 }

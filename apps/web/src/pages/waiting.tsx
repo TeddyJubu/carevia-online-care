@@ -4,7 +4,7 @@ import { api } from '../lib/api'
 import { useLoad, useNow } from '../lib/load'
 import { readQuestions } from '../lib/questions'
 import { countdown, hhmm } from '../lib/time'
-import { Emergency, Notice, PageTitle, Still } from '../ui/kit'
+import { Notice, PageTitle, Still } from '../ui/kit'
 import { VideoOff } from './call'
 import { phaseOf, useAppointment, VisitGate } from './visit'
 
@@ -206,7 +206,6 @@ export function Waiting() {
                 )}
                 {phase === 'before' && <p id="opens" className="fine text-center" aria-live="off">Opens in {countdown(a.call.joinOpensAt, now)}</p>}
                 <p className="notice">Connection trouble? Your appointment stays open: rejoin until {hhmm(a.call.joinClosesAt)}. After that, we’ll arrange a new time.</p>
-                <Emergency compact />
               </div>
             </section>
           </div>

@@ -5,7 +5,7 @@ import { useLoad } from '../lib/load'
 import { useSession } from '../lib/session'
 import { addDays, age, birthDate, dayLabel, hhmm, lisbonDay, when } from '../lib/time'
 import type { Appointment, Doctor, For, GroupSlug, ServiceGroup, Slot } from '../lib/types'
-import { DoctorAvatar, Emergency, ErrorState, euro, Field, FormError, HoldTimer, Loading, Markdown, Notice, PageTitle } from '../ui/kit'
+import { DoctorAvatar, ErrorState, euro, Field, FormError, HoldTimer, Loading, Markdown, Notice, PageTitle } from '../ui/kit'
 import { validateSignUp } from './auth'
 
 // Booking, following the patient-booking wireframe's service flow:
@@ -44,7 +44,6 @@ export function ServicesHome() {
       <PageTitle eyebrow={user ? 'Your patient home' : 'Book a video visit'} title="Find the right care" lede="Choose a service, meet your doctor and book a time that suits you.">
         {user ? `Welcome back, ${user.firstName}` : 'Find the right care'}
       </PageTitle>
-      <div className="mt-6"><Emergency compact /></div>
       <div className="mt-8 max-w-[700px]">
         <Field label="Search services" type="search" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Service, specialty or health concern" hint="Video consultations" />
       </div>
@@ -109,7 +108,6 @@ export function ServicesDoctors() {
     <div className="page">
       <Steps at={0} />
       <PageTitle eyebrow="Find your care" title={`${service.name} doctors`}>Choose who cares for you</PageTitle>
-      <div className="mt-6"><Emergency compact /></div>
       <div className="mt-8 grid gap-4 sm:grid-cols-2">
         <Field as="select" label="Area of care" value={group.slug} onChange={(e) => set({ group: e.target.value, service: '', specialty: '' })}>
           {groups.map((g) => <option key={g.slug} value={g.slug}>{g.name}</option>)}
@@ -305,7 +303,6 @@ export function ServicesTimes() {
     <div className="page">
       <Steps at={1} />
       <PageTitle eyebrow={`${d.name} · ${d.service}`} lede="Times are in Lisbon time. We hold your time for 10 minutes while you finish.">Choose your appointment</PageTitle>
-      <div className="mt-6"><Emergency compact /></div>
       {staff && <Notice tone="warn" className="mt-6"><span>Doctor and admin accounts can’t book visits. Sign out, then book as a patient.</span></Notice>}
       <div className="mt-8 grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_320px]">
         <div className="grid min-w-0 gap-6">
@@ -489,8 +486,6 @@ function Checkout({ appt, pickAgain }: { appt: Appointment; pickAgain: (message:
   return (
     <div className="animate-[pop_0.48s_cubic-bezier(.22,1,.36,1)]">
       <PageTitle eyebrow="Check out" lede={user ? 'Agree to the terms and pay. That’s all.' : 'Add your details, agree to the terms and pay. Your account is made as you pay.'}>Confirm your visit</PageTitle>
-      <div className="mt-6"><Emergency compact /></div>
-
       <div className="mt-8 grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_340px]">
         <aside className="card lg:sticky lg:top-[calc(var(--header-h)+16px)] lg:order-2" aria-label="Your visit">
           <dl className="summary">

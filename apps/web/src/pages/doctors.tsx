@@ -3,7 +3,7 @@ import { Link, useSearchParams } from 'react-router'
 import { api } from '../lib/api'
 import { useLoad } from '../lib/load'
 import type { Doctor } from '../lib/types'
-import { DoctorAvatar, Emergency, ErrorState, euro, Field, Loading, PageTitle } from '../ui/kit'
+import { DoctorAvatar, ErrorState, euro, Field, Loading, PageTitle } from '../ui/kit'
 
 // Public list of every doctor: fetched once, filtered here. Filters live in the URL (?q, group, specialty,
 // language, n) so links and Back keep them. Book opens that doctor's times (the service is the doctor's own).
@@ -45,8 +45,6 @@ export function DoctorsPage() {
       <PageTitle eyebrow="Our doctors" lede="Every doctor on Carevia sees patients by video. Search by name or narrow by area, specialty and language.">
         Find a doctor
       </PageTitle>
-      <div className="mt-6"><Emergency compact /></div>
-
       <div role="search" className="mt-8 grid grid-cols-2 gap-x-3 sm:gap-x-4 lg:grid-cols-4" aria-label="Find a doctor">
         <Field label="Search by name" className="col-span-2 lg:col-span-1" type="search" value={f.q} onChange={(e) => set({ q: e.target.value }, true)} placeholder="For example, Laurent" autoComplete="off" />
         <Field as="select" label="Area of care" className="col-span-2 lg:col-span-1" value={f.group} onChange={(e) => set({ group: e.target.value, specialty: '' })}>

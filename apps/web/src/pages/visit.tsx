@@ -9,8 +9,7 @@ import { useSession } from '../lib/session'
 import { countdown, fullDate, hhmm, minutes, when } from '../lib/time'
 import type { Appointment } from '../lib/types'
 import { TimePicker } from './time-picker'
-import { Documents } from '../ui/documents'
-import { Dialog, DoctorAvatar, Emergency, ErrorState, euro, euroCents, FormError, Loading, Markdown, Notice, PageTitle, paymentStatus } from '../ui/kit'
+import { Dialog, DoctorAvatar, ErrorState, euro, euroCents, FormError, Loading, Markdown, Notice, PageTitle, paymentStatus } from '../ui/kit'
 
 export function useAppointment() {
   const { id = '' } = useParams()
@@ -422,7 +421,6 @@ export function Done() {
                 </div>
                 <p className="mt-3">{IMED_TEXT}</p>
               </section>
-              <div className="mt-6"><Emergency compact /></div>
             </section>
             <aside className="grid content-start gap-3" aria-label="This visit">
               <VisitCard a={a} />
@@ -487,7 +485,6 @@ export function Reschedule() {
                 await api.reschedule(a.id, picked.id)
                 navigate(`/visits/${a.id}?moved=1`, { replace: true })
               }} />
-            <div className="mt-8"><Emergency compact /></div>
           </div>
         </div>
       )
