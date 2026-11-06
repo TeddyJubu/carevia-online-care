@@ -76,7 +76,10 @@
    saturation and brightness, a milky tint, fine frost grain and a lit rim, all inside the card's own rounded shape),
    and text softens. --z (set per panel by about-hscroll.js) is how far the panel has entered that zone, so the mask
    runs from clear at the 5% line to fully frosted over the outer 2.5%. Only while the panels travel. */
-.ah-glass{position:relative;border-radius:16px;overflow:hidden}
+.ah-glass{position:relative;border-radius:16px;overflow:hidden;isolation:isolate;background:#102e52}
+/* Navy wash over the about photo, above the glass strips; frost stays on top. */
+.ah-glass::after{content:"";position:absolute;inset:0;z-index:1;pointer-events:none;border-radius:inherit;background:linear-gradient(90deg,#0d3260b3,#123f7299),linear-gradient(180deg,#0a274d66,transparent 70%)}
+.ah-frost{z-index:2}
 .ah-frost,.ah-copy::after,.ah-title::after,.ah-facts::after{position:absolute;inset:0;pointer-events:none;opacity:0;transition:opacity .5s ease;-webkit-mask-image:linear-gradient(90deg,#000 calc(var(--z,-100vw) - 2.5vw),transparent var(--z,-100vw));mask-image:linear-gradient(90deg,#000 calc(var(--z,-100vw) - 2.5vw),transparent var(--z,-100vw))}.ah-frost{border-radius:inherit;background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='f'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 .22 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23f)'/%3E%3C/svg%3E"),linear-gradient(115deg,#ffffffb3,#ffffff59 38%,#ffffff40 55%,#ffffff80);backdrop-filter:blur(26px) saturate(1.5) brightness(1.12);-webkit-backdrop-filter:blur(26px) saturate(1.5) brightness(1.12);box-shadow:inset 0 0 0 1.5px #ffffffd9,inset 0 2px 0 #fff,inset 0 -2px 0 #ffffffb3,inset 0 0 48px #ffffff73}.ah-panel{position:relative}.ah-copy::after,.ah-title::after,.ah-facts::after{content:'';backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px)}.about-h.is-moving .ah-frost,.about-h.is-moving .ah-copy::after,.about-h.is-moving .ah-title::after,.about-h.is-moving .ah-facts::after{opacity:1}
 .ah-track{display:flex;height:100%;will-change:transform}
 .ah-panel{flex:none;height:100%;display:flex;flex-direction:column;justify-content:center;padding:0 6vw}

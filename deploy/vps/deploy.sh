@@ -15,8 +15,10 @@ VITE_DEMO=1 npm run build --prefix apps/web
 [ -d apps/admin ] && VITE_DEMO_MODE=true npm run build --prefix apps/admin
 
 rsync -az --delete --exclude .DS_Store --exclude /app --exclude /admin dist/ "$HOST:telemed-project/"
-rsync -az --delete apps/web/dist/ "$HOST:telemed-project/app/"
-[ -d apps/admin/dist ] && rsync -az --delete apps/admin/dist/ "$HOST:telemed-project/admin/"
+# Keep earlier hashed assets so tabs opened before this deploy can still load their pages; prune after 7 days.
+rsync -az --delete --filter="P assets/**" apps/web/dist/ "$HOST:telemed-project/app/"
+[ -d apps/admin/dist ] && rsync -az --delete --filter="P assets/**" apps/admin/dist/ "$HOST:telemed-project/admin/"
+ssh "$HOST" 'find telemed-project/app/assets telemed-project/admin/assets -type f -mtime +7 -delete 2>/dev/null || true'
 
 # API source from HEAD: package files for every workspace (npm ci needs them), apps/api, content, deploy.
 git archive HEAD package.json package-lock.json apps/api content deploy $(git ls-files 'apps/*/package.json') \

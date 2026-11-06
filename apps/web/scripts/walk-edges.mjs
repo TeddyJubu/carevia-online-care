@@ -92,7 +92,7 @@ for (const bad of ['/app/nope', '/app/visits/not-a-real-id', '/app/doctor', ...(
   console.log('     ', bad, '->', r?.status(), path(), '·', await h1()); await shot('404' + bad.replace(/\//g, '_'))
 }
 await p.goto(base + '/app/visits/not-a-real-id'); await p.waitForLoadState('networkidle')
-check((await h1()) === 'We couldn’t find this visit' && await p.getByRole('link', { name: 'Go to your visits' }).isVisible(), 'An unknown visit links back to the account', await h1())
+check((await h1()) === 'We couldn’t find this visit' && await p.getByRole('link', { name: 'Go to your appointments' }).getAttribute('href') === '/app/appointments', 'An unknown visit links back to the appointments list', await h1())
 
 // 4. Sign out, then the back button and a private URL.
 await p.goto(base + '/app/account/profile'); await p.getByRole('button', { name: 'Sign out' }).click(); await p.waitForURL(/signin/)

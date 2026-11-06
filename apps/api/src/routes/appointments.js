@@ -1,6 +1,8 @@
 import { PUBLIC_APP_URL, requireRole } from '../auth.js'
+import { DEMO_MODE } from '../config.js'
 import { createMeetingToken, createPrivateRoom } from '../daily.js'
 import { prisma } from '../prisma.js'
+import { receiptPdf, receiptNumber } from '../receipt.js'
 import { JOIN_CLOSES_MINUTES_AFTER, canReschedule, effectiveStatus, joinState, joinWindow } from '../rules.js'
 import { clashFor, sendBookingConfirmation } from './bookings.js'
 import { APPOINTMENT_INCLUDE, sendError, toAppointment } from '../views.js'
@@ -183,6 +185,19 @@ export async function appointmentRoutes(app) {
       .type('text/calendar; charset=utf-8')
       .header('content-disposition', 'attachment; filename="carevia-visit.ics"')
       .send(ics)
+  })
+
+  // Payment receipt as a PDF, for the patient who owns the visit. Payment data only (src/receipt.js).
+  app.get('/api/appointments/:id/receipt.pdf', { schema: { params: idParams } }, async (request, reply) => {
+    const { appointment } = await accessible(request, reply, ['patient'])
+    if (!appointment) return
+    if (!appointment.payment) return sendError(reply, 409, 'NOT_PAID', 'There’s no receipt for this visit: nothing was paid.')
+    const pdf = await receiptPdf(appointment, { demo: DEMO_MODE })
+    return reply
+      .type('application/pdf')
+      .header('cache-control', 'private, no-store')
+      .header('content-disposition', `attachment; filename="carevia-receipt-${receiptNumber(appointment.payment)}.pdf"`)
+      .send(pdf)
   })
 
   app.post('/api/appointments/:id/pre-join', {

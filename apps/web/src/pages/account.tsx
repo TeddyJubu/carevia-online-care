@@ -17,6 +17,7 @@ const errMsg = (e: unknown) => (e instanceof ApiError ? e.message : 'Something w
 const icon = (d: ReactNode) => <svg className="nav-ico" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">{d}</svg>
 const NAV = [
   { to: '/account', label: 'Home', end: true, icon: icon(<path d="M3.5 10.5 12 3.5l8.5 7V20a1 1 0 0 1-1 1H15v-6H9v6H4.5a1 1 0 0 1-1-1z" />) },
+  { to: '/appointments', label: 'Appointments', icon: icon(<><rect x="3.5" y="5" width="17" height="15.5" rx="2" /><path d="M3.5 9.5h17M8 3v4M16 3v4" /></>) },
   { to: '/account/family', label: 'Family', icon: icon(<><circle cx="9" cy="8" r="3.5" /><path d="M2.5 20c.8-3.5 3.4-5.5 6.5-5.5s5.7 2 6.5 5.5M16.5 5a3 3 0 0 1 0 6M18 14.6c1.9.5 3.2 2 3.6 4.4" /></>) },
   { to: '/account/payments', label: 'Payments', icon: icon(<><rect x="3" y="5.5" width="18" height="13" rx="2" /><path d="M3 10h18" /></>) },
   { to: '/account/profile', label: 'Profile', icon: icon(<><circle cx="12" cy="8" r="4" /><path d="M4.5 20.5c1-3.8 4-5.5 7.5-5.5s6.5 1.7 7.5 5.5" /></>) },
@@ -220,17 +221,12 @@ function BoardRow({ a, r, i }: { a: Appointment; r: Row; i: number }) {
 const EARLIER = 5
 
 function CareBoard({ upcoming, past, now }: { upcoming: Appointment[]; past: Appointment[]; now: number }) {
-  const [all, setAll] = useState(false)
-  const earlier = all ? past : past.slice(0, EARLIER)
+  const earlier = past.slice(0, EARLIER)
   return (
     <section aria-labelledby="board-title" className="mt-12">
       <div className="mb-4 flex items-end justify-between gap-4">
         <h2 id="board-title">Your care board</h2>
-        {past.length > EARLIER && (
-          <button type="button" className="inline-flex min-h-11 items-center text-[14px] font-medium hover:underline" aria-expanded={all} aria-controls="board-earlier" onClick={() => setAll(!all)}>
-            {all ? 'Show fewer' : `All records (${past.length})`}
-          </button>
-        )}
+        <Link to="/appointments" className="inline-flex min-h-11 items-center text-[14px] font-medium hover:underline">All records</Link>
       </div>
       <div className="cb on-navy">
         <table>

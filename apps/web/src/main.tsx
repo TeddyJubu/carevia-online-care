@@ -50,13 +50,23 @@ const clinician = (el: ReactNode) => <RequireRole role="clinician">{el}</Require
 // and doctor screens. The router loads a chunk before it commits the navigation, so the current screen stays up.
 type Mod = Record<string, ComponentType>
 const files = {
-  account: () => import('./pages/account'), auth: () => import('./pages/auth'), book: () => import('./pages/book'),
+  account: () => import('./pages/account'), appointments: () => import('./pages/appointments'), auth: () => import('./pages/auth'), book: () => import('./pages/book'),
   call: () => import('./pages/call'), dev: () => import('./pages/dev'), doctors: () => import('./pages/doctors'), doctor: () => import('./pages/doctor'),
   visit: () => import('./pages/visit'), waiting: () => import('./pages/waiting'),
 }
+// A deploy replaces the hashed page chunks, so a tab opened before it can ask for a file that is gone.
+// Reload once to pick up the new build; a second failure within a minute is a real error and is shown.
+const reloadForNewBuild = (error: unknown): Promise<never> => {
+  const last = Number(sessionStorage.getItem('carevia-chunk-reload')) || 0
+  if (Date.now() - last < 60_000) throw error
+  sessionStorage.setItem('carevia-chunk-reload', String(Date.now()))
+  window.location.reload()
+  return new Promise<never>(() => {})
+}
+
 const page = (file: keyof typeof files, name: string, wrap = (el: ReactNode) => el) => ({
   lazy: async () => {
-    const C = ((await files[file]()) as unknown as Mod)[name]
+    const C = ((await files[file]().catch(reloadForNewBuild)) as unknown as Mod)[name]
     return { element: wrap(<C />) }
   },
 })
@@ -86,6 +96,12 @@ const router = createBrowserRouter(
         { path: 'visits/:id/call', ...page('call', 'CallPage', patient) },
         { path: 'visits/:id/done', ...page('visit', 'Done', patient) },
         { path: 'visits/:id/receipt', ...page('visit', 'Receipt', patient) },
+        // Every visit on the account (pages/appointments.tsx), inside the account menu.
+        {
+          path: 'appointments',
+          ...page('account', 'AccountLayout', patient),
+          children: [{ index: true, ...page('appointments', 'AppointmentsPage') }],
+        },
         {
           path: 'account',
           ...page('account', 'AccountLayout', patient),

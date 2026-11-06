@@ -35,7 +35,7 @@ export function VisitGate({ load, children }: { load: ReturnType<typeof useAppoi
   if (load.error?.status === 404) return (
     <div className="page-narrow">
       <PageTitle lede="The link may be old, or the visit belongs to another account.">We couldn’t find this visit</PageTitle>
-      <Link to="/account" className="btn btn-primary mt-8">Go to your visits</Link>
+      <Link to="/appointments" className="btn btn-primary mt-8">Go to your appointments</Link>
     </div>
   )
   if (load.error) return <div className="page-narrow"><ErrorState error={load.error} onRetry={load.reload} /></div>
@@ -95,7 +95,7 @@ export function Prepare() {
       // check works any time too. Only joining the call waits for the window.
       const joinTo = a.preJoin?.confirmedAt ? `/visits/${a.id}/waiting` : `/visits/${a.id}/join`
       const opensIn = countdown(a.call.joinOpensAt, now)
-      const allLink = <Link to="/account" className="link inline-flex min-h-11 items-center text-sm">All appointments</Link>
+      const allLink = <Link to="/appointments" className="link inline-flex min-h-11 items-center text-sm">All appointments</Link>
       return (
         <div className="page">
           <div className="grid gap-10 min-[1025px]:grid-cols-[minmax(0,1fr)_360px]">
@@ -146,9 +146,10 @@ export function Prepare() {
                 </div>
               )}
             </section>
-            <aside className="grid content-start gap-4" aria-label="Reminders and payment">
+            <aside className="grid content-start gap-4" aria-label="Reminders, payment and documents">
               {a.status === 'confirmed' && <Reminders a={a} onSaved={load.set} />}
               <PaymentCard a={a} />
+              <Documents a={a} />
             </aside>
           </div>
           <Dialog open={cancelling} onClose={() => setCancelling(false)} title="Cancel this visit?">
@@ -229,7 +230,6 @@ function PaymentCard({ a }: { a: Appointment }) {
       {a.payment && <p className="fine mt-2">Demo payment on {fullDate(a.payment.paidAt)}</p>}
       {a.status === 'cancelled' && <p className="mt-3 text-[15px]">This visit was cancelled. No money was taken in this demo.</p>}
       <div className="mt-4 flex flex-wrap items-center gap-x-5 gap-y-2">
-        {a.payment && <Link to={`/visits/${a.id}/receipt`} className="btn btn-secondary btn-sm">Download receipt</Link>}
         <Link to="/account/payments" className="link inline-flex min-h-11 items-center text-sm">Payments &amp; refunds</Link>
       </div>
     </section>
@@ -424,8 +424,9 @@ export function Done() {
             </section>
             <aside className="grid content-start gap-3" aria-label="This visit">
               <VisitCard a={a} />
+              <Documents a={a} />
               <Link to={`/book/doctors/${a.doctor.id}/times`} className="btn btn-primary btn-block">Book a follow-up</Link>
-              <Link to="/account" className="btn btn-secondary btn-block">Back to your account</Link>
+              <Link to="/appointments" className="btn btn-secondary btn-block">All appointments</Link>
             </aside>
           </div>
         </div>
