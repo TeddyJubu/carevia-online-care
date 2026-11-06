@@ -176,6 +176,8 @@ if(!v45Story.includes('ah-track')||!v45Story.includes('clinician-45-3.jpg')||v45
 const portal=esc(PORTAL_URL),external='https://carevia.triple-labs-8416.chatgpt.site/';
 const v45Home=v45Story
  .replace('data-design="04.5"',`data-design="04.5" data-portal="${portal}"`)
+ // Service cards go straight to booking (no details popup in between): real links, so open-in-new-tab works too.
+ .replace(/<button class="care-open" data-service="([^"]+)">([\s\S]*?)<\/button>/g,(m,id,inner)=>`<a class="care-open" href="${portal}/book?service=${id}">${inner.replace('>Details<','>Book<').replace(' about ',' ')}</a>`)
  .replace('<a class="nav-pill nav-book" href="#care">Find your care</a>',`<a class="nav-pill nav-book" href="${portal}/signin">Sign in</a>`)
  .replace('<button class="button dark" data-all-care>View all care options</button>',`<button class="button dark" data-all-care>View all care options</button><a class="button light" href="${portal}/book?service=general" style="text-decoration:underline;text-decoration-color:#a7bdd0;text-underline-offset:4px">Not sure which one?</a>`)
  .replace(`<a class="button light" href="${external}" target="_blank" rel="noopener">Create your account</a>`,`<a class="button light" href="${portal}/signup">Create your account</a>`)
@@ -185,7 +187,7 @@ const v45Home=v45Story
  .replaceAll('href="assets/carevia-mark.png"','href="assets/carevia-mark-192.png"')
  .replaceAll('src="assets/carevia-iridescent.png"','src="assets/carevia-iridescent-400.webp"');
 // Only the footer's and the FAQ's "Visit Carevia" keep the external site.
-if(!v45Home.includes('data-portal=')||!v45Home.includes('/signin">Sign in')||!v45Home.includes('>Not sure which one?</a>')||!v45Home.includes('/signup">Create your account')||v45Home.split(external).length-1!==2)throw new Error('Design 04.5 portal links failed');
+if(v45Home.includes('class="care-open" data-service')||!v45Home.includes('class="care-open" href=')||!v45Home.includes('data-portal=')||!v45Home.includes('/signin">Sign in')||!v45Home.includes('>Not sure which one?</a>')||!v45Home.includes('/signup">Create your account')||v45Home.split(external).length-1!==2)throw new Error('Design 04.5 portal links failed');
 await writeFile('dist/design-04-5.html',v45Home);
 await writeFile('dist/index.html',v45Home.replace('rel="canonical" href="https://carevia.triplelabs.dev/design-04-5.html"','rel="canonical" href="https://carevia.triplelabs.dev/"'));
 

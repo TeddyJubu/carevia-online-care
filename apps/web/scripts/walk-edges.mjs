@@ -25,10 +25,9 @@ const sleep = (s) => p.waitForTimeout(s * 1000) // sign-in is limited to 3 per 1
 
 // 1. Homepage deep links.
 await home()
-const card = p.locator('.treatment-card [data-service="mental"], [data-service="mental"]').first()
-await card.scrollIntoViewIfNeeded(); await card.click()
-const book = p.locator('#care-dialog a', { hasText: /^Book / })
-check(await book.getAttribute('href') === '/app/book?service=mental', 'service dialog links to /app/book?service=mental', await book.getAttribute('href'))
+// Service cards link straight to booking: no details popup in between.
+const book = p.locator('.treatment-card a.care-open[href*="service=mental"]').first()
+check(await book.getAttribute('href') === '/app/book?service=mental', 'Mental health card links to /app/book?service=mental', await book.getAttribute('href'))
 await follow(book)
 check(await h1() === 'Choose who cares for you' && /group=mental/.test(path()), 'Book {service} opens the doctors for that area', `${path()} · ${await h1()}`); await shot('home-book-service')
 for (const [name, want, heading] of [

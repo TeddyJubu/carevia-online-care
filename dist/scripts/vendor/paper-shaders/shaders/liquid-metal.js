@@ -3,8 +3,8 @@
  *       https://github.com/paper-design/shaders       *
  * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
-import {} from "../shader-sizing.js?v=cca28bc34e";
-import { declarePI, rotation2, simplexNoise, colorBandingFix } from "../shader-utils.js?v=cca28bc34e";
+import {} from "../shader-sizing.js?v=2f993ca480";
+import { declarePI, rotation2, simplexNoise, colorBandingFix } from "../shader-utils.js?v=2f993ca480";
 const liquidMetalFragmentShader = `#version 300 es
 precision mediump float;
 
