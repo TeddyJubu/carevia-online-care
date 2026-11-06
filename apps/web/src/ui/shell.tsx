@@ -25,7 +25,10 @@ export function Header() {
         <NavLink to="/doctors" className="nav-pill nav-link">Doctors</NavLink>
         {user?.role === 'patient' && <NavLink to="/appointments" className="nav-pill nav-link hidden sm:inline-flex">Appointments</NavLink>}
         {user
-          ? <Link to={account} className="nav-pill glass">{user.role === 'clinician' ? 'Your agenda' : 'Your account'}</Link>
+          ? <Link to={account} className="nav-pill glass">
+              <span className="max-[480px]:hidden">{user.role === 'clinician' ? 'Your agenda' : 'Your account'}</span>
+              <span className="min-[481px]:hidden">{user.role === 'clinician' ? 'Agenda' : 'Account'}</span>
+            </Link>
           : <Link to="/signin" className="nav-pill glass">Sign in</Link>}
       </div>
     </header>

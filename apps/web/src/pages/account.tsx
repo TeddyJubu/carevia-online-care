@@ -1,41 +1,66 @@
-import { useState, type FormEvent, type ReactNode } from 'react'
-import { Link, NavLink, Outlet, useNavigate, useSearchParams } from 'react-router'
+import { useState, type CSSProperties, type FormEvent, type ReactNode } from 'react'
+import { Link, NavLink, Outlet, useLocation, useNavigate, useSearchParams } from 'react-router'
 import { api, ApiError } from '../lib/api'
 import { content } from '../lib/content'
 import { useLoad, useNow } from '../lib/load'
 import { useSession } from '../lib/session'
-import { age, birthDate, fullDate, lisbonDay, shortDate, when } from '../lib/time'
+import { age, birthDate, dayMonth, fullDate, hhmm, lisbonDay, longDate, minutes, relDay, shortDate } from '../lib/time'
 import type { Appointment, FamilyMember } from '../lib/types'
-import { Dialog, Empty, ErrorState, euro, Field, FormError, Loading, Markdown, Notice, PageTitle, paymentStatus, Still } from '../ui/kit'
+import { Dialog, Emergency, Empty, ErrorState, euro, Field, FormError, Loading, Markdown, Notice, PageTitle, paymentStatus, Still } from '../ui/kit'
 import { toE164 } from './auth'
+import { checkInSteps, phaseOf } from './visit'
 
 type Errors = Record<string, string>
 const val = (f: FormData, k: string) => String(f.get(k) ?? '').trim()
 const errMsg = (e: unknown) => (e instanceof ApiError ? e.message : 'Something went wrong. Please try again.')
 
+const icon = (d: ReactNode) => <svg className="nav-ico" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">{d}</svg>
 const NAV = [
-  { to: '/account', label: 'Home', end: true },
-  { to: '/appointments', label: 'Appointments' },
-  { to: '/account/family', label: 'Family' },
-  { to: '/account/payments', label: 'Payments' },
-  { to: '/account/profile', label: 'Profile' },
-  { to: '/account/security', label: 'Security' },
+  { to: '/account', label: 'Home', end: true, icon: icon(<path d="M3.5 10.5 12 3.5l8.5 7V20a1 1 0 0 1-1 1H15v-6H9v6H4.5a1 1 0 0 1-1-1z" />) },
+  { to: '/appointments', label: 'Appointments', icon: icon(<><rect x="3.5" y="5" width="17" height="15.5" rx="2" /><path d="M3.5 9.5h17M8 3v4M16 3v4" /></>) },
+  { to: '/account/family', label: 'Family', icon: icon(<><circle cx="9" cy="8" r="3.5" /><path d="M2.5 20c.8-3.5 3.4-5.5 6.5-5.5s5.7 2 6.5 5.5M16.5 5a3 3 0 0 1 0 6M18 14.6c1.9.5 3.2 2 3.6 4.4" /></>) },
+  { to: '/account/payments', label: 'Payments', icon: icon(<><rect x="3" y="5.5" width="18" height="13" rx="2" /><path d="M3 10h18" /></>) },
+  { to: '/account/profile', label: 'Profile', icon: icon(<><circle cx="12" cy="8" r="4" /><path d="M4.5 20.5c1-3.8 4-5.5 7.5-5.5s6.5 1.7 7.5 5.5" /></>) },
+  { to: '/account/security', label: 'Security', icon: icon(<path d="M12 3 4.5 6v5.5c0 4.6 3.2 8.3 7.5 9.5 4.3-1.2 7.5-4.9 7.5-9.5V6z" />) },
 ]
 
-// Wireframe 12: a left menu on desktop, a compact scrollable row on phones. No "Documents": those live in iMED.
+// A left rail on desktop (menu, then everyone on the account), a compact scrollable row on phones.
+// No "Documents": those live in iMED.
 export function AccountLayout() {
+  const { user } = useSession()
+  const { pathname } = useLocation()
+  // Reloaded on each account page, so a change on Family shows here when you come back.
+  const family = useLoad(() => api.family(), [pathname])
   return (
     <div className="page">
       <div className="grid gap-6 lg:grid-cols-[200px_minmax(0,1fr)] lg:gap-12">
-        <nav aria-label="Your account" className="side-nav min-w-0">
-          <ul className="-mx-4 flex gap-1 overflow-x-auto px-4 pb-1 lg:mx-0 lg:grid lg:overflow-visible lg:px-0 lg:sticky lg:top-[calc(var(--header-h)+24px)]">
-            {NAV.map((n) => (
-              <li key={n.to} className="flex-none">
-                <NavLink to={n.to} end={n.end} className="whitespace-nowrap">{n.label}</NavLink>
+        <div className="min-w-0 lg:sticky lg:top-[calc(var(--header-h)+24px)] lg:self-start">
+          <nav aria-label="Your account" className="side-nav">
+            <ul className="-mx-4 flex gap-1 overflow-x-auto px-4 pb-1 lg:mx-0 lg:grid lg:gap-0.5 lg:overflow-visible lg:px-0">
+              {NAV.map((n) => (
+                <li key={n.to} className="flex-none">
+                  <NavLink to={n.to} end={n.end} className="whitespace-nowrap">{n.icon}{n.label}</NavLink>
+                </li>
+              ))}
+            </ul>
+          </nav>
+          <section aria-labelledby="manifest-title" className="manifest max-lg:hidden">
+            <h2 id="manifest-title" className="k">On this account</h2>
+            <ul className="mt-3.5 grid gap-3.5">
+              <li className="flex items-center gap-2.5">
+                <span className="initial" aria-hidden="true">{user?.firstName.charAt(0)}</span>
+                <span><span className="block text-[14px] font-medium leading-tight">You</span><span className="block text-[12px] text-muted">Account holder</span></span>
               </li>
-            ))}
-          </ul>
-        </nav>
+              {family.data?.members.map((m) => (
+                <li key={m.id} className="flex items-center gap-2.5">
+                  <span className="initial initial-warm" aria-hidden="true">{m.firstName.charAt(0)}</span>
+                  <span className="min-w-0"><span className="block truncate text-[14px] font-medium leading-tight">{m.firstName} {m.lastName}</span><span className="block text-[12px] text-muted">{m.relationship === 'child' ? 'Child' : 'Adult you care for'}</span></span>
+                </li>
+              ))}
+            </ul>
+            <Link to="/account/family" className="mt-1 inline-flex min-h-11 items-center text-[13px] font-medium hover:underline">Manage family</Link>
+          </section>
+        </div>
         <div className="min-w-0">
           <Outlet />
         </div>
@@ -44,53 +69,189 @@ export function AccountLayout() {
   )
 }
 
-const OUTCOME: Record<string, [string, string]> = {
-  completed: ['Completed', 'badge-ok'],
-  needs_in_person: ['In-person care advised', 'badge-warn'],
-  no_show: ['Missed', 'badge-danger'],
-  ended_poor_quality: ['Call ended early', 'badge-warn'],
+// ---------- Home: the next visit as a boarding pass, its progress, and the care board ----------
+
+const plus = <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14" /></svg>
+const camera = <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" aria-hidden="true"><rect x="2.5" y="6.5" width="13" height="11" rx="2" /><path d="m15.5 10.5 6-3.5v10l-6-3.5" /></svg>
+const tick = <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="m5 12.5 4.5 4.5L19 7.5" /></svg>
+
+/** No booking number exists in the API; the visit id is already in every visit link, so its tail stands in. */
+const bookingRef = (a: Appointment) => `CV-${a.id.replace(/[^a-z0-9]/gi, '').slice(-6).toUpperCase()}`
+const forName = (a: Appointment) => (a.patient?.kind === 'family' ? a.patient.displayName.split(' ')[0] : 'You')
+const joinTo = (a: Appointment) => (a.preJoin?.confirmedAt ? `/visits/${a.id}/waiting` : `/visits/${a.id}/join`)
+
+/** "2h 40m", "3d 4h" or "12m" until an instant, rounded up so it never reads 0 before it opens. */
+function opensIn(iso: string, now: number): string {
+  const m = Math.max(1, Math.ceil((Date.parse(iso) - now) / 60000))
+  if (m >= 1440) return `${Math.floor(m / 1440)}d ${Math.floor((m % 1440) / 60)}h`
+  return m >= 60 ? `${Math.floor(m / 60)}h ${m % 60}m` : `${m}m`
 }
 
-function pastBadge(a: Appointment): [string, string] {
-  if (a.status === 'cancelled') return ['Cancelled', '']
-  if (a.outcome) return OUTCOME[a.outcome]
-  if (a.status === 'completed') return OUTCOME.completed
-  return ['Visit ended', '']
-}
-
-function UpcomingCard({ a, now }: { a: Appointment; now: number }) {
-  const open = Date.parse(a.call.joinOpensAt) <= now && now < Date.parse(a.call.joinClosesAt)
+function BoardingPass({ a, now }: { a: Appointment; now: number }) {
+  const phase = phaseOf(a, now)
+  const steps = checkInSteps(a)
+  const done = steps.filter(Boolean).length
   return (
-    <article className="card">
-      <p className="eyebrow">Upcoming</p>
-      <h3 className="mt-2 text-[20px]">{when(a.startsAt)}</h3>
-      <p className="muted mt-1">
-        {a.service.name} · {a.doctor.name}
-        {a.patient?.kind === 'family' && <> · for {a.patient.displayName}</>}
-      </p>
-      <div className="mt-5 flex flex-wrap items-center gap-x-4 gap-y-2">
-        {open ? (
-          <Link to={a.preJoin?.confirmedAt ? `/visits/${a.id}/waiting` : `/visits/${a.id}/join`} className="btn btn-primary btn-sm">Join your visit</Link>
-        ) : (
-          <>
-            <Link to={`/visits/${a.id}`} className="btn btn-secondary btn-sm">Prepare</Link>
-            <span className="fine">Join opens 10 minutes before</span>
-          </>
-        )}
+    <section className="bp" aria-labelledby="bp-title">
+      <div className="bp-body">
+        <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1">
+          <h2 id="bp-title" className="k flex items-center gap-2 text-accent"><span className="live-dot" aria-hidden="true" />{relDay(a.startsAt, new Date(now))} · Video consultation</h2>
+          <p className="k">Booking {bookingRef(a)}</p>
+        </div>
+        <div className="bp-route">
+          <div><p className="k">Patient</p><p className="bp-name">{a.patient?.kind === 'family' ? a.patient.displayName : 'You'}</p></div>
+          <div className="bp-line" aria-hidden="true"><span className="bp-mode">{camera}Video</span></div>
+          <div className="sm:text-right"><p className="k">Clinician</p><p className="bp-name">{a.doctor.name}</p></div>
+        </div>
+        <div className="bp-fields">
+          <dl><dt className="k">Appointment</dt><dd className="bp-time">{hhmm(a.startsAt)}</dd></dl>
+          <dl className="bp-facts">
+            <div><dt className="k">Date</dt><dd>{shortDate(a.startsAt)}</dd></div>
+            <div><dt className="k">Service</dt><dd>{a.service.name}</dd></div>
+            <div><dt className="k">Join opens</dt><dd>{hhmm(a.call.joinOpensAt)}</dd></div>
+          </dl>
+        </div>
       </div>
-    </article>
+      <div className="bp-perf" aria-hidden="true" />
+      <div className="bp-stub on-navy">
+        {phase === 'before' ? (
+          <div>
+            <p className="k">Join opens in</p>
+            {/* Static text: it changes once a minute, too often to announce. The status line below speaks when it opens. */}
+            <p className="bp-count">{opensIn(a.call.joinOpensAt, now)}</p>
+            <p className="text-[13px] text-white/70">Waiting room opens 10 min before</p>
+          </div>
+        ) : (
+          <div>
+            <p className="k">Waiting room</p>
+            <p className="bp-count">Open</p>
+            <p className="text-[13px] text-white/70">Join until {hhmm(a.call.joinClosesAt)}</p>
+          </div>
+        )}
+        <p role="status" className="sr-only">{phase === 'open' ? 'The waiting room for your next visit is open.' : ''}</p>
+        <div className="grid gap-3">
+          <Link to={joinTo(a)} className="btn btn-block bp-cta">{phase === 'open' && a.preJoin?.confirmedAt ? 'Enter the waiting room' : 'Check in now'}</Link>
+          <p className="text-[12px] text-white/70">{done} of 3 check-in steps done · <Link to={`/visits/${a.id}`} className="link">See steps</Link></p>
+        </div>
+      </div>
+    </section>
   )
 }
 
-function Section({ title, action, children }: { title: string; action?: ReactNode; children: ReactNode }) {
-  const id = `sec-${title.replace(/\W+/g, '-').toLowerCase()}`
+function EmptyPass() {
   return (
-    <section aria-labelledby={id} className="mt-10">
-      <div className="mb-4 flex items-end justify-between gap-4">
-        <h2 id={id}>{title}</h2>
-        {action}
+    <section className="bp" aria-labelledby="bp-title">
+      <div className="bp-body justify-center">
+        <p className="k">Next visit</p>
+        <h2 id="bp-title" className="bp-name mt-2">No visit booked</h2>
+        <p className="muted mt-2 max-w-[44ch]">When you book, your visit’s time, doctor and check-in appear here, ready for the day.</p>
       </div>
-      {children}
+      <div className="bp-perf" aria-hidden="true" />
+      <div className="bp-stub on-navy justify-center gap-4">
+        <p className="text-[15px] text-white/80">Online video visits with doctors in mainland Portugal.</p>
+        <Link to="/book" className="btn btn-block bp-cta">{plus}Book new care</Link>
+      </div>
+    </section>
+  )
+}
+
+/** Booked > Check in > Waiting room > Visit > Summary for the next visit. Summary is Carevia's visit status page. */
+function Progress({ a, now }: { a: Appointment; now: number }) {
+  const phase = phaseOf(a, now)
+  const left = checkInSteps(a).filter((s) => !s).length
+  const current = a.call.state === 'in_progress' ? 3 : phase === 'open' ? (a.preJoin?.confirmedAt ? 2 : 1) : left ? 1 : 2
+  const steps: [string, string][] = [
+    ['Booked', a.payment ? shortDate(a.payment.paidAt) : 'Paid'],
+    ['Check in', current > 1 ? 'Done' : `Now · ${left} step${left === 1 ? '' : 's'} left`],
+    ['Waiting room', `From ${hhmm(a.call.joinOpensAt)}`],
+    ['Visit', `${hhmm(a.startsAt)} · ~${minutes(a.startsAt, a.endsAt)} min`],
+    ['Summary', 'After the visit'],
+  ]
+  return (
+    <ol className="progress" aria-label="Your next visit, step by step">
+      {steps.map(([label, sub], i) => (
+        <li key={label} className={i < current ? 'is-done' : i === current ? 'is-now' : ''} aria-current={i === current ? 'step' : undefined}>
+          <span className="progress-dot" aria-hidden="true">{i < current ? tick : null}</span>
+          <span className="block text-[14px] font-medium">{label}{i < current && <span className="sr-only"> (done)</span>}</span>
+          <span className="block text-[12px] text-muted">{sub}</span>
+        </li>
+      ))}
+    </ol>
+  )
+}
+
+type Row = { status: string; tone: string; sub: string; action?: { to: string; label: string; pill?: boolean } }
+
+function upcomingRow(a: Appointment, now: number): Row {
+  const phase = phaseOf(a, now)
+  const today = lisbonDay(a.startsAt) === lisbonDay(new Date(now))
+  const sub = `${relDay(a.startsAt, new Date(now))} · ${hhmm(a.startsAt)} · Video`
+  if (phase === 'open') return { status: 'Waiting room open', tone: 'live', sub, action: { to: joinTo(a), label: 'Check in', pill: true } }
+  if (today) return { status: 'Check-in open', tone: 'live', sub, action: { to: joinTo(a), label: 'Check in', pill: true } }
+  return { status: a.preJoin?.confirmedAt ? 'Checked in' : 'Scheduled', tone: '', sub, action: { to: `/visits/${a.id}`, label: 'Prepare' } }
+}
+
+const PAST: Record<string, [string, string]> = {
+  completed: ['Completed', 'ok'], needs_in_person: ['In-person advised', 'warm'], no_show: ['Missed', 'warm'], ended_poor_quality: ['Call ended early', 'warm'],
+}
+function pastRow(a: Appointment): Row {
+  if (a.status === 'cancelled') return { status: 'Cancelled', tone: 'off', sub: 'Cancelled' }
+  const [status, tone] = PAST[a.outcome ?? (a.status === 'completed' ? 'completed' : '')] ?? ['Visit ended', '']
+  return { status, tone, sub: 'Video visit', action: { to: `/visits/${a.id}/done`, label: 'Summary' } }
+}
+
+function BoardRow({ a, r, i }: { a: Appointment; r: Row; i: number }) {
+  const [d, m] = dayMonth(a.startsAt)
+  return (
+    <tr>
+      <td><span className="flap" style={{ '--d': `${i * 40}ms` } as CSSProperties}><span className="sr-only">{fullDate(a.startsAt)}</span>{[...d].map((c, k) => <b key={k} aria-hidden="true">{c}</b>)}<i aria-hidden="true" />{[...m].map((c, k) => <b key={k} className="flap-m" aria-hidden="true">{c}</b>)}</span></td>
+      <td><span className="block font-medium text-white">{a.service.name}</span><span className="block text-[13px] text-white/60">{r.sub}</span></td>
+      <td><span className="cb-k" aria-hidden="true">With </span>{a.doctor.name}</td>
+      <td><span className="cb-k" aria-hidden="true">For </span>{forName(a)}</td>
+      <td><span className={`cb-status ${r.tone}`}>{r.status}</span></td>
+      <td className="cb-act">
+        {r.action
+          ? <Link to={r.action.to} className={r.action.pill ? 'cb-pill' : 'cb-link'}>{r.action.label}<span className="sr-only">, {a.service.name}, {fullDate(a.startsAt)}</span></Link>
+          : <span className="text-white/40"><span aria-hidden="true">—</span><span className="sr-only">No action</span></span>}
+      </td>
+    </tr>
+  )
+}
+
+const EARLIER = 5
+
+function CareBoard({ upcoming, past, now }: { upcoming: Appointment[]; past: Appointment[]; now: number }) {
+  const [all, setAll] = useState(false)
+  const earlier = all ? past : past.slice(0, EARLIER)
+  return (
+    <section aria-labelledby="board-title" className="mt-12">
+      <div className="mb-4 flex items-end justify-between gap-4">
+        <h2 id="board-title">Your care board</h2>
+        {past.length > EARLIER && (
+          <button type="button" className="inline-flex min-h-11 items-center text-[14px] font-medium hover:underline" aria-expanded={all} aria-controls="board-earlier" onClick={() => setAll(!all)}>
+            {all ? 'Show fewer' : `All records (${past.length})`}
+          </button>
+        )}
+      </div>
+      <div className="cb on-navy">
+        <table>
+          <caption className="sr-only">Your visits, upcoming and earlier</caption>
+          <thead>
+            <tr><th scope="col">Date</th><th scope="col">Visit</th><th scope="col">Clinician</th><th scope="col">For</th><th scope="col">Status</th><th scope="col"><span className="sr-only">Action</span></th></tr>
+          </thead>
+          <tbody>
+            <tr className="cb-sec"><th scope="colgroup" colSpan={6}>Upcoming</th></tr>
+            {upcoming.length ? upcoming.map((a, i) => <BoardRow key={a.id} a={a} r={upcomingRow(a, now)} i={i} />)
+              : <tr className="cb-none"><td colSpan={6}>Nothing booked. <Link to="/book" className="link">Book new care</Link></td></tr>}
+          </tbody>
+          {past.length > 0 && (
+            <tbody id="board-earlier">
+              <tr className="cb-sec"><th scope="colgroup" colSpan={6}>Earlier</th></tr>
+              {earlier.map((a, i) => <BoardRow key={a.id} a={a} r={pastRow(a)} i={i + upcoming.length} />)}
+            </tbody>
+          )}
+        </table>
+      </div>
     </section>
   )
 }
@@ -98,17 +259,20 @@ function Section({ title, action, children }: { title: string; action?: ReactNod
 export function AccountHome() {
   const { user } = useSession()
   const [params, setParams] = useSearchParams()
-  const now = useNow(30000)
+  const now = useNow(60000)
   const upcoming = useLoad(() => api.appointments('upcoming'), [])
   const past = useLoad(() => api.appointments('past'), [])
-  const family = useLoad(() => api.family(), [])
   const verified = params.get('verified') === '1'
+  const next = upcoming.data?.appointments[0]
 
   return (
     <>
       <div className="flex flex-wrap items-end justify-between gap-4">
-        <PageTitle title="Your account">Hello, {user?.firstName}</PageTitle>
-        <Link to="/book" className="btn btn-primary">Book new care</Link>
+        <div>
+          <p className="k text-accent mb-2 text-[13px]">{longDate(new Date(now))}</p>
+          <PageTitle title="Your account">Hello, {user?.firstName}</PageTitle>
+        </div>
+        <Link to="/book" className="btn btn-primary">{plus}Book new care</Link>
       </div>
 
       {verified && (
@@ -118,62 +282,18 @@ export function AccountHome() {
         </Notice>
       )}
 
-      <div className="mt-8 grid gap-6 xl:grid-cols-[minmax(0,1fr)_320px]">
-        <div className="grid gap-4 content-start">
-          <h2 className="sr-only">Upcoming visits</h2>
-          {upcoming.loading && !upcoming.data ? <Loading label="Loading your visits" lines={2} />
-            : upcoming.error ? <ErrorState error={upcoming.error} onRetry={upcoming.reload} title="We couldn’t load your visits" />
-            : upcoming.data!.appointments.length === 0 ? (
-              <Empty title="No upcoming visits" image={<Still name="empty-no-visits" className="aspect-[3/2]" />} action={<Link to="/book" className="btn btn-primary btn-sm">Book new care</Link>}>
-                When you book a visit, it appears here with everything you need to get ready.
-              </Empty>
-            ) : upcoming.data!.appointments.map((a) => <UpcomingCard key={a.id} a={a} now={now} />)}
-        </div>
-
-        <section aria-labelledby="family-title" className="card self-start">
-          <p className="eyebrow" id="family-title">Family</p>
-          {family.loading && !family.data ? <div className="mt-4"><Loading label="Loading your family" lines={2} /></div>
-            : family.error ? <div className="mt-4"><ErrorState error={family.error} onRetry={family.reload} /></div>
-            : (
-              <ul className="rows mt-3">
-                <li className="flex justify-between gap-4 py-3"><span>You</span><span className="muted">Account holder</span></li>
-                {family.data!.members.map((m) => (
-                  <li key={m.id} className="flex justify-between gap-4 py-3">
-                    <span>{m.firstName} {m.lastName}</span>
-                    <span className="muted">{m.relationship === 'child' ? 'Child' : 'Adult you care for'}</span>
-                  </li>
-                ))}
-              </ul>
-            )}
-          <Link to="/account/family" className="link mt-2 inline-flex min-h-11 items-center">Manage family</Link>
-        </section>
+      <div className="mt-7">
+        {upcoming.loading && !upcoming.data ? <Loading label="Loading your visits" lines={3} />
+          : upcoming.error ? <ErrorState error={upcoming.error} onRetry={upcoming.reload} title="We couldn’t load your visits" />
+          : next ? <><BoardingPass a={next} now={now} /><Progress a={next} now={now} /></>
+          : <EmptyPass />}
       </div>
 
-      <Section title="Past visits">
-        {past.loading && !past.data ? <Loading label="Loading past visits" lines={2} />
-          : past.error ? <ErrorState error={past.error} onRetry={past.reload} title="We couldn’t load your past visits" />
-          : past.data!.appointments.length === 0 ? <Empty title="No past visits yet" art="caught-up">Visits you’ve had will be listed here.</Empty>
-          : (
-            <ul className="card rows p-0">
-              {past.data!.appointments.map((a) => {
-                const [label, tone] = pastBadge(a)
-                return (
-                  <li key={a.id} className="grid gap-x-6 gap-y-1 px-5 py-4 sm:grid-cols-[110px_minmax(0,1fr)_auto] sm:items-center">
-                    <span className="fine sm:text-[15px] sm:text-[var(--color-ink)]">{fullDate(a.startsAt)}</span>
-                    <span className="min-w-0">
-                      <span className="block font-medium">{a.service.name}{a.patient?.kind === 'family' && <span className="muted font-normal"> · {a.patient.displayName}</span>}</span>
-                      <span className="fine">{a.doctor.name}</span>
-                    </span>
-                    <span className="mt-2 flex items-center gap-4 sm:mt-0">
-                      <span className={`badge ${tone}`}>{label}</span>
-                      {a.status !== 'cancelled' && <Link to={`/visits/${a.id}/done`} className="link inline-flex min-h-11 items-center text-[15px]">Visit status<span className="sr-only">, {fullDate(a.startsAt)}</span></Link>}
-                    </span>
-                  </li>
-                )
-              })}
-            </ul>
-          )}
-      </Section>
+      {upcoming.data && (past.error ? <div className="mt-12"><ErrorState error={past.error} onRetry={past.reload} title="We couldn’t load your past visits" /></div>
+        : past.data ? <CareBoard upcoming={upcoming.data.appointments} past={past.data.appointments} now={now} />
+        : <div className="mt-12"><Loading label="Loading past visits" lines={2} /></div>)}
+
+      <div className="mt-8"><Emergency compact /></div>
     </>
   )
 }
