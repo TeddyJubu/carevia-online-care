@@ -170,7 +170,7 @@ export function ServicesHome() {
                   </div>
                   {g.confusedWith && (
                     <p className="border-t border-[#102d5012] pt-3.5 text-[14px] italic text-[#56677a]">
-                      Often confused with {otherSlug ? <><a href={`#plate-${otherSlug}`} className="text-ink">{other.trim()}</a>:{why.join(':')}</> : g.confusedWith}
+                      Often confused with {otherSlug ? <><a href={`#plate-${otherSlug}`} className="text-ink underline underline-offset-2">{other.trim()}</a>:{why.join(':')}</> : g.confusedWith}
                     </p>
                   )}
                   <div className="rounded-[10px] bg-[#eef3fa] outline outline-1 -outline-offset-1 outline-[#1d4f911f]">
@@ -203,7 +203,7 @@ export function ServicesHome() {
         )}
       <p className="fine mt-10">
         You can book for yourself, your child or an adult you care for. You choose who when you pick a time.
-        {all[0] && <> Still unsure? Start with <a href={`#plate-${all[0].slug}`}>Plate 01</a>, a GP can redirect you.</>}
+        {all[0] && <> Still unsure? Start with <a href={`#plate-${all[0].slug}`} className="underline underline-offset-2">Plate 01</a>, a GP can redirect you.</>}
       </p>
     </div>
   )

@@ -49,7 +49,9 @@ await shot('book-unknown-service')
 
 // 2. Back and forward through booking, then a refresh on the times and checkout.
 await p.goto(base + '/app/book')
-await p.getByRole('list', { name: 'Areas of care' }).getByRole('link', { name: /General/ }).click()
+// Each area is a plate; its services and the area's doctors open under "See N services".
+const plate = p.locator('#plate-general'); await plate.getByRole('button', { name: /^See \d+ services?/ }).click()
+await plate.getByRole('link', { name: /^All .* doctors$/ }).click()
 await p.waitForURL(/book\/doctors\?/); await p.getByLabel('Service', { exact: true }).selectOption({ label: 'Allergies' })
 await p.locator('article a.chip').first().waitFor()
 await p.getByRole('link', { name: /^More times/ }).first().click(); await p.waitForURL(/\/times/)
