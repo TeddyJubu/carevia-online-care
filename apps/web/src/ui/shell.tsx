@@ -24,7 +24,10 @@ export function Header() {
         <a href="tel:112" className="call-112"><span className="hidden sm:inline">Emergency?&nbsp;</span>Call 112</a>
         <NavLink to="/doctors" className="nav-pill nav-link">Doctors</NavLink>
         {user
-          ? <Link to={account} className="nav-pill glass">{user.role === 'clinician' ? 'Your agenda' : 'Your account'}</Link>
+          ? <Link to={account} className="nav-pill glass">
+              <span className="max-[480px]:hidden">{user.role === 'clinician' ? 'Your agenda' : 'Your account'}</span>
+              <span className="min-[481px]:hidden">{user.role === 'clinician' ? 'Agenda' : 'Account'}</span>
+            </Link>
           : <Link to="/signin" className="nav-pill glass">Sign in</Link>}
       </div>
     </header>

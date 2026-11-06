@@ -101,8 +101,8 @@
   .app-header-inner { display: flex; align-items: center; gap: 12px; height: var(--header-h); width: min(1200px, calc(100% - 32px)); margin-inline: auto; }
   .brand { display: inline-flex; align-items: center; gap: 10px; min-height: 44px; font-size: 22px; font-weight: 600; letter-spacing: -0.04em; text-decoration: none; color: #fff; }
   .brand img { width: 34px; height: 34px; filter: brightness(0) invert(1); }
-  .call-112 { display: inline-flex; align-items: center; min-height: 44px; padding-inline: 8px; font-size: 14px; color: #fff; text-decoration: underline; text-underline-offset: 4px; text-decoration-color: #ffffff80; }
-  .nav-pill { display: inline-flex; align-items: center; justify-content: center; min-height: 44px; padding: 0 18px; border-radius: 10px; font-size: 14px; text-decoration: none; }
+  .call-112 { white-space: nowrap; display: inline-flex; align-items: center; min-height: 44px; padding-inline: 8px; font-size: 14px; color: #fff; text-decoration: underline; text-underline-offset: 4px; text-decoration-color: #ffffff80; }
+  .nav-pill { white-space: nowrap; display: inline-flex; align-items: center; justify-content: center; min-height: 44px; padding: 0 18px; border-radius: 10px; font-size: 14px; text-decoration: none; }
   /* A plain header link (no glass) beside the account pill; tighter on phones so brand, 112 and both links fit at 390px. */
   .nav-link { color: #fff; transition: background 0.2s; }
   .nav-link:hover, .nav-link[aria-current="page"] { background: #ffffff1a; }
