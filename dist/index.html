@@ -5,12 +5,12 @@
 .topbar .nav-logo,.topbar .nav-logo:is(:hover,:active,:focus-visible){width:auto;padding:0 6px;background:none!important;border-color:transparent!important;box-shadow:none!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important}.topbar .nav-logo::before,.topbar .nav-logo::after{display:none}.topbar .nav-logo .carevia-mark{width:58px;height:58px}
 /* Nav emblem: the glossy white cross mark, shown in its own colours (the 04.2 nav whitens the plain mark). */
 .topbar .nav-logo .carevia-mark.nav-emblem{filter:none}
-/* Hover or keyboard focus: the white cross crossfades into the blue-orange ring (same grid cell, no movement). */
-.topbar .nav-logo .nav-emblem{grid-area:1/1;transition:opacity .3s ease}
-.topbar .nav-logo .nav-emblem-hover{opacity:0}
-.topbar .nav-logo:focus-visible .nav-emblem{opacity:0;transition-duration:.45s}
-.topbar .nav-logo:focus-visible .nav-emblem-hover{opacity:1}
-@media(hover:hover){.topbar .nav-logo:hover .nav-emblem{opacity:0;transition-duration:.45s}.topbar .nav-logo:hover .nav-emblem-hover{opacity:1}}
+/* Hover or keyboard focus: a hard-edged wipe from bottom to top, the ring replacing the white cross line by line (no blend, no movement). */
+.topbar .nav-logo .nav-emblem{grid-area:1/1;clip-path:inset(0 0 0 0);transition:clip-path .3s cubic-bezier(.4,0,.2,1)}
+.topbar .nav-logo .nav-emblem-hover{clip-path:inset(100% 0 0 0)}
+.topbar .nav-logo:focus-visible .nav-emblem{clip-path:inset(0 0 100% 0);transition-duration:.45s}
+.topbar .nav-logo:focus-visible .nav-emblem-hover{clip-path:inset(0 0 0 0)}
+@media(hover:hover){.topbar .nav-logo:hover .nav-emblem{clip-path:inset(0 0 100% 0);transition-duration:.45s}.topbar .nav-logo:hover .nav-emblem-hover{clip-path:inset(0 0 0 0)}}
 /* Nav: a three-column grid keeps the emblem dead centre; on desktop both pills share the wider width. */
 .topbar{display:grid;grid-template-columns:1fr auto 1fr;align-items:center}
 .topbar .nav-pill{justify-content:center}
