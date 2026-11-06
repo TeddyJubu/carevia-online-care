@@ -177,18 +177,21 @@ const portal=esc(PORTAL_URL),external='https://carevia.triple-labs-8416.chatgpt.
 const v45Home=v45Story
  .replace('data-design="04.5"',`data-design="04.5" data-portal="${portal}"`)
  .replace('<a class="button dark" href="#care">Find a consultation</a>',`<a class="button dark" href="${portal}/book">Find a consultation</a>`)
+ .replace('here.</h2><a class="button light" href="#care">Find your care</a>',`here.</h2><a class="button light" href="${portal}/book">Find your care</a>`)
+ // The FAQ's "Still have a question? Visit Carevia" box pointed at the old prototype site: removed.
+ .replace(/<a class="care-faq-contact"[\s\S]*?<\/a>/,'')
  // Service cards go straight to booking (no details popup in between): real links, so open-in-new-tab works too.
  .replace(/<button class="care-open" data-service="([^"]+)">([\s\S]*?)<\/button>/g,(m,id,inner)=>`<a class="care-open" href="${portal}/book?service=${id}">${inner.replace('>Details<','>Book<').replace(' about ',' ')}</a>`)
  .replace('<a class="nav-pill nav-book" href="#care">Find your care</a>',`<a class="nav-pill nav-book" href="${portal}/signin">Sign in</a>`)
  .replace('<button class="button dark" data-all-care>View all care options</button>',`<button class="button dark" data-all-care>View all care options</button><a class="button light" href="${portal}/book?service=general" style="text-decoration:underline;text-decoration-color:#a7bdd0;text-underline-offset:4px">Not sure which one?</a>`)
  .replace(`<a class="button light" href="${external}" target="_blank" rel="noopener">Create your account</a>`,`<a class="button light" href="${portal}/signup">Create your account</a>`)
- .replace(`<a class="button dark" href="${external}#doctors" target="_blank" rel="noopener">Explore Carevia’s clinicians</a>`,'<a class="button dark" href="#care">Find your clinician</a>')
+ .replace(`<a class="button dark" href="${external}#doctors" target="_blank" rel="noopener">Explore Carevia’s clinicians</a>`,`<a class="button dark" href="${portal}/book">Find your clinician</a>`)
  // The marks were 1254-1647px PNGs (about 0.5 MB each) shown at 40-132 CSS px; 3x copies keep them sharp on phones.
  .replaceAll('src="assets/carevia-mark.png"','src="assets/carevia-mark-192.webp"')
  .replaceAll('href="assets/carevia-mark.png"','href="assets/carevia-mark-192.png"')
  .replaceAll('src="assets/carevia-iridescent.png"','src="assets/carevia-iridescent-400.webp"');
 // Only the footer's and the FAQ's "Visit Carevia" keep the external site.
-if(!v45Home.includes('/book">Find a consultation</a>')||v45Home.includes('class="care-open" data-service')||!v45Home.includes('class="care-open" href=')||!v45Home.includes('data-portal=')||!v45Home.includes('/signin">Sign in')||!v45Home.includes('>Not sure which one?</a>')||!v45Home.includes('/signup">Create your account')||v45Home.split(external).length-1!==2)throw new Error('Design 04.5 portal links failed');
+if(!v45Home.includes('/book">Find a consultation</a>')||v45Home.includes('class="care-open" data-service')||!v45Home.includes('class="care-open" href=')||!v45Home.includes('data-portal=')||!v45Home.includes('/signin">Sign in')||!v45Home.includes('>Not sure which one?</a>')||!v45Home.includes('/signup">Create your account')||v45Home.split(external).length-1!==1||v45Home.includes('care-faq-contact"')||!v45Home.includes('/book">Find your care</a>')||!v45Home.includes('/book">Find your clinician</a>'))throw new Error('Design 04.5 portal links failed');
 await writeFile('dist/design-04-5.html',v45Home);
 await writeFile('dist/index.html',v45Home.replace('rel="canonical" href="https://carevia.triplelabs.dev/design-04-5.html"','rel="canonical" href="https://carevia.triplelabs.dev/"'));
 
