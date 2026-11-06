@@ -73,7 +73,9 @@ export const auth = betterAuth({
     },
   },
   // Rate limiting is on in every environment, not only in production (Better Auth's default).
-  rateLimit: { enabled: true, window: 60, max: 100, storage: 'memory' },
+  // Session checks only read the caller's own cookie, so they are not limited. Sign-in keeps
+  // Better Auth's built-in 3 per 10 s per IP, and other auth routes keep 100 per minute.
+  rateLimit: { enabled: true, window: 60, max: 100, storage: 'memory', customRules: { '/get-session': false } },
   plugins: [
     haveIBeenPwned({
       customPasswordCompromisedMessage: 'This password has appeared in a data breach. Choose a different one.',
