@@ -60,15 +60,31 @@ const filmStyles=`<style>.hero-film{object-fit:cover;object-position:50% 50%}
 .topbar .nav-pill{justify-content:center}
 .topbar .nav-logo{place-items:center;grid-template-rows:minmax(0,1fr)}
 @media(max-width:600px){.topbar>.menu-toggle{justify-self:start}.topbar>.nav-book{justify-self:end}}
-/* Past the hero, the three pieces share one frosted capsule so they stay readable over the page (scripts/design-04.js sets .is-docked). */
-.topbar::before{content:'';position:absolute;inset:-5px -7px;z-index:-1;border:1px solid #ffffff1f;border-radius:999px;background:linear-gradient(180deg,#25476fe6,#0b2140eb);box-shadow:inset 0 1px #ffffff29,inset 0 -1px #00000033,0 18px 40px -18px #0a1e3aa6,0 2px 8px -2px #0a1e3a40;backdrop-filter:blur(20px) saturate(170%);-webkit-backdrop-filter:blur(20px) saturate(170%);pointer-events:none;opacity:0;transform:scale(.97);transition:opacity .22s cubic-bezier(.4,0,1,1),transform .22s cubic-bezier(.4,0,1,1)}
-.topbar.is-docked::before{opacity:1;transform:none;transition-duration:.48s;transition-timing-function:cubic-bezier(.22,1,.36,1)}
-.topbar.is-docked .nav-pill{background:transparent;border-color:transparent;box-shadow:none;backdrop-filter:none;-webkit-backdrop-filter:none}
-/* Docked, the emblem settles to about 42px so it sits inside the capsule. */
-.topbar .nav-logo{transition:transform .22s cubic-bezier(.4,0,1,1),filter .3s ease}
-.topbar.is-docked .nav-logo{transform:scale(.72);transition:transform .48s cubic-bezier(.22,1,.36,1),filter .3s ease}
+/* Past the hero, the three pieces join into one frosted bar so they stay readable over the page (scripts/design-04.js sets .is-docked).
+   The join: the bar grows out from under the emblem (expo ease-out, no overshoot: across ~370px even 4% would bulge past the pills) until it meets
+   the pills, the pills lean in to meet it on a spring (about 4% overshoot),
+   hand their fill to the bar, and one faint glare runs across. The bar keeps the pills' corner radius; it animates its insets, never scale,
+   so the corners stay true the whole way. Leaving, the bar draws back under the emblem and the pills take their fill back at once. */
+@property --pill-fill{syntax:'<number>';inherits:false;initial-value:1}
+.topbar{--dock-r:10px;--spring:cubic-bezier(.22,1,.36,1);--spring:linear(0,.029,.104,.204,.318,.434,.545,.647,.737,.814,.877,.927,.966,.994,1.014,1.027,1.035,1.038,1.038,1.036,1.033,1.029,1.024,1.02,1.016,1.012,1.009,1.006,1.004,1.002,1.001,1,.999,.999,.999,.999,1)}
+@media(max-width:600px){.topbar{--dock-r:9px}}
+.topbar::before{content:'';position:absolute;inset:-5px 50%;z-index:-1;border:1px solid #ffffff1f;border-radius:var(--dock-r);background:linear-gradient(180deg,#25476fe6,#0b2140eb);box-shadow:inset 0 1px #ffffff29,inset 0 -1px #00000033,0 18px 40px -18px #0a1e3aa6,0 2px 8px -2px #0a1e3a40;backdrop-filter:blur(20px) saturate(170%);-webkit-backdrop-filter:blur(20px) saturate(170%);pointer-events:none;opacity:0;transition:inset .34s cubic-bezier(.4,0,.2,1),opacity .18s .16s linear}
+.topbar.is-docked::before{inset:-5px -7px;opacity:1;transition:inset .56s cubic-bezier(.16,1,.3,1),opacity .14s linear}
+/* The pills' fill runs on one number so the gradient can fade (gradients themselves don't interpolate). Same colours as design-04-2.css. */
+.topbar .nav-pill{background:linear-gradient(180deg,rgb(61 110 163/calc(.15*var(--pill-fill))),rgb(4 20 35/calc(.15*var(--pill-fill)))),rgb(7 30 53/calc(.95*var(--pill-fill)));transition:--pill-fill .2s,border-color .25s,box-shadow .25s,backdrop-filter .2s,-webkit-backdrop-filter .2s}
+.topbar.is-docked .nav-pill{--pill-fill:0;border-color:transparent;box-shadow:none;backdrop-filter:none;-webkit-backdrop-filter:none;transition-duration:.32s;transition-delay:.2s;animation:dock-pull .7s}
+/* Magnetic lean: the pills drift a few pixels towards the emblem, faster as they near (ease-in), then spring home as the bar takes them. */
+.topbar>.menu-toggle{--pull:5px}.topbar>.nav-book{--pull:-5px}
+@keyframes dock-pull{0%{translate:0;animation-timing-function:cubic-bezier(.55,0,.8,.3)}32%{translate:var(--pull);animation-timing-function:var(--spring)}100%{translate:0}}
+/* One faint glare crosses the bar, left to right, just as it closes. */
+.topbar::after{content:'';position:absolute;inset:-5px -7px;z-index:-1;border-radius:var(--dock-r);background:linear-gradient(105deg,#fff0 42%,#ffffff1c 50%,#fff0 58%) 120% 0/250% 100% no-repeat;pointer-events:none;opacity:0}
+.topbar.is-docked::after{animation:dock-glare 1.05s .3s cubic-bezier(.45,.05,.25,1) both}
+@keyframes dock-glare{0%{opacity:0;background-position:120% 0}18%,78%{opacity:1}100%{opacity:0;background-position:-20% 0}}
+/* Docked, the emblem settles to about 42px so it sits inside the bar, on the same spring. */
+.topbar .nav-logo{transition:transform .3s cubic-bezier(.4,0,.2,1),filter .3s ease}
+.topbar.is-docked .nav-logo{transform:scale(.72);transition:transform .62s var(--spring),filter .3s ease}
 @media(max-width:600px){.topbar.is-docked .nav-logo{transform:scale(.8)}}
-@media(prefers-reduced-motion:reduce){.topbar::before,.topbar .nav-logo{transition:none}}
+@media(prefers-reduced-motion:reduce){.topbar::before,.topbar .nav-logo,.topbar .nav-pill{transition:none}.topbar.is-docked .nav-pill,.topbar.is-docked::after{animation:none}}
 /* Orange specular rim (scripts/specular-nav.js): canvas spills 24px past each pill and sits at z-index -1 inside the pill's isolated stack (above its fill, below its text); 4.2's blue chroma rim is retired on the pills. */
 .specular-light{position:absolute;inset:-24px;width:calc(100% + 48px);height:calc(100% + 48px);z-index:-1;pointer-events:none;opacity:0;transition:opacity .35s}.topbar .nav-pill:is(:hover,:focus-visible) .specular-light,.hero .search-shell:hover .specular-light{opacity:1}.topbar .nav-pill::after{display:none}
 /* Calm load: everything in the hero clears from a light blur, one after another.
