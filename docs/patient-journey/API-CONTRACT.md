@@ -173,12 +173,12 @@ The API reads `consent.md` for `/api/consent/current`. The web app imports the o
 
 | Route | Screen |
 |---|---|
-| `/app/services-v2` | Booking, step 1: search and the areas of care |
-| `/app/services-v2/doctors?group=<slug>&service=<id>` | Choose who cares for you: area, service, filters, doctors with their next times |
-| `/app/services-v2/doctors/:id` | Doctor profile |
-| `/app/services-v2/doctors/:id/times?slot=<id>` | The doctor's times and who the visit is for (Me, my child, another adult); Continue holds the time |
-| `/app/services-v2/checkout` | Your details (signed out), the child or adult (from Family or new), mainland and consent boxes, demo payment; then claim, patient, consent and pay as in the Booking table |
-| `/app/book…` | Old links: `?service=<slug>` opens that area's doctors, `&doctor=<id>` that doctor's times, anything else `/app/services-v2` |
+| `/app/book` | Booking, step 1: search and the areas of care. Old links: `?service=<slug>` opens that area's doctors, `&doctor=<id>` that doctor's times |
+| `/app/book/doctors?group=<slug>&service=<id>` | Choose who cares for you: area, service, filters, doctors with their next times |
+| `/app/book/doctors/:id` | Doctor profile |
+| `/app/book/doctors/:id/times?slot=<id>` | The doctor's times and who the visit is for (Me, my child, another adult); Continue holds the time |
+| `/app/book/checkout` | Your details (signed out), the child or adult (from Family or new), mainland and consent boxes, demo payment; then claim, patient, consent and pay as in the Booking table |
+| `/app/book/<old step>`, `/app/services-v2/…` | Old addresses: the step-by-step flow's screens go to `/app/book`; `/app/services-v2/…` to the same path under `/app/book` |
 | `/app/visits/:id` | J7: confirmation and preparation, calendar file, questions stored on the device; reminder choices and the payment card |
 | `/app/visits/:id/join` | J8: confirm email and mobile, companion option (new screen) |
 | `/app/visits/:id/waiting` | J9: device check and waiting room |

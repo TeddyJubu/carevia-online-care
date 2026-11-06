@@ -77,9 +77,9 @@ for (const width of widths.length ? widths.map(Number) : [390, 1280]) {
   await go('/app/forgot-password', 'forgot-password')
   await go('/app/reset-password?token=x', 'reset-password')
   await go('/app/nope', '404')
-  // Booking: Services v2 (services, doctors, profile, times, checkout).
-  await go('/app/services-v2', 'S1-services')
-  await go('/app/services-v2/doctors?group=general', 'S2-doctors')
+  // Booking (services, doctors, profile, times, checkout).
+  await go('/app/book', 'S1-services')
+  await go('/app/book/doctors?group=general', 'S2-doctors')
   await p.getByRole('button', { name: 'More filters' }).click(); await p.waitForTimeout(300)
   rows.push(await audit(p, 'S2-doctors-more-filters', width))
   await p.getByRole('link', { name: /^Profile/ }).first().click(); await p.getByText('Professional registration').waitFor()
@@ -101,7 +101,7 @@ for (const width of widths.length ? widths.map(Number) : [390, 1280]) {
 
   // Patient.
   await signIn(p, 'patient@example.com', 'demo-password')
-  await p.goto(base + '/app/services-v2/doctors?group=general&service=3')
+  await p.goto(base + '/app/book/doctors?group=general&service=3')
   await p.locator('article a.chip').nth(width < 600 ? 2 : 1).click(); await p.locator('[role=radio][aria-checked=true]').waitFor()
   await p.getByRole('button', { name: 'Continue' }).filter({ visible: true }).click(); await p.waitForURL(/checkout/)
   rows.push(await audit(p, 'S5-checkout-signed-in', width))
@@ -164,7 +164,7 @@ for (const width of widths.length ? widths.map(Number) : [390, 1280]) {
   // Reflow: 1280 at 200% zoom is 640 CSS px; WCAG 1.4.10 is 320 CSS px.
   for (const zw of width === 1280 ? [640, 320] : []) {
     await p.setViewportSize({ width: zw, height: 800 })
-    for (const path of ['/', '/app/services-v2', '/app/services-v2/doctors?group=general', '/app/signin', '/app/signup']) {
+    for (const path of ['/', '/app/book', '/app/book/doctors?group=general', '/app/signin', '/app/signup']) {
       await p.goto((path === '/' ? home : base) + path); await p.waitForLoadState('networkidle').catch(() => {})
       const o = await p.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)
       console.log(`${width} reflow ${zw}px ${path}: ${o > 0 ? `OVERFLOW ${o}px` : 'ok'}`)

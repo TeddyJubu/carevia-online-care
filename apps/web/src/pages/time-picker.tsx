@@ -6,7 +6,7 @@ import { addDays, dayLabel, hhmm, lisbonDay } from '../lib/time'
 import type { Doctor, GroupSlug, SlotWithDoctor } from '../lib/types'
 import { Dialog, DoctorAvatar, ErrorState, euro, Field, FormError, Loading } from '../ui/kit'
 
-// The doctor-and-time picker used by reschedule (visit.tsx). Booking itself is Services v2.
+// The doctor-and-time picker used by reschedule (visit.tsx). Booking itself is pages/book.tsx.
 
 function Actions({ back, children }: { back?: string; children: ReactNode }) {
   return (

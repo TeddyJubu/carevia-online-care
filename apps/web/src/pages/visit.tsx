@@ -141,7 +141,7 @@ export function Prepare() {
               )}
               {a.status === 'cancelled' && (
                 <div className="mt-6 flex flex-wrap items-center gap-x-6 gap-y-3">
-                  <Link to={`/services-v2/doctors?group=${a.service.groupSlug}&service=${a.service.id}`} className="btn btn-primary">Book another time</Link>
+                  <Link to={`/book/doctors?group=${a.service.groupSlug}&service=${a.service.id}`} className="btn btn-primary">Book another time</Link>
                   {allLink}
                 </div>
               )}
@@ -417,7 +417,7 @@ export function Done() {
             </section>
             <aside className="grid content-start gap-3" aria-label="This visit">
               <VisitCard a={a} />
-              <Link to={`/services-v2/doctors/${a.doctor.id}/times`} className="btn btn-primary btn-block">Book a follow-up</Link>
+              <Link to={`/book/doctors/${a.doctor.id}/times`} className="btn btn-primary btn-block">Book a follow-up</Link>
               <Link to="/account" className="btn btn-secondary btn-block">Back to your account</Link>
             </aside>
           </div>

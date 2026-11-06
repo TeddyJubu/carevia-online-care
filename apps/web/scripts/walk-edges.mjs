@@ -32,7 +32,7 @@ check(await book.getAttribute('href') === '/app/book?service=mental', 'service d
 await follow(book)
 check(await h1() === 'Choose who cares for you' && /group=mental/.test(path()), 'Book {service} opens the doctors for that area', `${path()} · ${await h1()}`); await shot('home-book-service')
 for (const [name, want, heading] of [
-  ['Not sure which one?', /^\/app\/services-v2\/doctors\?group=general$/, 'Choose who cares for you'],
+  ['Not sure which one?', /^\/app\/book\/doctors\?group=general$/, 'Choose who cares for you'],
   ['Create your account', /^\/app\/signup$/, 'Create your account'],
   ['Sign in', /^\/app\/signin$/, 'Sign in'],
 ]) {
@@ -49,15 +49,15 @@ for (const slug of ['general', 'mental', 'nutrition', 'specialist', 'certificate
 }
 await shot('book-unknown-service')
 
-// 2. Back and forward through Services v2, then a refresh on the times and checkout.
-await p.goto(base + '/app/services-v2')
+// 2. Back and forward through booking, then a refresh on the times and checkout.
+await p.goto(base + '/app/book')
 await p.getByRole('list', { name: 'Areas of care' }).getByRole('link', { name: /General/ }).click()
-await p.waitForURL(/services-v2\/doctors\?/); await p.getByLabel('Service', { exact: true }).selectOption({ label: 'Allergies' })
+await p.waitForURL(/book\/doctors\?/); await p.getByLabel('Service', { exact: true }).selectOption({ label: 'Allergies' })
 await p.locator('article a.chip').first().waitFor()
 await p.getByRole('link', { name: /^More times/ }).first().click(); await p.waitForURL(/\/times/)
-await p.goBack(); await p.waitForURL(/services-v2\/doctors\?/)
+await p.goBack(); await p.waitForURL(/book\/doctors\?/)
 check((await p.getByLabel('Service', { exact: true }).locator('option:checked').textContent()) === 'Allergies', 'Back to the doctors keeps the chosen service', path())
-await p.goBack(); await p.waitForURL(/services-v2$/)
+await p.goBack(); await p.waitForURL(/book$/)
 check((await h1()).startsWith('Find the right care'), 'Back again returns to the services home', await h1())
 await p.goForward(); await p.goForward(); await p.waitForURL(/\/times/)
 check((await h1()) === 'Choose your appointment', 'Forward twice returns to the times', await h1())

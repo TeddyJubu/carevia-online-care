@@ -8,7 +8,7 @@ import type { Appointment, Doctor, For, GroupSlug, ServiceGroup, Slot } from '..
 import { DoctorAvatar, Emergency, ErrorState, euro, Field, FormError, HoldTimer, Loading, Markdown, Notice, PageTitle } from '../ui/kit'
 import { validateSignUp } from './auth'
 
-// Services v2, following the patient-booking wireframe's service flow:
+// Booking, following the patient-booking wireframe's service flow:
 // services home (search + areas) > choose who cares for you (service, filters, doctors) > doctor profile >
 // the doctor's times > checkout (details if signed out, consent, demo payment). Video, for the account holder.
 // The full flow (/book) stays for booking for someone else.
@@ -56,7 +56,7 @@ export function ServicesHome() {
           <ul className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3" aria-label="Areas of care">
             {groups.map(({ g, match }) => (
               <li key={g.slug}>
-                <Link to={`/services-v2/doctors?group=${g.slug}${match ? `&service=${match.id}` : ''}`} className="card flex h-full flex-col gap-2 no-underline transition-colors hover:border-ink">
+                <Link to={`/book/doctors?group=${g.slug}${match ? `&service=${match.id}` : ''}`} className="card flex h-full flex-col gap-2 no-underline transition-colors hover:border-ink">
                   <span className="text-[18px] font-medium">{g.name}</span>
                   <span className="muted">{g.blurb}</span>
                   {match ? <span className="fine">Matches: {match.name}</span>
@@ -166,7 +166,7 @@ export function ServicesDoctors() {
 /** A doctor with their next three times: tapping a time opens their times with it already chosen. */
 function DoctorCard({ doctor: d }: { doctor: Doctor }) {
   const next = useLoad(() => (d.nextAvailableAt ? api.slots(d.id, lisbonDay(d.nextAvailableAt), 7).then((r) => r.slots.slice(0, 3)) : Promise.resolve([])), [d.id])
-  const times = `/services-v2/doctors/${d.id}/times`
+  const times = `/book/doctors/${d.id}/times`
   return (
     <article className="card card-tight" aria-labelledby={`doc-${d.id}`}>
       <div className="flex gap-4">
@@ -195,7 +195,7 @@ function DoctorCard({ doctor: d }: { doctor: Doctor }) {
               <Link to={times} className="link ml-1 inline-flex min-h-11 items-center text-sm">More times<span className="sr-only"> with {d.name}</span></Link>
             </>
           )}
-        <Link to={`/services-v2/doctors/${d.id}`} className="link ml-auto inline-flex min-h-11 items-center text-sm">Profile<span className="sr-only"> of {d.name}</span></Link>
+        <Link to={`/book/doctors/${d.id}`} className="link ml-auto inline-flex min-h-11 items-center text-sm">Profile<span className="sr-only"> of {d.name}</span></Link>
       </div>
     </article>
   )
@@ -212,7 +212,7 @@ export function ServicesDoctor() {
   const { group, service } = serviceOf(catalog.data?.groups ?? [], d)
   return (
     <div className="page">
-      <Link to={group ? `/services-v2/doctors?group=${group.slug}&service=${service?.id ?? ''}` : '/services-v2'} className="link inline-flex min-h-11 items-center text-sm">Back to doctors</Link>
+      <Link to={group ? `/book/doctors?group=${group.slug}&service=${service?.id ?? ''}` : '/book'} className="link inline-flex min-h-11 items-center text-sm">Back to doctors</Link>
       <div className="mt-4 grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_320px]">
         <section className="card">
           <div className="flex items-center gap-4">
@@ -237,7 +237,7 @@ export function ServicesDoctor() {
           <p className="mt-2">{d.service}</p>
           <p className="mt-4 text-[22px] font-medium">{euro(d.fee)}</p>
           <p className="fine">Per video consultation</p>
-          <Link to={`/services-v2/doctors/${d.id}/times`} className="btn btn-primary btn-block mt-6">Choose a time</Link>
+          <Link to={`/book/doctors/${d.id}/times`} className="btn btn-primary btn-block mt-6">Choose a time</Link>
         </aside>
       </div>
     </div>
@@ -289,7 +289,7 @@ export function ServicesTimes() {
     setError(null)
     try {
       const { appointment } = await api.hold({ slotId: picked.id, serviceId: service.id, for: who })
-      navigate('/services-v2/checkout', { state: { appt: appointment } })
+      navigate('/book/checkout', { state: { appt: appointment } })
     } catch (e) {
       const x = e as ApiError
       setError(x.code === 'SLOT_TAKEN' ? 'Someone has just booked that time. Choose another time.' : x.message)
@@ -314,7 +314,7 @@ export function ServicesTimes() {
               <DoctorAvatar doctor={d} />
               <div className="min-w-0"><h2 className="font-sans text-[18px] font-medium">{d.name}</h2><p className="fine">{d.languages} · Video consultation</p></div>
             </div>
-            <p className="mt-4">{d.specialty} · {euro(d.fee)} · <Link to={`/services-v2/doctors/${d.id}`} className="link">View profile</Link></p>
+            <p className="mt-4">{d.specialty} · {euro(d.fee)} · <Link to={`/book/doctors/${d.id}`} className="link">View profile</Link></p>
             <fieldset className="mt-6 min-w-0">
               <legend className="font-medium">Who is this visit for?</legend>
               <div className="mt-3 grid gap-2 sm:grid-cols-3">
@@ -332,7 +332,7 @@ export function ServicesTimes() {
             <h2 id="times-h" className="font-sans text-[20px] font-medium">Available times</h2>
             {slots.error ? <div className="mt-4"><ErrorState error={slots.error} onRetry={slots.reload} /></div>
               : !slots.data ? <div className="mt-4"><Loading lines={2} label="Loading times" /></div>
-              : !days.length ? <p className="muted mt-4">No free times in the next three weeks. <Link to="/services-v2" className="link">Choose another doctor</Link>.</p> : (
+              : !days.length ? <p className="muted mt-4">No free times in the next three weeks. <Link to="/book" className="link">Choose another doctor</Link>.</p> : (
                 <>
                   {(allDays ? days : days.slice(0, DAYS)).map(([label, list]) => (
                     <div key={label} className="mt-5">
@@ -383,14 +383,14 @@ export function ServicesCheckout() {
     return (
       <div className="page">
         <PageTitle lede="If you’ve just paid, your visit is in your account.">No booking in progress</PageTitle>
-        <div className="mt-8 flex flex-wrap gap-3"><Link to="/services-v2" className="btn btn-primary">Choose care</Link><Link to="/account" className="btn btn-secondary">Your visits</Link></div>
+        <div className="mt-8 flex flex-wrap gap-3"><Link to="/book" className="btn btn-primary">Choose care</Link><Link to="/account" className="btn btn-secondary">Your visits</Link></div>
       </div>
     )
   }
   /** Back to this doctor's times, giving the held time back so others can book it. */
   const pickAgain = (notice: string | null) => {
     void api.release(appt.id).catch(() => {}) // already expired or released: nothing to do
-    navigate(`/services-v2/doctors/${appt.doctor.id}/times`, { replace: true, state: { notice, for: appt.for } })
+    navigate(`/book/doctors/${appt.doctor.id}/times`, { replace: true, state: { notice, for: appt.for } })
   }
   return <div className="page"><Steps at={2} /><Checkout appt={appt} pickAgain={pickAgain} /></div>
 }

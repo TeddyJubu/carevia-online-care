@@ -101,10 +101,10 @@ This thread may use subagents for independent screens once the shell (W1, W2) is
 **Homepage thread** (`pj/homepage`):
 1. **H1:** `build.mjs` writes Design 04.5 to `dist/index.html`. 04.2 and 04.5 keep their own URLs. Keep the edit small and local: the 04.5 design is still being iterated in other threads.
 2. **H2:** Links into the portal, using a `PORTAL_URL` setting that defaults to `/app`:
-   - each service-details dialog says "Book [service]" and opens `/app/book?service=<id>` (redirects to the Services v2 doctors for that area)
+   - each service-details dialog says "Book [service]" and opens `/app/book?service=<id>` (opens the doctors for that area)
    - "Find your care" keeps scrolling to the list
    - a "Sign in" link goes to `/app/signin`
-   - a "Not sure which one?" card opens `/app/book?service=general` (redirects to Services v2)
+   - a "Not sure which one?" card opens `/app/book?service=general` (opens the General & urgent care doctors)
 3. **H3:** Copy fixes:
    - "free rebook" becomes reconnect, then reschedule
    - "documents saved to your account" becomes "available through iMED"

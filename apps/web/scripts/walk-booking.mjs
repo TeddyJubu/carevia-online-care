@@ -1,4 +1,4 @@
-// Services v2 walk (the wireframe's service flow): BASE_URL=http://localhost:5180 node scripts/walk-services-v2.mjs <outDir> [width...]
+// Booking walk (the wireframe's service flow): BASE_URL=http://localhost:5180 node scripts/walk-booking.mjs <outDir> [width...]
 // Per width: search and filters; old /book redirects; (a) the demo patient books signed in, counting clicks; (b) a new patient signs up
 // at checkout; (c) someone else holds the chosen time first (SLOT_TAKEN); (d) the demo patient books for their child. Needs the API in demo mode.
 // On localhost (or RESET=1) it resets the demo first, so earlier runs' bookings don't clash.
@@ -34,7 +34,7 @@ const times = (p) => p.locator('[role=radiogroup] [role=radio]')
 async function toCheckout(p, { width, area = 'General & urgent care', shots = false, timeIndex = 0 }) {
   let clicks = 0
   const click = async (l) => { await l.click(); clicks++ }
-  await p.goto(base + '/app/services-v2')
+  await p.goto(base + '/app/book')
   const card = p.getByRole('list', { name: 'Areas of care' }).getByRole('link', { name: new RegExp(area) })
   await card.waitFor()
   if (shots) {
@@ -70,7 +70,7 @@ for (const width of widths) {
   // Search narrows the areas and opens the matching service; filters and the doctor profile work.
   {
     const p = await page(width)
-    await p.goto(base + '/app/services-v2')
+    await p.goto(base + '/app/book')
     await p.getByLabel('Search services').fill('migraine')
     const cards = p.getByRole('list', { name: 'Areas of care' }).getByRole('link')
     check(await cards.count() === 1 && /Matches: Migraine/.test(await cards.first().textContent()), 'Search "migraine" finds Specialist care, Migraine', await cards.count())
@@ -95,7 +95,7 @@ for (const width of widths) {
     await p.goto(base + '/app/signin')
     await p.getByLabel('Email').fill('patient@example.com'); await p.getByLabel('Password').fill('demo-password')
     await p.getByRole('button', { name: 'Sign in', exact: true }).click(); await p.waitForURL(/\/app\/account/)
-    check(await p.getByRole('link', { name: 'Book new care' }).first().getAttribute('href') === '/app/services-v2', 'Account “Book new care” opens Services v2')
+    check(await p.getByRole('link', { name: 'Book new care' }).first().getAttribute('href') === '/app/book', 'Account “Book new care” opens booking')
     let clicks = 0
     // The demo patient may already have a visit at a time (TIME_CLASH): check the message, then try the next time.
     for (let i = 0; ; i++) {
@@ -117,10 +117,10 @@ for (const width of widths) {
     check(true, `(a) signed-in booking lands on the visit page in ${clicks} clicks`, clicks)
     await p.screenshot({ path: `${out}/v2-5-booked-${width}.png` })
 
-    // (d) the same patient books for their child (the old /book link redirects into Services v2).
+    // (d) the same patient books for their child (an old /book?service= link redirects to the doctors).
     await p.goto(base + '/app/book?service=general')
     await heading(p, 'Choose who cares for you')
-    check(/services-v2\/doctors\?group=general/.test(p.url()), 'Old /book?service= link opens the Services v2 doctors', p.url().replace(base, ''))
+    check(/book\/doctors\?group=general/.test(p.url()), 'Old /book?service= link opens the doctors', p.url().replace(base, ''))
     await p.locator('article a.chip').last().click()
     await heading(p, 'Choose your appointment')
     await p.getByLabel(/^My child/).check()
@@ -135,10 +135,10 @@ for (const width of widths) {
     await p.context().close()
   }
 
-  // Old /book links redirect.
+  // Old links redirect: the step-by-step flow's screens and /services-v2.
   {
     const p = await page(width)
-    for (const [from, want] of [['/app/book', /\/app\/services-v2$/], ['/app/book/time', /\/app\/services-v2$/], ['/app/book?service=mental&doctor=3', /\/app\/services-v2\/doctors\/3\/times$/]]) {
+    for (const [from, want] of [['/app/book/pay', /\/app\/book$/], ['/app/book/time', /\/app\/book$/], ['/app/services-v2/doctors?group=mental', /\/app\/book\/doctors\?group=mental$/], ['/app/book?service=mental&doctor=3', /\/app\/book\/doctors\/3\/times$/]]) {
       await p.goto(base + from); await p.waitForURL(want, { timeout: 10000 }).catch(() => {})
       check(want.test(p.url()), `${from} redirects`, p.url().replace(base, ''))
     }
@@ -166,7 +166,7 @@ for (const width of widths) {
   // (c) someone else holds the chosen time before Continue.
   {
     const p = await page(width)
-    await p.goto(base + '/app/services-v2/doctors?group=general&service=7')
+    await p.goto(base + '/app/book/doctors?group=general&service=7')
     await p.getByRole('link', { name: /^More times/ }).first().click()
     await heading(p, 'Choose your appointment')
     const doctorId = p.url().match(/doctors\/(\d+)\/times/)[1]

@@ -96,7 +96,7 @@ export function SignInForm({ onDone, submitLabel = 'Sign in' }: { onDone: (u: Us
   )
 }
 
-/** Sign-up fields from a form, with the phone in E.164 and an error per bad field. Shared with Services v2 checkout. */
+/** Sign-up fields from a form, with the phone in E.164 and an error per bad field. Shared with the booking checkout. */
 export function validateSignUp(f: FormData) {
   const b = { firstName: val(f, 'firstName'), lastName: val(f, 'lastName'), email: val(f, 'email'), phone: val(f, 'phone'), dateOfBirth: val(f, 'dateOfBirth'), password: String(f.get('password') ?? '') }
   const errs: Errors = {}

@@ -107,7 +107,7 @@ export function AccountHome() {
     <>
       <div className="flex flex-wrap items-end justify-between gap-4">
         <PageTitle title="Your account">Hello, {user?.firstName}</PageTitle>
-        <Link to="/services-v2" className="btn btn-primary">Book new care</Link>
+        <Link to="/book" className="btn btn-primary">Book new care</Link>
       </div>
 
       {verified && (
@@ -123,7 +123,7 @@ export function AccountHome() {
           {upcoming.loading && !upcoming.data ? <Loading label="Loading your visits" lines={2} />
             : upcoming.error ? <ErrorState error={upcoming.error} onRetry={upcoming.reload} title="We couldn’t load your visits" />
             : upcoming.data!.appointments.length === 0 ? (
-              <Empty title="No upcoming visits" image={<Still name="empty-no-visits" className="aspect-[3/2]" />} action={<Link to="/services-v2" className="btn btn-primary btn-sm">Book new care</Link>}>
+              <Empty title="No upcoming visits" image={<Still name="empty-no-visits" className="aspect-[3/2]" />} action={<Link to="/book" className="btn btn-primary btn-sm">Book new care</Link>}>
                 When you book a visit, it appears here with everything you need to get ready.
               </Empty>
             ) : upcoming.data!.appointments.map((a) => <UpcomingCard key={a.id} a={a} now={now} />)}
@@ -591,7 +591,7 @@ export function PaymentsPage() {
         <h2 id="payments-title" className="sr-only">Your payments</h2>
         {error ? <ErrorState error={error} onRetry={() => { upcoming.reload(); past.reload() }} title="We couldn’t load your payments" />
           : loading ? <Loading label="Loading your payments" lines={3} />
-          : paid.length === 0 ? <Empty title="No payments yet" art="caught-up" action={<Link to="/services-v2" className="btn btn-primary btn-sm">Book new care</Link>}>When you pay for a visit, it appears here with its receipt.</Empty>
+          : paid.length === 0 ? <Empty title="No payments yet" art="caught-up" action={<Link to="/book" className="btn btn-primary btn-sm">Book new care</Link>}>When you pay for a visit, it appears here with its receipt.</Empty>
           : (
             <ul className="card card-tight rows">
               {paid.map((a) => {
