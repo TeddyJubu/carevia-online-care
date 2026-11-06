@@ -77,17 +77,17 @@
 
   /* Pill buttons, 48px tall (above the 44px minimum). No arrow glyphs on any button. */
   .btn { display: inline-flex; align-items: center; justify-content: center; gap: 10px; min-height: 48px; padding: 0 24px; border: 1px solid transparent; border-radius: 999px; font-size: 15px; font-weight: 500; line-height: 1.2; text-align: center; text-decoration: none; cursor: pointer; transition: background 0.25s, border-color 0.25s, transform 0.4s var(--ease), box-shadow 0.25s; }
-  .btn:hover:not(:disabled) { transform: translateY(-1px); }
-  .btn:active:not(:disabled) { transform: none; }
+  .btn:hover:not(:disabled,[aria-disabled="true"]) { transform: translateY(-1px); }
+  .btn:active:not(:disabled,[aria-disabled="true"]) { transform: none; }
   .btn:disabled, .btn[aria-disabled="true"] { opacity: 0.5; cursor: not-allowed; }
   .btn-primary { background: var(--color-ink); color: #fff; }
-  .btn-primary:hover:not(:disabled) { background: #244f7b; }
+  .btn-primary:hover:not(:disabled,[aria-disabled="true"]) { background: #244f7b; }
   .btn-secondary { background: #fff; color: var(--color-ink); border-color: #102d5040; }
-  .btn-secondary:hover:not(:disabled) { border-color: var(--color-ink); background: #fbfdff; }
+  .btn-secondary:hover:not(:disabled,[aria-disabled="true"]) { border-color: var(--color-ink); background: #fbfdff; }
   .btn-quiet { background: transparent; color: var(--color-ink); padding-inline: 12px; }
-  .btn-quiet:hover:not(:disabled) { background: #102d500d; }
+  .btn-quiet:hover:not(:disabled,[aria-disabled="true"]) { background: #102d500d; }
   .btn-danger { background: var(--color-danger); color: #fff; }
-  .btn-danger:hover:not(:disabled) { background: #8f1d17; }
+  .btn-danger:hover:not(:disabled,[aria-disabled="true"]) { background: #8f1d17; }
   .btn-block { width: 100%; }
   .btn-sm { min-height: 44px; padding: 0 18px; font-size: 14px; }
 
@@ -230,7 +230,7 @@
   .bp-stub .k { color: #ffffffb3; }
   .bp-count { margin-top: 6px; font-family: var(--font-serif); font-size: 52px; line-height: 55px; font-variant-numeric: tabular-nums; }
   .bp-cta { background: #fff; color: var(--color-ink); }
-  .bp-cta:hover:not(:disabled) { background: #eef3f9; }
+  .bp-cta:hover:not(:disabled,[aria-disabled="true"]) { background: #eef3f9; }
   @media (max-width: 767px) {
     .bp { flex-direction: column; min-height: 0; }
     .bp-body { padding: 24px 20px; gap: 22px; }

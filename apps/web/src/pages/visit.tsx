@@ -376,8 +376,8 @@ export function PreJoin() {
           <PageTitle eyebrow={`${when(a.startsAt)} · ${a.doctor.name}`} lede="Before a video consultation, we check that the contact details on your account are yours. It’s a Portuguese teleconsultation rule.">Confirm it’s you</PageTitle>
           <fieldset className="card mt-8">
             <legend className="sr-only">Your contact details</legend>
-            <label className="check"><input type="checkbox" checked={email} onChange={(e) => setEmail(e.target.checked)} /><span>This is my email address: <strong className="font-medium break-all">{user?.email}</strong></span></label>
-            <label className="check"><input type="checkbox" checked={mobile} onChange={(e) => setMobile(e.target.checked)} /><span>This is my mobile number: <strong className="font-medium">{user?.phone}</strong></span></label>
+            <label className="check"><input type="checkbox" checked={email} onChange={(e) => { setEmail(e.target.checked); setError(null) }} /><span>This is my email address: <strong className="font-medium break-all">{user?.email}</strong></span></label>
+            <label className="check"><input type="checkbox" checked={mobile} onChange={(e) => { setMobile(e.target.checked); setError(null) }} /><span>This is my mobile number: <strong className="font-medium">{user?.phone}</strong></span></label>
             <p className="fine mt-2">Something wrong? <Link to="/account/profile" className="link">Update your details</Link> first.</p>
           </fieldset>
           <fieldset className="card mt-4">
@@ -391,7 +391,8 @@ export function PreJoin() {
           <FormError error={error} />
           <div className="mt-8 flex flex-wrap gap-3">
             <Link to={`/visits/${a.id}`} className="btn btn-secondary">Back</Link>
-            <button className="btn btn-primary" disabled={pending}>{pending ? 'Saving…' : 'Continue to the waiting room'}</button>
+            {/* Dimmed until both are ticked. aria-disabled, not disabled: it stays focusable and a click says what's missing. */}
+            <button className="btn btn-primary" disabled={pending} aria-disabled={!email || !mobile}>{pending ? 'Saving…' : 'Continue to the waiting room'}</button>
           </div>
         </form>
       )
