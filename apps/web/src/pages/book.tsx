@@ -178,12 +178,15 @@ export function ServicesHome() {
                       className="flex w-full cursor-pointer items-center gap-3 border-0 bg-transparent py-3 pl-4 pr-3 text-left">
                       <span className="min-w-0 flex-1">
                         <span className="block font-semibold text-[#123c70]">{expanded ? 'Hide services' : `See ${g.services.length} ${g.services.length === 1 ? 'service' : 'services'}`}</span>
-                        {!expanded && <span className="block truncate text-[14px] text-[#56677a]">{g.services.slice(0, 3).map((x) => x.name).join(', ')}{g.services.length > 3 && ` +${g.services.length - 3}`}</span>}
+                        <span aria-hidden={expanded} className={`grid transition-[grid-template-rows,opacity] duration-400 ease-(--ease) ${expanded ? 'grid-rows-[0fr] opacity-0' : 'grid-rows-[1fr] opacity-100'}`}>
+                          <span className="block min-h-0 truncate text-[14px] text-[#56677a]">{g.services.slice(0, 3).map((x) => x.name).join(', ')}{g.services.length > 3 && ` +${g.services.length - 3}`}</span>
+                        </span>
                       </span>
-                      <span className={`grid size-9 shrink-0 place-items-center rounded-full bg-gradient-to-b from-[#0b2648] to-[#163d6e] text-white transition-transform ${expanded ? 'rotate-180' : ''}`}><Icon name="chevron-down" size={18} /></span>
+                      <span className={`grid size-9 shrink-0 place-items-center rounded-full bg-gradient-to-b from-[#0b2648] to-[#163d6e] text-white transition-transform duration-400 ease-(--ease) ${expanded ? 'rotate-180' : ''}`}><Icon name="chevron-down" size={18} /></span>
                     </button>
-                    {expanded && (
-                      <ul id={listId} className="grid gap-1 px-2 pb-2">
+                    {/* ponytail: grid-rows 0fr->1fr animates to the list's real height, no JS measuring */}
+                    <div inert={!expanded} className={`grid transition-[grid-template-rows] duration-400 ease-(--ease) ${expanded ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]'}`}>
+                      <ul id={listId} className={`grid min-h-0 gap-1 overflow-hidden px-2 transition-[opacity,translate,padding] duration-400 ease-(--ease) ${expanded ? 'translate-y-0 pb-2 opacity-100' : '-translate-y-1 pb-0 opacity-0'}`}>
                         {g.services.map((x) => (
                           <li key={x.id}>
                             <Link to={`/book/doctors?group=${g.slug}&service=${x.id}`}
@@ -194,7 +197,7 @@ export function ServicesHome() {
                         ))}
                         <li><Link to={`/book/doctors?group=${g.slug}`} className="block rounded-lg px-3 py-2 text-[15px] font-medium hover:bg-white">All {g.name} doctors</Link></li>
                       </ul>
-                    )}
+                    </div>
                   </div>
                 </li>
               )
@@ -420,7 +423,8 @@ export function ServicesTimes() {
 
   async function go() {
     if (!picked) return setError('Choose a time to continue.')
-    if (!service) return
+    // The service comes from the catalog, which can still be loading; never let Continue do nothing.
+    if (!service) return setError(catalog.error ? 'We couldn’t load this service. Refresh the page and try again.' : 'Still loading this visit’s details. Try again in a moment.')
     setPending(true)
     setError(null)
     try {
