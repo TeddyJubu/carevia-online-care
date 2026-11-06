@@ -12,7 +12,9 @@ const LANG_JOINER = ' · '
 const uniq = (xs: string[]) => [...new Set(xs)].sort((a, b) => a.localeCompare(b))
 
 export function DoctorsPage() {
-  const all = useLoad(() => api.doctors({}).then((r) => r.doctors), [])
+  // A to Z by surname, like a directory. The API order groups the generated demo names together.
+  const surname = (name: string) => name.split(' ').at(-1) ?? name
+  const all = useLoad(() => api.doctors({}).then((r) => [...r.doctors].sort((a, b) => surname(a.name).localeCompare(surname(b.name)) || a.name.localeCompare(b.name))), [])
   const [params, setParams] = useSearchParams()
   const f = { q: params.get('q') ?? '', group: params.get('group') ?? '', specialty: params.get('specialty') ?? '', language: params.get('language') ?? '' }
   const limit = Math.max(PAGE, Number(params.get('n')) || PAGE)
