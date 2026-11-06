@@ -94,7 +94,7 @@ await p.goto(base + '/app/visits/not-a-real-id'); await p.waitForLoadState('netw
 check((await h1()) === 'We couldn’t find this visit' && await p.getByRole('link', { name: 'Go to your appointments' }).getAttribute('href') === '/app/appointments', 'An unknown visit links back to the appointments list', await h1())
 
 // 4. Sign out, then the back button and a private URL.
-await p.goto(base + '/app/account/profile'); await p.getByRole('button', { name: 'Sign out' }).click(); await p.waitForURL(/signin/)
+await p.goto(base + '/app/account/profile'); await p.getByRole('button', { name: 'Sign out' }).first().click(); await p.waitForURL(/signin/)
 await p.goBack(); await p.waitForTimeout(1000)
 check(!/Demo Patient/.test(await p.locator('main').textContent().catch(() => '') ?? ''), 'Back after sign-out shows no account data', path())
 await p.goto(base + visit); await p.waitForTimeout(1000)
@@ -109,7 +109,7 @@ await p.getByRole('button', { name: /^Sign in/ }).click(); await p.waitForTimeou
 const desk = (await p.locator('body').textContent()) ?? ''
 check(!/example\.com|\+351|1990-01-01|Demo Patient/.test(desk), 'Admin list shows no patient name, email, phone or birth date')
 await p.getByRole('button', { name: /video|daily/i }).first().click().catch(() => {}); await p.waitForTimeout(800); await shot('admin-daily')
-await p.getByRole('button', { name: 'Sign out' }).click(); await p.waitForTimeout(800)
+await p.getByRole('button', { name: 'Sign out' }).first().click(); await p.waitForTimeout(800)
 }
 await b.close()
 console.log(failed ? `${failed} failed` : 'all ok')

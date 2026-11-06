@@ -47,7 +47,7 @@ else { await p.goto(`${base}/app/visits/${today}/call`); await p.waitForTimeout(
 await p.goto(`${base}/app/visits/${ids.child}`); await shot('j7-later')
 await p.goto(`${base}/app/visits/${ids.child}/waiting`); await p.waitForTimeout(1200); await shot('j9-before')
 for (const id of ids.past) { await p.goto(`${base}/app/visits/${id}/done`); await shot('j11-done') }
-await p.goto(base + '/app/account/profile'); await p.getByRole('button', { name: 'Sign out' }).click(); await p.waitForURL(/signin/)
+await p.goto(base + '/app/account/profile'); await p.getByRole('button', { name: 'Sign out' }).first().click(); await p.waitForURL(/signin/)
 await signIn('doctor@carevia.test', 'doctor-demo-password')
 await p.goto(base + '/app/doctor'); await shot('j13-agenda')
 await p.locator('a.btn', { hasText: /Start visit|Open visit/ }).first().click(); await p.waitForURL(/doctor\/visits/); await shot('j13-visit')

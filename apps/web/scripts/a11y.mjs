@@ -137,7 +137,7 @@ for (const width of widths.length ? widths.map(Number) : [390, 1280]) {
   await p.emulateMedia({ media: 'print' }); await p.goto(`${base}/app/visits/${child.id}/receipt`)
   rows.push(await audit(p, 'receipt-print', width))
   await p.emulateMedia({ media: 'screen' })
-  await p.goto(base + '/app/account/profile'); await p.getByRole('button', { name: 'Sign out' }).click(); await p.waitForURL(/signin/)
+  await p.goto(base + '/app/account/profile'); await p.getByRole('button', { name: 'Sign out' }).first().click(); await p.waitForURL(/signin/)
 
   // Doctor.
   await signIn(p, 'doctor@carevia.test', 'doctor-demo-password')
@@ -161,7 +161,7 @@ for (const width of widths.length ? widths.map(Number) : [390, 1280]) {
     rows.push(await audit(p, 'admin-appointments', width))
     await p.getByRole('button', { name: /video|daily/i }).first().click().catch(() => {}); await p.waitForTimeout(500)
     rows.push(await audit(p, 'admin-daily', width))
-    await p.getByRole('button', { name: 'Sign out' }).click().catch(() => {})
+    await p.getByRole('button', { name: 'Sign out' }).first().click().catch(() => {})
   }
 
   // Reflow: 1280 at 200% zoom is 640 CSS px; WCAG 1.4.10 is 320 CSS px.
