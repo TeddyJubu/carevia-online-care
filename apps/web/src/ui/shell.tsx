@@ -1,5 +1,5 @@
 import { useEffect, type ReactNode } from 'react'
-import { Link, Navigate, NavLink, Outlet, useLocation } from 'react-router'
+import { Link, Navigate, NavLink, Outlet, useLocation, useNavigate } from 'react-router'
 import { MOCK } from '../lib/api'
 import { content, plain } from '../lib/content'
 import { DEMO_BUILD, useDemo } from '../lib/demo'
@@ -12,8 +12,8 @@ import { Loading } from './kit'
 const homepage = (signedIn: boolean) => (signedIn ? SITE : '/')
 
 export function Header() {
-  const { user } = useSession()
-  const account = user?.role === 'clinician' ? '/doctor' : '/account'
+  const { user, signOut } = useSession()
+  const navigate = useNavigate()
   return (
     <header className="app-header on-navy">
       <div className="app-header-inner">
@@ -26,10 +26,7 @@ export function Header() {
         <NavLink to="/doctors" className="nav-pill nav-link">Doctors</NavLink>
         {user?.role === 'patient' && <NavLink to="/appointments" className="nav-pill nav-link hidden sm:inline-flex">Appointments</NavLink>}
         {user
-          ? <Link to={account} className="nav-pill glass">
-              <span className="max-[480px]:hidden">{user.role === 'clinician' ? 'Your agenda' : 'Your account'}</span>
-              <span className="min-[481px]:hidden">{user.role === 'clinician' ? 'Agenda' : 'Account'}</span>
-            </Link>
+          ? <button type="button" className="nav-pill glass cursor-pointer" onClick={async () => { await signOut(); navigate('/signin') }}>Sign out</button>
           : <Link to="/signin" className="nav-pill glass">Sign in</Link>}
       </div>
     </header>
