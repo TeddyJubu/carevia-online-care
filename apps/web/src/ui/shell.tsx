@@ -3,12 +3,13 @@ import { Link, Navigate, NavLink, Outlet, useLocation } from 'react-router'
 import { MOCK } from '../lib/api'
 import { content, plain } from '../lib/content'
 import { DEMO_BUILD, useDemo } from '../lib/demo'
-import { useSession } from '../lib/session'
+import { SITE, useSession } from '../lib/session'
 import type { Role } from '../lib/types'
 import { Loading } from './kit'
 
-// The homepage (Design 04.5) lives at the site root, outside /app/.
-const HOME = '/'
+// The homepage (Design 04.5) lives at the site root, outside /app/. Signed in, it sends visitors to their home
+// unless the link says ?site.
+const homepage = (signedIn: boolean) => (signedIn ? SITE : '/')
 
 export function Header() {
   const { user } = useSession()
@@ -16,11 +17,12 @@ export function Header() {
   return (
     <header className="app-header on-navy">
       <div className="app-header-inner">
-        <a href={HOME} className="brand" aria-label="Carevia home">
+        <a href={homepage(!!user)} className="brand" aria-label="Carevia home">
           <img src="/app/brand/carevia-mark.png" alt="" width={34} height={34} />
           <span>Carevia</span>
         </a>
         <span className="flex-1" />
+        {user && <a href={SITE} className="nav-pill nav-link">Site</a>}
         <NavLink to="/doctors" className="nav-pill nav-link">Doctors</NavLink>
         {user?.role === 'patient' && <NavLink to="/appointments" className="nav-pill nav-link hidden sm:inline-flex">Appointments</NavLink>}
         {user
@@ -51,7 +53,7 @@ export function Footer() {
         <nav aria-label="Footer" className="text-sm">
           <p className="eyebrow mb-1">Carevia</p>
           <ul className="grid">
-            <li><a href={HOME} className="inline-flex min-h-11 items-center">Homepage</a></li>
+            <li><a href={homepage(!!user)} className="inline-flex min-h-11 items-center">Homepage</a></li>
             {clinician ? <li><Link to="/doctor" className="inline-flex min-h-11 items-center">Your agenda</Link></li> : <>
               <li><Link to="/book" className="inline-flex min-h-11 items-center">Book a visit</Link></li>
               <li><Link to="/account" className="inline-flex min-h-11 items-center">Your account</Link></li>

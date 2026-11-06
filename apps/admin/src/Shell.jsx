@@ -52,6 +52,8 @@ export default function Shell({ user, section, onSignOut, children }) {
                 {item.label}
               </a>
             ))}
+            {/* ?site: the homepage otherwise sends a signed-in admin straight back here. */}
+            <a href="/?site">Site</a>
           </nav>
           <button className="nav-pill nav-signout" type="button" onClick={onSignOut}>
             Sign out

@@ -3,7 +3,7 @@ import { EmptyArt } from './ui/empty-art'
 import { createRoot } from 'react-dom/client'
 import { createBrowserRouter, Link, Navigate, RouterProvider, useLocation, useSearchParams } from 'react-router'
 import type { ComponentType, ReactNode } from 'react'
-import { homeFor, SessionProvider, useSession } from './lib/session'
+import { ADMIN_HOME, homeFor, SessionProvider, useSession } from './lib/session'
 import { Loading, PageTitle } from './ui/kit'
 import { Layout, RequireRole } from './ui/shell'
 import './styles.css'
@@ -11,6 +11,7 @@ import './styles.css'
 function Index() {
   const { user, loading } = useSession()
   if (loading) return <div className="page-narrow"><Loading /></div>
+  if (user?.role === 'admin') { window.location.replace(ADMIN_HOME); return null }
   return <Navigate to={user ? homeFor(user) : '/book'} replace />
 }
 

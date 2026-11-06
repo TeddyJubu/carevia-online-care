@@ -2,7 +2,7 @@ import { useState, type FormEvent, type ReactNode } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router'
 import { api, ApiError } from '../lib/api'
 import { DEMO_BUILD, useDemo } from '../lib/demo'
-import { homeFor, useSession } from '../lib/session'
+import { ADMIN_HOME, homeFor, useSession } from '../lib/session'
 import { age, lisbonDay } from '../lib/time'
 import type { User } from '../lib/types'
 import { Field, FormError, Notice, PageTitle } from '../ui/kit'
@@ -179,7 +179,9 @@ export function SignIn() {
   const next = useNext()
   const [params] = useSearchParams()
   const { user, signOut } = useSession()
-  if (user?.role === 'admin' || params.get('admin')) {
+  // Admins have their own app: a signed-in admin goes straight there.
+  if (user?.role === 'admin') { window.location.replace(ADMIN_HOME); return null }
+  if (params.get('admin')) {
     return (
       <AuthShell title="Admin accounts use the admin app" lede="This portal is for patients and doctors. Sign out, then sign in to the admin app.">
         <button className="btn btn-secondary" onClick={() => signOut()}>Sign out</button>
@@ -188,7 +190,7 @@ export function SignIn() {
   }
   return (
     <AuthShell title="Sign in" lede="See your visits, get ready for the next one, and manage your family." footer={<>New to Carevia? <Link className="link" to={`/signup${next ? `?next=${encodeURIComponent(next)}` : ''}`}>Create an account</Link></>}>
-      <SignInForm onDone={(u) => navigate(next && u.role === 'patient' ? next : homeFor(u), { replace: true })} />
+      <SignInForm onDone={(u) => u.role === 'admin' ? window.location.replace(ADMIN_HOME) : navigate(next && u.role === 'patient' ? next : homeFor(u), { replace: true })} />
     </AuthShell>
   )
 }

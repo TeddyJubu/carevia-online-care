@@ -34,5 +34,9 @@ export function useSession() {
   return ctx
 }
 
-/** Where a signed-in account lands by default. */
-export const homeFor = (u: User) => (u.role === 'clinician' ? '/doctor' : u.role === 'admin' ? '/signin?admin=1' : '/account')
+/** Where a signed-in account lands by default: an /app/ path, or the admin app for admins. */
+export const homeFor = (u: User) => (u.role === 'clinician' ? '/doctor' : u.role === 'admin' ? ADMIN_HOME : '/account')
+/** The admin app is a separate build outside /app/, so the router can't navigate there: a full page load does. */
+export const ADMIN_HOME = '/admin/'
+/** The homepage for a signed-in visitor: ?site stops the homepage sending them back to their home. */
+export const SITE = '/?site'
