@@ -265,7 +265,7 @@
   .ledger-head { display: flex; justify-content: space-between; align-items: flex-end; gap: 16px; padding-bottom: 16px; border-bottom: 1.5px solid var(--color-ink); }
   .ledger-row { display: grid; grid-template-columns: 44px minmax(0, 1fr) auto 96px; align-items: center; gap: 20px; padding: 16px 0; color: var(--color-ink); }
   .ledger-row + .ledger-row { border-top: 1px solid #102d501a; }
-  .ledger-row.is-off .ledger-date > :first-child, .ledger-row.is-off .ledger-amount, .ledger-row.is-off .ledger-service { color: #8a97a6; }
+  .ledger-row.is-off .ledger-date > :first-child, .ledger-row.is-off .ledger-amount, .ledger-row.is-off .ledger-service { color: var(--color-muted); }
   .ledger-date { display: grid; gap: 1px; }
   .ledger-dot { width: 6px; height: 6px; border-radius: 50%; background: #8a97a6; }
   .ledger-dot.ok { background: #2e9e66; }
