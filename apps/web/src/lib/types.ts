@@ -40,6 +40,7 @@ export type Doctor = {
   education?: string
   approach?: string
   group?: number
+  groupSlug?: string
   groupName?: string
   service?: string
   nextAvailableAt?: string | null

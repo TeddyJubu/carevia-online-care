@@ -51,7 +51,7 @@ const clinician = (el: ReactNode) => <RequireRole role="clinician">{el}</Require
 type Mod = Record<string, ComponentType>
 const files = {
   account: () => import('./pages/account'), auth: () => import('./pages/auth'), book: () => import('./pages/book'),
-  call: () => import('./pages/call'), dev: () => import('./pages/dev'), doctor: () => import('./pages/doctor'),
+  call: () => import('./pages/call'), dev: () => import('./pages/dev'), doctors: () => import('./pages/doctors'), doctor: () => import('./pages/doctor'),
   visit: () => import('./pages/visit'), waiting: () => import('./pages/waiting'),
 }
 const page = (file: keyof typeof files, name: string, wrap = (el: ReactNode) => el) => ({
@@ -77,6 +77,8 @@ const router = createBrowserRouter(
         // The old step-by-step flow's screens (who, time, account, family, consent, pay) start again at /book.
         { path: 'book/*', element: <Navigate to="/book" replace /> },
         { path: 'services-v2/*', element: <FromServicesV2 /> },
+        // Public list of every doctor (pages/doctors.tsx); Book opens that doctor's times.
+        { path: 'doctors', ...page('doctors', 'DoctorsPage') },
         { path: 'visits/:id', ...page('visit', 'Prepare', patient) },
         { path: 'visits/:id/join', ...page('visit', 'PreJoin', patient) },
         { path: 'visits/:id/reschedule', ...page('visit', 'Reschedule', patient) },

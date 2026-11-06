@@ -103,6 +103,10 @@
   .brand img { width: 34px; height: 34px; filter: brightness(0) invert(1); }
   .call-112 { display: inline-flex; align-items: center; min-height: 44px; padding-inline: 8px; font-size: 14px; color: #fff; text-decoration: underline; text-underline-offset: 4px; text-decoration-color: #ffffff80; }
   .nav-pill { display: inline-flex; align-items: center; justify-content: center; min-height: 44px; padding: 0 18px; border-radius: 10px; font-size: 14px; text-decoration: none; }
+  /* A plain header link (no glass) beside the account pill; tighter on phones so brand, 112 and both links fit at 390px. */
+  .nav-link { color: #fff; transition: background 0.2s; }
+  .nav-link:hover, .nav-link[aria-current="page"] { background: #ffffff1a; }
+  @media (max-width: 480px) { .app-header-inner { gap: 4px; } .nav-pill { padding: 0 12px; } .brand { gap: 8px; } }
   .app-footer { background: var(--color-ink); color: #fff; padding: 56px 0 0; margin-top: 96px; overflow: hidden; }
   .app-footer a { color: #fff; }
   .footer-wordmark { margin-top: 48px; font-size: clamp(64px, 16vw, 200px); font-weight: 700; line-height: 0.8; letter-spacing: -0.05em; text-align: center; white-space: nowrap; color: #839bb8; -webkit-mask-image: linear-gradient(#000, #0002); mask-image: linear-gradient(#000, #0002); user-select: none; }
@@ -116,6 +120,12 @@
 
   .card { background: #fff; border: 1px solid #102d5014; border-radius: 14px; padding: 24px; }
   .card-tight { padding: 16px 20px; }
+  /* Doctors page: list of cards; each new batch fades up (opacity/transform only; reduced motion is handled globally). */
+  .doctor-grid { display: grid; gap: 16px; grid-template-columns: repeat(auto-fill, minmax(min(100%, 340px), 1fr)); }
+  .doctor-card { display: flex; flex-direction: column; height: 100%; animation: pop 0.45s cubic-bezier(.22,1,.36,1) both; }
+  .doctor-facts { display: grid; grid-template-columns: auto 1fr; gap: 4px 12px; margin-top: 14px; font-size: 14px; }
+  .doctor-facts dt { color: var(--color-muted); }
+  .doctor-facts dd { margin: 0; min-width: 0; }
   .card-mist { background: var(--color-mist); border-color: transparent; }
   .rule { border: 0; border-top: 1px solid var(--color-line); margin: 0; }
   .rows > * + * { border-top: 1px solid var(--color-line); }
