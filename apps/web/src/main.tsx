@@ -22,7 +22,7 @@ function NotFound() {
       <PageTitle lede="The link may be old, or the page has moved.">We couldn’t find that page</PageTitle>
       <div className="mt-8 flex flex-wrap gap-3">
         <Link to="/account" className="btn btn-primary">Go to your account</Link>
-        <a href="/" className="btn btn-secondary">Carevia homepage</a>
+        <a href="/?site" className="btn btn-secondary">Carevia homepage</a>
       </div>
     </div>
   )
