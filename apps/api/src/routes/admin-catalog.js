@@ -276,6 +276,8 @@ export async function adminCatalogRoutes(app) {
         id: group.id,
         name: group.name,
         blurb: group.blurb,
+        fieldMarks: group.fieldMarks,
+        confusedWith: group.confusedWith,
         icon: group.icon,
         sortOrder: group.sortOrder,
         active: group.active,
@@ -300,6 +302,8 @@ export async function adminCatalogRoutes(app) {
         properties: {
           name: shortText,
           blurb: { type: 'string', minLength: 1, maxLength: 400 },
+          fieldMarks: { type: 'string', maxLength: 1000 },
+          confusedWith: { type: 'string', maxLength: 400 },
           icon: { type: 'string', minLength: 1, maxLength: 40 },
           sortOrder: { type: 'integer' },
         },
@@ -326,6 +330,8 @@ export async function adminCatalogRoutes(app) {
           slug,
           name,
           blurb,
+          fieldMarks: clean(request.body.fieldMarks),
+          confusedWith: clean(request.body.confusedWith),
           icon,
           sortOrder: Number.isInteger(request.body.sortOrder) ? request.body.sortOrder : (last._max.sortOrder ?? -1) + 1,
         },
@@ -344,6 +350,8 @@ export async function adminCatalogRoutes(app) {
         properties: {
           name: shortText,
           blurb: { type: 'string', minLength: 1, maxLength: 400 },
+          fieldMarks: { type: 'string', maxLength: 1000 },
+          confusedWith: { type: 'string', maxLength: 400 },
           icon: { type: 'string', minLength: 1, maxLength: 40 },
           sortOrder: { type: 'integer' },
           active: { type: 'boolean' },
@@ -363,9 +371,13 @@ export async function adminCatalogRoutes(app) {
     if ('icon' in request.body) data.icon = clean(request.body.icon)
     if ('sortOrder' in request.body) data.sortOrder = request.body.sortOrder
     if ('active' in request.body) data.active = request.body.active
-    if (!Object.keys(data).length || Object.values(data).some((value) => value === '')) {
+    const onlyCopy = 'fieldMarks' in request.body || 'confusedWith' in request.body
+    if ((!Object.keys(data).length && !onlyCopy) || Object.values(data).some((value) => value === '')) {
       return reply.code(400).send({ error: 'VALIDATION', message: 'Check the group name and description.' })
     }
+    // May be cleared, so set after the not-empty check above.
+    if ('fieldMarks' in request.body) data.fieldMarks = clean(request.body.fieldMarks)
+    if ('confusedWith' in request.body) data.confusedWith = clean(request.body.confusedWith)
     const group = await prisma.serviceGroup.update({ where: { id }, data })
     return { group }
   })

@@ -87,7 +87,7 @@ export const api = {
     enableTwoFactor: (password: string) => post<{ totpURI: string; backupCodes: string[] }>('/api/auth/two-factor/enable', { password }),
     disableTwoFactor: (password: string) => post<unknown>('/api/auth/two-factor/disable', { password }),
   },
-  services: () => get<{ groups: ServiceGroup[] }>('/api/services'),
+  services: () => get<{ today: string; groups: ServiceGroup[] }>('/api/services'),
   doctors: (f: { groupSlug?: GroupSlug; service?: string; language?: string; sort?: 'first-available' }) =>
     get<{ doctors: Doctor[] }>(`/api/doctors${qs(f)}`),
   doctor: (id: number) => get<{ doctor: Doctor }>(`/api/doctors/${id}`),

@@ -26,6 +26,8 @@ async function main() {
       slug: group.slug,
       name: group.name,
       blurb: group.blurb,
+      fieldMarks: group.fieldMarks.join('\n'),
+      confusedWith: group.confusedWith,
       icon: group.icon,
       sortOrder: id,
     })),

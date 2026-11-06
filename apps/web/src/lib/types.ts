@@ -23,6 +23,13 @@ export type ServiceGroup = {
   slug: GroupSlug
   name: string
   blurb: string
+  /** Signs that this is the right group, one per item. Editable in admin. */
+  fieldMarks: string[]
+  /** "Other group: when to choose that instead." Empty when not set. */
+  confusedWith: string
+  /** Open slots per Lisbon day, today first, 7 days. */
+  week: number[]
+  nextAvailableAt: string | null
   icon: string
   fromFee: number
   services: { id: number; name: string }[]

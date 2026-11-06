@@ -1,10 +1,11 @@
-import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react'
+import { useEffect, useMemo, useRef, useState, type CSSProperties, type FormEvent } from 'react'
 import { Link, useLocation, useNavigate, useParams, useSearchParams } from 'react-router'
 import { api, ApiError } from '../lib/api'
 import { useLoad } from '../lib/load'
 import { useSession } from '../lib/session'
 import { addDays, age, birthDate, dayLabel, hhmm, lisbonDay, when } from '../lib/time'
 import type { Appointment, Doctor, For, GroupSlug, ServiceGroup, Slot } from '../lib/types'
+import { Icon } from '../ui/icons'
 import { DoctorAvatar, ErrorState, euro, Field, FormError, HoldTimer, Loading, Markdown, Notice, PageTitle } from '../ui/kit'
 import { validateSignUp } from './auth'
 
@@ -42,43 +43,168 @@ const serviceOf = (groups: ServiceGroup[], d: Pick<Doctor, 'service' | 'group'>)
   return { group: g, service: g?.services.find((s) => s.name === d.service) }
 }
 
-// ---------- 1. services home ----------
+// ---------- 1. services home: a field guide of plates ----------
+const WORDS = ['No', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine', 'Ten', 'Eleven', 'Twelve']
+const pad = (n: number) => String(n).padStart(2, '0')
+const lisbon = (o: Intl.DateTimeFormatOptions) => new Intl.DateTimeFormat('en-GB', { timeZone: 'Europe/Lisbon', ...o })
+const shortNext = lisbon({ weekday: 'short', day: 'numeric', month: 'short' })
+const initial = lisbon({ weekday: 'narrow' })
+const todayLong = lisbon({ weekday: 'long', day: 'numeric', month: 'long' })
+/** "Today 13:40", "Tomorrow 09:00" or "Mon 11 Nov". */
+const nextLabel = (iso: string) => { const d = dayLabel(iso); return d === 'Today' || d === 'Tomorrow' ? `${d} ${hhmm(iso)}` : shortNext.format(new Date(iso)) }
+/** Rows of 2, 3, 2… as in the design; a short last row stretches to fill. Column spans on a 6-column grid. */
+function plateSpans(n: number): number[] {
+  const out: number[] = []
+  for (let i = 0, r = 0; i < n; r++) {
+    const len = Math.min(r % 2 ? 3 : 2, n - i)
+    for (let k = 0; k < len; k++, i++) out.push(6 / len)
+  }
+  return out
+}
+
 export function ServicesHome() {
   const { user } = useSession()
   const catalog = useCatalog()
   const [q, setQ] = useState('')
+  const [open, setOpen] = useState<Record<string, boolean>>({})
+  const all = catalog.data?.groups ?? []
   const term = q.trim().toLowerCase()
-  const groups = (catalog.data?.groups ?? []).map((g) => ({ g, match: term ? g.services.find((s) => s.name.toLowerCase().includes(term)) : undefined }))
-    .filter(({ g, match }) => !term || match || `${g.name} ${g.blurb}`.toLowerCase().includes(term))
+  const groups = all.map((g, i) => ({ g, no: i + 1, matches: term ? g.services.filter((s) => s.name.toLowerCase().includes(term)) : [] }))
+    .filter(({ g, matches }) => !term || matches.length || `${g.name} ${g.blurb} ${g.fieldMarks.join(' ')}`.toLowerCase().includes(term))
+  const spans = plateSpans(groups.length)
+  const busiest = Math.max(1, ...all.flatMap((g) => g.week))
+  const fees = all.map((g) => g.fromFee).filter((f): f is number => f != null)
+  const today = catalog.data?.today
+  const days = today ? Array.from({ length: 7 }, (_, i) => new Date(`${addDays(today, i)}T12:00:00Z`)) : []
+  const byName = new Map(all.map((g) => [g.name.toLowerCase(), g.slug]))
 
   return (
     <div className="page">
-      <PageTitle eyebrow={user ? 'Your patient home' : 'Book a video visit'} title="Find the right care" lede="Choose a service, meet your doctor and book a time that suits you.">
-        {user ? `Welcome back, ${user.firstName}` : 'Find the right care'}
-      </PageTitle>
-      <div className="mt-8 max-w-[700px]">
-        <Field label="Search services" type="search" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Service, specialty or health concern" hint="Video consultations" />
+      <div className="flex flex-col gap-10 lg:flex-row lg:items-end lg:justify-between lg:gap-16">
+        <div className="min-w-0 max-w-[700px]">
+          <PageTitle title="Find the right care" eyebrow={<span className="font-sans text-[13px] font-medium uppercase tracking-[0.09em] text-[#1d4f91]">{user ? 'Your patient home' : 'Book a video visit'} · A field guide</span>}>
+            {user && <>Welcome back, {user.firstName}.<br /></>}Know which care you need.
+          </PageTitle>
+          <p className="lede mt-4">
+            {all.length ? `${WORDS[all.length] ?? all.length} services that can look alike. ` : ''}Each plate shows the few signs that tell them apart, and when doctors are around this week.
+          </p>
+          <label className="mt-7 flex h-14 max-w-[600px] items-center gap-2.5 rounded-xl bg-white px-4 shadow-[0_1px_2px_#102d500d,0_10px_28px_#102d5012] outline outline-1 -outline-offset-1 outline-line focus-within:outline-2 focus-within:outline-[var(--focus)]">
+            <Icon name="search" size={18} className="text-muted" />
+            <span className="sr-only">Search services</span>
+            <input type="search" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Service, specialty or health concern"
+              className="h-full min-w-0 flex-1 border-0 bg-transparent text-[16px] outline-none placeholder:text-muted" />
+          </label>
+        </div>
+        <aside aria-labelledby="key-title" className="on-navy w-full shrink-0 rounded-[14px] bg-gradient-to-b from-[#0b2648] to-[#163d6e] p-6 text-white shadow-[0_16px_40px_#0b264833] outline outline-1 -outline-offset-1 outline-white/10 lg:w-[340px]">
+          <div className="flex items-baseline justify-between gap-3">
+            <h2 id="key-title" className="text-[20px] text-white">Key to symbols</h2>
+            <span className="text-[12px] text-white/70">How to read a plate</span>
+          </div>
+          <ul className="mt-3.5 grid gap-3 text-[14px]">
+            <li className="flex items-center gap-3"><Icon name="stethoscope" size={16} className="text-[#9cc0ee]" />Icon: the type of care on each plate</li>
+            <li className="flex items-center gap-3"><Icon name="arrow-right" size={16} className="text-[#9cc0ee]" />Field mark: a sign this is the right service</li>
+            <li className="flex items-center gap-3"><Icon name="circle-chevron-down" size={16} className="text-[#9cc0ee]" />Select any plate to see its services</li>
+            <li className="flex items-center gap-3"><Icon name="chart-column" size={16} className="text-[#9cc0ee]" />Open slots over the next 7 days</li>
+          </ul>
+        </aside>
       </div>
-      <h2 className="mt-12">Explore your services</h2>
-      <p className="muted mt-2">Choose a service to see doctors and available appointments.</p>
+
+      <div className="mt-16 flex flex-wrap items-end justify-between gap-x-6 gap-y-2 border-b border-[#102d5033] pb-4">
+        <h2 className="text-[30px]">Plates 01–{pad(all.length || 1)}</h2>
+        {today && (
+          <p className="fine flex items-center gap-2 text-ink">
+            <span aria-hidden="true" className="size-2.5 rounded-[2px] bg-accent" />
+            Today, {todayLong.format(days[0])}.{fees.length > 0 && ` Every consultation from ${euro(Math.min(...fees))}.`}
+          </p>
+        )}
+      </div>
+
       {catalog.error ? <div className="mt-6"><ErrorState error={catalog.error} onRetry={catalog.reload} /></div>
         : !catalog.data ? <div className="mt-6"><Loading label="Loading services" /></div>
         : !groups.length ? <p className="mt-6" role="status">No matching services. Try another search.</p> : (
-          <ul className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3" aria-label="Areas of care">
-            {groups.map(({ g, match }) => (
-              <li key={g.slug}>
-                <Link to={`/book/doctors?group=${g.slug}${match ? `&service=${match.id}` : ''}`} className="card flex h-full flex-col gap-2 no-underline transition-colors hover:border-ink">
-                  <span className="text-[18px] font-medium">{g.name}</span>
-                  <span className="muted">{g.blurb}</span>
-                  {match ? <span className="fine">Matches: {match.name}</span>
-                    : <span className="fine">{g.services.slice(0, 3).map((x) => x.name).join(' · ')}{g.services.length > 3 && ` and ${g.services.length - 3} more`}</span>}
-                  <span className="mt-auto pt-2 font-medium">From {euro(g.fromFee)}</span>
-                </Link>
-              </li>
-            ))}
+          <ul className="mt-10 grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-6" aria-label="Areas of care">
+            {groups.map(({ g, no, matches }, i) => {
+              const expanded = open[g.slug] ?? matches.length > 0
+              const listId = `plate-${g.slug}-services`
+              const [other, ...why] = g.confusedWith.split(':')
+              const otherSlug = why.length ? byName.get(other.trim().toLowerCase()) : undefined
+              const free = g.week.reduce((a, b) => a + b, 0)
+              return (
+                <li key={g.slug} id={`plate-${g.slug}`} style={{ '--span': spans[i] } as CSSProperties}
+                  className="flex scroll-mt-24 flex-col gap-[18px] rounded-[14px] bg-white p-6 shadow-[0_1px_2px_#102d500d,0_10px_28px_#102d5012] outline outline-1 -outline-offset-1 outline-[#102d5012] sm:p-7 lg:col-span-(--span)">
+                  <div className="flex items-center gap-4">
+                    <span className="grid size-12 place-items-center rounded-xl bg-gradient-to-b from-[#0b2648] to-[#163d6e] text-white"><Icon name={g.icon} /></span>
+                    <span className="flex items-center gap-2.5 text-[12px] font-semibold tracking-[0.12em] text-[#1d4f91]">PLATE {pad(no)}<span aria-hidden="true" className="h-px w-6 bg-[#1d4f9140]" /></span>
+                  </div>
+                  <div>
+                    <h3 className="font-serif text-[30px] font-normal leading-[35px]">{g.name}</h3>
+                    <p className="mt-1 text-[15px] text-[#56677a]">{g.blurb}</p>
+                  </div>
+                  {g.fieldMarks.length > 0 && (
+                    <div>
+                      <p className="text-[12px] font-semibold tracking-[0.1em] text-[#56677a]">FIELD MARKS</p>
+                      <ul className="mt-2.5 grid gap-2.5 text-[15px] font-medium">
+                        {g.fieldMarks.map((m) => <li key={m} className="flex gap-2.5"><Icon name="arrow-right" size={16} className="mt-[3px] text-[#1d4f91]" />{m}</li>)}
+                      </ul>
+                    </div>
+                  )}
+                  <div className="mt-auto flex items-end justify-between gap-4">
+                    <div>
+                      <p className="text-[13px] text-[#56677a]">Next 7 days</p>
+                      <ol className="mt-1.5 flex gap-1" aria-label={`${free} open ${free === 1 ? 'slot' : 'slots'} over the next 7 days`}>
+                        {days.map((d, k) => (
+                          <li key={k} aria-hidden="true" className="flex w-2.5 flex-col items-center gap-1">
+                            <span className="flex h-[30px] items-end">
+                              <span className={`w-2 rounded-[2px] ${g.week[k] ? (k === 0 ? 'bg-accent' : 'bg-ink') : 'bg-[#9cc0ee]'}`}
+                                style={{ height: g.week[k] ? 6 + Math.round((24 * g.week[k]) / busiest) : 3 }} />
+                            </span>
+                            <span className={`text-[11px] leading-none ${k === 0 ? 'font-semibold text-accent' : 'text-[#56677a]'}`}>{initial.format(d)}</span>
+                          </li>
+                        ))}
+                      </ol>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-[13px] font-medium text-ok">{g.nextAvailableAt ? `Next: ${nextLabel(g.nextAvailableAt)}` : 'No open times this week'}</p>
+                      {g.fromFee != null && <p className="text-[18px] font-semibold">From {euro(g.fromFee)}</p>}
+                    </div>
+                  </div>
+                  {g.confusedWith && (
+                    <p className="border-t border-[#102d5012] pt-3.5 text-[14px] italic text-[#56677a]">
+                      Often confused with {otherSlug ? <><a href={`#plate-${otherSlug}`} className="text-ink">{other.trim()}</a>:{why.join(':')}</> : g.confusedWith}
+                    </p>
+                  )}
+                  <div className="rounded-[10px] bg-[#eef3fa] outline outline-1 -outline-offset-1 outline-[#1d4f911f]">
+                    <button type="button" aria-expanded={expanded} aria-controls={listId} onClick={() => setOpen((o) => ({ ...o, [g.slug]: !expanded }))}
+                      className="flex w-full cursor-pointer items-center gap-3 border-0 bg-transparent py-3 pl-4 pr-3 text-left">
+                      <span className="min-w-0 flex-1">
+                        <span className="block font-semibold text-[#123c70]">{expanded ? 'Hide services' : `See ${g.services.length} ${g.services.length === 1 ? 'service' : 'services'}`}</span>
+                        {!expanded && <span className="block truncate text-[14px] text-[#56677a]">{g.services.slice(0, 3).map((x) => x.name).join(', ')}{g.services.length > 3 && ` +${g.services.length - 3}`}</span>}
+                      </span>
+                      <span className={`grid size-9 shrink-0 place-items-center rounded-full bg-gradient-to-b from-[#0b2648] to-[#163d6e] text-white transition-transform ${expanded ? 'rotate-180' : ''}`}><Icon name="chevron-down" size={18} /></span>
+                    </button>
+                    {expanded && (
+                      <ul id={listId} className="grid gap-1 px-2 pb-2">
+                        {g.services.map((x) => (
+                          <li key={x.id}>
+                            <Link to={`/book/doctors?group=${g.slug}&service=${x.id}`}
+                              className={`flex items-center justify-between gap-3 rounded-lg px-3 py-2 text-[15px] no-underline hover:bg-white ${matches.some((m) => m.id === x.id) ? 'bg-white font-medium' : ''}`}>
+                              {x.name}
+                            </Link>
+                          </li>
+                        ))}
+                        <li><Link to={`/book/doctors?group=${g.slug}`} className="block rounded-lg px-3 py-2 text-[15px] font-medium hover:bg-white">All {g.name} doctors</Link></li>
+                      </ul>
+                    )}
+                  </div>
+                </li>
+              )
+            })}
           </ul>
         )}
-      <p className="fine mt-10">You can book for yourself, your child or an adult you care for. You choose who when you pick a time.</p>
+      <p className="fine mt-10">
+        You can book for yourself, your child or an adult you care for. You choose who when you pick a time.
+        {all[0] && <> Still unsure? Start with <a href={`#plate-${all[0].slug}`}>Plate 01</a>, a GP can redirect you.</>}
+      </p>
     </div>
   )
 }

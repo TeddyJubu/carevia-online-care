@@ -11,11 +11,11 @@ type Res = { status: number; data: any }
 const GROUPS: { slug: GroupSlug; name: string; blurb: string; icon: string; services: string[] }[] = [
   { slug: 'general', name: 'General & urgent care', blurb: 'General medicine, child care and common conditions', icon: 'stethoscope', services: ['Adult urgent care', 'Paediatric urgent care', 'Adult check-up', 'Child consultation', 'Respiratory infections', 'Urinary infections', 'Skin consultation', 'Hair loss', 'Pain', 'Allergies', 'Hypertension', 'Contraception', 'Men’s health', 'Sexology'] },
   { slug: 'mental', name: 'Mental health', blurb: 'Psychology, psychiatry and ongoing support', icon: 'brain', services: ['Adult psychology', 'Child psychology', 'Psychiatry', 'Child psychiatry', 'Adult ADHD', 'Child ADHD', 'Autism', 'Couples and family therapy', 'Eating disorders', 'Screen and gaming dependency', 'Substance and behavioural dependencies', 'Smoking cessation'] },
-  { slug: 'nutrition', name: 'Weight management', blurb: 'Nutrition and weight-loss consultations', icon: 'heart', services: ['Nutrition', 'Weight-loss consultation'] },
-  { slug: 'specialist', name: 'Specialist care', blurb: 'Find the right specialist for your needs', icon: 'activity', services: ['Gynaecology', 'Neurology', 'Endocrinology', 'Rheumatology', 'Paediatrics', 'Migraine', 'Menopause', 'Breastfeeding', 'Travel medicine'] },
+  { slug: 'nutrition', name: 'Weight management', blurb: 'Nutrition and weight-loss consultations', icon: 'scale', services: ['Nutrition', 'Weight-loss consultation'] },
+  { slug: 'specialist', name: 'Specialist care', blurb: 'Find the right specialist for your needs', icon: 'microscope', services: ['Gynaecology', 'Neurology', 'Endocrinology', 'Rheumatology', 'Paediatrics', 'Migraine', 'Menopause', 'Breastfeeding', 'Travel medicine'] },
   { slug: 'certificates', name: 'Certificates & assessments', blurb: 'Fitness and health assessments with a doctor', icon: 'file-check', services: ['Sick leave assessment', 'Illness assessment', 'Nursery and school fitness assessment', 'Occupational fitness assessment', 'Driving fitness assessment', 'Driving fitness with psychotechnical assessment', 'In-person psychotechnical assessment', 'Hunting or firearms fitness assessment', 'Diving fitness assessment', 'Boating licence fitness assessment'] },
-  { slug: 'treatments', name: 'Treatments', blurb: 'Clinical advice and treatment review', icon: 'heart-pulse', services: ['Skin treatment', 'Hair-loss treatment', 'Pain management', 'Allergies treatment', 'Hypertension treatment', 'Smoking cessation'] },
-  { slug: 'renewals', name: 'Test requests & renewals', blurb: 'Doctor consultations for test requests and treatment renewals', icon: 'clipboard-list', services: ['Tests and laboratory investigations', 'Treatment renewal review'] },
+  { slug: 'treatments', name: 'Treatments', blurb: 'Clinical advice and treatment review', icon: 'pill', services: ['Skin treatment', 'Hair-loss treatment', 'Pain management', 'Allergies treatment', 'Hypertension treatment', 'Smoking cessation'] },
+  { slug: 'renewals', name: 'Test requests & renewals', blurb: 'Doctor consultations for test requests and treatment renewals', icon: 'test-tube-diagonal', services: ['Tests and laboratory investigations', 'Treatment renewal review'] },
 ]
 const FIRST = ['Emma', 'Lucas', 'Sofia', 'Noah', 'Amelia', 'Hugo', 'Clara', 'Leo', 'Ines', 'Oscar', 'Maya', 'Felix', 'Elena', 'Adam', 'Nora', 'Louis', 'Alice', 'Milan', 'Sara', 'Theo']
 const LAST = ['Laurent', 'Meyer', 'Martins', 'Rossi', 'Dubois', 'Silva', 'Weber', 'Costa', 'Moreau', 'Fischer', 'Romano', 'Pereira', 'Bernard', 'Schmidt', 'Almeida', 'Fontana', 'Petit', 'Andersson', 'Novak', 'Lindberg']
@@ -257,13 +257,33 @@ on('POST', '/api/auth/change-password', (_, b) => {
   return ok()
 })
 
-on('GET', '/api/services', () => ok({
-  groups: GROUPS.map((g, gi): ServiceGroup => ({
+// Plate copy, as seeded by apps/api (admin-editable there).
+const PLATE: Record<string, [string[], string]> = {
+  general: [["Something new in the last few days", "Fever, cough, infection, rash or minor injury", "Any age, from babies to adults"], "Specialist care: choose that for a known, ongoing condition."],
+  mental: [["Low mood, anxiety, stress or poor sleep", "You’d like the same clinician each time", "Talking therapy or medication advice"], "Treatments: choose that if you only need a medication review."],
+  nutrition: [["A planned change, not a sudden one", "Regular check-ins over weeks", "Nutrition plans you can follow at home"], "General & urgent care: for weight change you can’t explain."],
+  specialist: [["A known condition that needs an expert", "Gynaecology, neurology, endocrinology and more", "No referral needed"], "General & urgent care: for symptoms that are new."],
+  certificates: [["You need a document, not a diagnosis", "Sick leave, school or nursery fitness", "Usually 10 to 15 minutes"], "Test requests & renewals: for lab orders and results."],
+  treatments: [["Skin, hair loss or ongoing pain", "Reviewing a treatment you’ve started", "Prescription is often the outcome"], "Specialist care: when you still need a diagnosis."],
+  renewals: [["You already know what you need", "Lab tests or a repeat prescription", "Results arrive in your account"], "Certificates & assessments: for written statements."],
+}
+on('GET', '/api/services', () => {
+  const today = lisbonDay()
+  const days = Array.from({ length: 7 }, (_, i) => addDays(today, i))
+  const now = new Date().toISOString()
+  return ok({
+  today,
+  groups: GROUPS.map((g, gi): ServiceGroup => {
+    const open = doctors.filter((d) => d.groupIndex === gi).flatMap((d) => slotsFor(d, today, 7)).map((x) => x.startsAt).filter((t) => t > now).sort()
+    return {
     id: gi, slug: g.slug, name: g.name, blurb: g.blurb, icon: g.icon,
+    fieldMarks: PLATE[g.slug]?.[0] ?? [], confusedWith: PLATE[g.slug]?.[1] ?? '',
+    week: days.map((day) => open.filter((t) => lisbonDay(t) === day).length), nextAvailableAt: open[0] ?? null,
     fromFee: Math.min(...doctors.filter((d) => d.groupIndex === gi).map((d) => d.fee)),
     services: services.filter((s) => s.groupIndex === gi).map(({ id, name }) => ({ id, name })),
-  })),
-}))
+  }}),
+  })
+})
 function nextAvailable(d: Doc) { return slotsFor(d, lisbonDay(), 22)[0]?.startsAt ?? null }
 on('GET', '/api/doctors', (_, __, q) => {
   const gi = GROUPS.findIndex((g) => g.slug === q.get('groupSlug'))

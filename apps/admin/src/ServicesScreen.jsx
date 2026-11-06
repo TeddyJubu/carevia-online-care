@@ -80,6 +80,8 @@ export default function ServicesScreen({ id, onSignOut, onDenied }) {
       const saved = await updateServiceGroup(selected.id, {
         name: selected.name.trim(),
         blurb: selected.blurb.trim(),
+        fieldMarks: selected.fieldMarks || '',
+        confusedWith: selected.confusedWith || '',
       })
       replaceGroup({ ...selected, ...saved.group })
       setBanner({ tone: 'ok', text: 'Group saved.' })
@@ -247,6 +249,23 @@ export default function ServicesScreen({ id, onSignOut, onDenied }) {
                       value={selected.blurb}
                       onChange={(event) => replaceGroup({ ...selected, blurb: event.target.value })}
                       required
+                    />
+                  </label>
+                  <label className="field field-wide">
+                    <span>Field marks (one per line)</span>
+                    <textarea
+                      rows={3}
+                      value={selected.fieldMarks || ''}
+                      onChange={(event) => replaceGroup({ ...selected, fieldMarks: event.target.value })}
+                      placeholder="Signs that this is the right group for a patient"
+                    />
+                  </label>
+                  <label className="field field-wide">
+                    <span>Often confused with</span>
+                    <input
+                      value={selected.confusedWith || ''}
+                      onChange={(event) => replaceGroup({ ...selected, confusedWith: event.target.value })}
+                      placeholder="Specialist care: choose that for a known, ongoing condition."
                     />
                   </label>
                 </div>

@@ -53,12 +53,32 @@ export async function catalogRoutes(app) {
         doctors: { where: { active: true }, select: { fee: true } },
       },
     })
+    // Open slots for the next 7 Lisbon days, per group: the plate's week bars and "Next" time.
+    const now = new Date()
+    const today = lisbonToday(now)
+    const days = Array.from({ length: 7 }, (_, i) => addDays(today, i))
+    const slots = await prisma.slot.findMany({
+      where: { ...freeSlotWhere(now), startsAt: { gt: now, lt: lisbonTimeToUtc(addDays(today, 7), '00:00') } },
+      orderBy: { startsAt: 'asc' },
+      select: { startsAt: true, doctor: { select: { groupId: true } } },
+    })
+    const week = new Map()
+    for (const slot of slots) {
+      const g = week.get(slot.doctor.groupId) ?? { counts: days.map(() => 0), next: slot.startsAt }
+      g.counts[days.indexOf(lisbonToday(slot.startsAt))] += 1
+      week.set(slot.doctor.groupId, g)
+    }
     return {
+      today,
       groups: groups.filter((group) => group.services.length > 0).map((group) => ({
         id: group.id,
         slug: group.slug,
         name: group.name,
         blurb: group.blurb,
+        fieldMarks: group.fieldMarks.split('\n').map((line) => line.trim()).filter(Boolean),
+        confusedWith: group.confusedWith,
+        week: week.get(group.id)?.counts ?? days.map(() => 0),
+        nextAvailableAt: week.get(group.id)?.next ?? null,
         icon: group.icon,
         fromFee: group.doctors.length ? Math.min(...group.doctors.map((doctor) => doctor.fee)) : null,
         services: group.services.map((service) => ({ id: service.id, name: service.name })),

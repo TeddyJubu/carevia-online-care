@@ -159,6 +159,10 @@ model ServiceGroup {
   name      String
   blurb     String
   icon      String
+  // Patient-facing "field marks": one sign per line that this is the right group.
+  fieldMarks   String @default("")
+  // One line naming the group patients mix this one up with, and when to choose that instead.
+  confusedWith String @default("")
   sortOrder Int
   // Off hides the group, its services and its doctors from patients; admins still see it.
   active    Boolean   @default(true)
