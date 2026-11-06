@@ -291,6 +291,13 @@ async function bookingChecks(patient) {
     confirmation ? confirmation.text : 'no message')
   expectError('releasing a confirmed visit is 409 NOT_HELD', await anon.del(`/api/bookings/${holdId}`), 409, 'NOT_HELD')
   expectError('another patient cannot read the visit (404)', await other.get(`/api/appointments/${holdId}`), 404, 'NOT_FOUND')
+  const receipt = await anon.get(`/api/appointments/${holdId}/receipt.pdf`)
+  record('receipt.pdf: the owner gets a 200 PDF download',
+    receipt.status === 200 && receipt.headers.get('content-type') === 'application/pdf' && receipt.text.startsWith('%PDF-')
+      && /attachment; filename="carevia-receipt-CV-\d{8}-\w{6}\.pdf"/.test(receipt.headers.get('content-disposition')) && /no-store/.test(receipt.headers.get('cache-control')),
+    `${receipt.status} ${receipt.headers.get('content-type')}`)
+  expectError('receipt.pdf: another patient gets 404', await other.get(`/api/appointments/${holdId}/receipt.pdf`), 404, 'NOT_FOUND')
+  expectError('receipt.pdf: signed out is 401 AUTH_REQUIRED', await new Browser().get(`/api/appointments/${holdId}/receipt.pdf`), 401, 'AUTH_REQUIRED')
 
   const upcoming = await anon.get('/api/appointments?scope=upcoming')
   record('the new visit is in the patient’s upcoming list', upcoming.json?.appointments?.some((item) => item.id === holdId), `count ${upcoming.json?.appointments?.length}`)
@@ -327,6 +334,7 @@ async function bookingChecks(patient) {
   const set = await patient.put(`/api/bookings/${childHold}/patient`, { familyMemberId: leo?.id })
   record('choose the child for the booking', set.status === 200 && set.json?.appointment?.patient?.kind === 'family'
     && set.json.appointment.patient.displayName === 'Leo Patient', show(set))
+  expectError('receipt.pdf for an unpaid hold is 409 NOT_PAID', await patient.get(`/api/appointments/${childHold}/receipt.pdf`), 409, 'NOT_PAID')
   const releasedChild = await patient.del(`/api/bookings/${childHold}`)
   record('release a hold', releasedChild.status === 200 && releasedChild.json?.ok === true, show(releasedChild))
   return { adultId: adult.json?.member?.id }
