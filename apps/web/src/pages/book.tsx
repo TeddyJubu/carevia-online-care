@@ -24,6 +24,18 @@ function Steps({ at }: { at: number }) {
   )
 }
 
+// Family's "Book for Leo" says who the next booking is for. The times step reads the relationship,
+// checkout the person; paying clears it, and it lapses after 30 minutes so a later booking starts fresh.
+const BOOK_FOR = 'carevia.bookFor'
+type BookFor = { for: Exclude<For, 'self'>; memberId: string; at: number }
+export const setBookFor = (v: Omit<BookFor, 'at'>) => sessionStorage.setItem(BOOK_FOR, JSON.stringify({ ...v, at: Date.now() }))
+const bookFor = (): Partial<BookFor> => {
+  try {
+    const v = JSON.parse(sessionStorage.getItem(BOOK_FOR) ?? 'null') as BookFor | null
+    return v && Date.now() - v.at < 30 * 60_000 ? v : {}
+  } catch { return {} }
+}
+
 const useCatalog = () => useLoad(() => api.services(), [])
 const serviceOf = (groups: ServiceGroup[], d: Pick<Doctor, 'service' | 'group'>) => {
   const g = groups.find((x) => x.id === d.group) ?? groups.find((x) => x.services.some((s) => s.name === d.service))
@@ -260,7 +272,7 @@ export function ServicesTimes() {
   const [error, setError] = useState<string | null>((state as { notice?: string } | null)?.notice ?? null)
   const [pending, setPending] = useState(false)
   // Who the visit is for is part of the hold (the API fixes it then), so it's asked here; checkout names the person.
-  const [who, setWho] = useState<For>((state as { for?: For } | null)?.for ?? 'self')
+  const [who, setWho] = useState<For>(() => (state as { for?: For } | null)?.for ?? bookFor().for ?? 'self')
   const days = useMemo(() => {
     const m = new Map<string, Slot[]>()
     for (const s of slots.data ?? []) m.set(dayLabel(s.startsAt), [...(m.get(dayLabel(s.startsAt)) ?? []), s])
@@ -411,9 +423,9 @@ function Checkout({ appt, pickAgain }: { appt: Appointment; pickAgain: (message:
   // For a child or another adult: pick them from Family, or add them (signed-out patients always add).
   const kind: For = appt.for ?? 'self'
   const family = useLoad(() => (user && kind !== 'self' ? api.family().then((r) => r.members.filter((m) => m.relationship === kind)) : Promise.resolve([])), [user?.id, kind])
-  const [member, setMember] = useState('')
+  const [member, setMember] = useState(() => bookFor().memberId ?? '')
   const members = family.data ?? []
-  const chosen = member || members[0]?.id || 'new'
+  const chosen = member === 'new' || members.some((m) => m.id === member) ? member : members[0]?.id || 'new'
   const child = kind === 'child'
   const picked = user ? members.find((m) => m.id === chosen) : undefined
 
@@ -470,6 +482,7 @@ function Checkout({ appt, pickAgain }: { appt: Appointment; pickAgain: (message:
       }
       if (!a.consent) a = (await api.acceptConsent(a.id, consent.data!.version)).appointment
       const { appointment } = await api.pay(a.id)
+      sessionStorage.removeItem(BOOK_FOR)
       navigate(`/visits/${appointment.id}?booked=1`, { replace: true }) // Back skips the paid checkout
     } catch (err) {
       const x = err as ApiError

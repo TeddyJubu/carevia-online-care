@@ -206,6 +206,16 @@
   .manifest { margin-top: 28px; padding: 24px 14px 0; border-top: 1px solid var(--color-line); }
   .initial { display: grid; place-items: center; width: 32px; height: 32px; flex: none; border-radius: 50%; background: var(--color-ink); color: #fff; font-size: 13px; font-weight: 500; }
   .initial-warm { background: var(--color-accent); }
+  .initial-lg { width: 44px; height: 44px; font-size: 16px; }
+  /* Family: one row per person on the account */
+  .member-row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; padding: 18px 20px; }
+  .tag { display: inline-flex; padding: 2px 8px; border-radius: 6px; background: #e3ecf6; color: var(--color-ink); font-size: 12px; line-height: 18px; font-weight: 500; white-space: nowrap; }
+  .tag-warm { background: #fbf3ed; color: var(--color-accent); }
+  .choice-rel { gap: 14px; padding: 18px; }
+  .choice-rel:has(input:checked) { box-shadow: inset 0 0 0 1px var(--color-ink), 0 4px 14px #102d5014; }
+  .ico-tile { display: grid; place-items: center; width: 40px; height: 40px; flex: none; border-radius: 10px; background: #f3f6fa; color: var(--color-muted); transition: background 0.2s, color 0.2s; }
+  .choice:has(input:checked) .ico-tile { background: #e3ecf6; color: var(--color-ink); }
+  .confirm-row { align-items: center; padding: 14px 16px; border-radius: 10px; background: #f6f6f6; font-size: 14px; }
   .live-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--color-accent); flex: none; }
 
   /* The next visit as a boarding pass: body, perforation, navy stub. Stacks below 768px. */

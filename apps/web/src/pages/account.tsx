@@ -8,6 +8,7 @@ import { age, birthDate, dayMonth, fullDate, hhmm, lisbonDay, longDate, minutes,
 import type { Appointment, FamilyMember } from '../lib/types'
 import { Dialog, Empty, ErrorState, euro, Field, FormError, Loading, Markdown, Notice, PageTitle, paymentStatus, Still } from '../ui/kit'
 import { toE164 } from './auth'
+import { setBookFor } from './book'
 import { checkInSteps, phaseOf } from './visit'
 
 type Errors = Record<string, string>
@@ -296,6 +297,11 @@ export function AccountHome() {
 
 type MemberInput = Omit<FamilyMember, 'id'>
 
+const lock = <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><rect x="5" y="10.5" width="14" height="10" rx="2" /><path d="M8 10.5V7.5a4 4 0 0 1 8 0v3" /></svg>
+const childIco = <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><circle cx="12" cy="9" r="4.5" /><path d="M10.3 9.6h.01M13.7 9.6h.01M10.6 11.4c.8.6 2 .6 2.8 0M6 21c.9-3.2 3.2-5 6-5s5.1 1.8 6 5" /></svg>
+const adultIco = <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><circle cx="12" cy="7.5" r="3.5" /><path d="M5 21c.9-4 3.6-6.5 7-6.5s6.1 2.5 7 6.5" /></svg>
+const yearsOld = (dob: string) => { const n = age(dob); return n < 1 ? 'Under 1 year old' : `${n} year${n === 1 ? '' : 's'} old` }
+
 function checkMember(b: Partial<MemberInput>): Errors {
   const e: Errors = {}
   if (!b.firstName) e.firstName = 'Enter their first name.'
@@ -312,6 +318,9 @@ function MemberForm({ initial, submitLabel, onSave, onCancel }: { initial?: Fami
   const [errors, setErrors] = useState<Errors>({})
   const [error, setError] = useState<string | null>(null)
   const [pending, setPending] = useState(false)
+  const [rel, setRel] = useState<MemberInput['relationship']>(initial?.relationship ?? 'child')
+  // Only asked when adding: the API has no field for it, so it's a check before the person is created.
+  const askConfirm = !initial
 
   async function onSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault()
@@ -319,6 +328,7 @@ function MemberForm({ initial, submitLabel, onSave, onCancel }: { initial?: Fami
     const f = new FormData(form)
     const b = { firstName: val(f, 'firstName'), lastName: val(f, 'lastName'), dateOfBirth: val(f, 'dateOfBirth'), relationship: val(f, 'relationship') as MemberInput['relationship'] }
     const errs = checkMember(b)
+    if (askConfirm && !f.get('confirm')) errs.confirm = rel === 'child' ? 'Confirm you’re their parent or legal guardian.' : 'Confirm they’ve agreed to you booking for them.'
     setErrors(errs)
     setError(null)
     if (Object.keys(errs).length) {
@@ -328,7 +338,7 @@ function MemberForm({ initial, submitLabel, onSave, onCancel }: { initial?: Fami
     setPending(true)
     try {
       await onSave(b)
-      if (!initial) { form.reset(); setErrors({}) }
+      if (!initial) { form.reset(); setRel('child'); setErrors({}) }
     } catch (err) {
       setError(errMsg(err))
     } finally {
@@ -337,37 +347,60 @@ function MemberForm({ initial, submitLabel, onSave, onCancel }: { initial?: Fami
   }
 
   return (
-    <form noValidate onSubmit={onSubmit} className="grid gap-5">
-      <fieldset className="grid gap-3">
-        <legend className="field-label mb-2">Who are they to you?</legend>
+    <form noValidate onSubmit={onSubmit} className="grid gap-6">
+      <fieldset className="grid gap-2.5">
+        <legend className="field-label mb-2.5">Who are they to you?</legend>
         <div className="grid gap-3 sm:grid-cols-2">
-          <label className="choice">
-            <input type="radio" name="relationship" value="child" defaultChecked={initial ? initial.relationship === 'child' : true} aria-describedby={errors.relationship ? 'rel-err' : undefined} />
-            <span><span className="block font-medium">My child</span><span className="fine">Under 18. You book as parent or guardian.</span></span>
+          <label className="choice choice-rel">
+            <input type="radio" name="relationship" value="child" checked={rel === 'child'} onChange={() => setRel('child')} aria-describedby={errors.relationship ? 'rel-err' : undefined} />
+            <span className="min-w-0 flex-1"><span className="block font-medium">My child</span><span className="fine">Under 18. You book as parent or guardian.</span></span>
+            <span className="ico-tile">{childIco}</span>
           </label>
-          <label className="choice">
-            <input type="radio" name="relationship" value="adult" defaultChecked={initial?.relationship === 'adult'} />
-            <span><span className="block font-medium">Another adult I care for</span><span className="fine">18 or over.</span></span>
+          <label className="choice choice-rel">
+            <input type="radio" name="relationship" value="adult" checked={rel === 'adult'} onChange={() => setRel('adult')} />
+            <span className="min-w-0 flex-1"><span className="block font-medium">Another adult I care for</span><span className="fine">18 or over.</span></span>
+            <span className="ico-tile">{adultIco}</span>
           </label>
         </div>
         <p id="rel-err" className="field-error" aria-live="polite">{errors.relationship}</p>
       </fieldset>
       <div className="grid gap-5 sm:grid-cols-2">
-        <Field label="First name" name="firstName" autoComplete="off" defaultValue={initial?.firstName} error={errors.firstName} />
-        <Field label="Last name" name="lastName" autoComplete="off" defaultValue={initial?.lastName} error={errors.lastName} />
+        <Field label="First name" name="firstName" autoComplete="off" placeholder="e.g. Leo" defaultValue={initial?.firstName} error={errors.firstName} />
+        <Field label="Last name" name="lastName" autoComplete="off" placeholder="e.g. Silva" defaultValue={initial?.lastName} error={errors.lastName} />
       </div>
-      <Field label="Date of birth" name="dateOfBirth" type="date" max={lisbonDay()} defaultValue={initial?.dateOfBirth} error={errors.dateOfBirth} />
+      <Field label="Date of birth" name="dateOfBirth" type="date" max={lisbonDay()} defaultValue={initial?.dateOfBirth} error={errors.dateOfBirth}
+        hint="We use this to match them with a paediatric or adult doctor." />
+      {askConfirm && (
+        <div>
+          <label className="check confirm-row">
+            <input type="checkbox" name="confirm" aria-invalid={errors.confirm ? true : undefined} aria-describedby={errors.confirm ? 'confirm-err' : undefined} />
+            <span>{rel === 'child' ? 'I confirm I’m their parent or legal guardian.' : 'I confirm they’ve agreed to me booking visits for them.'}</span>
+          </label>
+          {errors.confirm && <p id="confirm-err" className="field-error mt-2" role="alert">{errors.confirm}</p>}
+        </div>
+      )}
       <FormError error={error} />
-      <div className="flex flex-wrap gap-3">
-        <button className="btn btn-primary" disabled={pending}>{pending ? 'Saving…' : submitLabel}</button>
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-3">
+        <button className="btn btn-primary" disabled={pending}>{!initial && plus}{pending ? 'Saving…' : submitLabel}</button>
         {onCancel && <button type="button" className="btn btn-secondary" onClick={onCancel}>Cancel</button>}
+        {!initial && <p className="fine">You can change these details at any time.</p>}
       </div>
     </form>
   )
 }
 
 export function FamilyPage() {
+  const { user } = useSession()
+  const navigate = useNavigate()
   const family = useLoad(() => api.family(), [])
+  // Only to say whether each person has a visit coming up. Visits name the patient, not the member id.
+  const upcoming = useLoad(() => api.appointments('upcoming'), [])
+  const upcomingFor = (m: FamilyMember) => {
+    if (!upcoming.data) return null
+    const n = upcoming.data.appointments.filter((a) => a.patient?.kind === 'family' && a.patient.displayName === `${m.firstName} ${m.lastName}`).length
+    return n === 0 ? 'No upcoming visits' : `${n} upcoming visit${n === 1 ? '' : 's'}`
+  }
+  const people = 1 + (family.data?.members.length ?? 0)
   const [editing, setEditing] = useState<FamilyMember | null>(null)
   const [removing, setRemoving] = useState<FamilyMember | null>(null)
   const [removeError, setRemoveError] = useState<string | null>(null)
@@ -392,35 +425,54 @@ export function FamilyPage() {
 
   return (
     <>
-      <PageTitle title="Family" lede="Book visits for your children, or for an adult you care for, from your own account.">Family</PageTitle>
+      <PageTitle title="Family" lede="Book visits for your children, or for an adult you care for, from your own account."
+        eyebrow={<span className="k" style={{ color: 'var(--color-accent)', fontSize: 13 }}>Account{family.data ? ` · ${people} ${people === 1 ? 'person' : 'people'}` : ''}</span>}>Family</PageTitle>
       <p role="status" aria-live="polite" className="sr-only">{status}</p>
 
-      <section aria-labelledby="members-title" className="mt-8">
-        <h2 id="members-title" className="sr-only">Family members</h2>
+      <section aria-labelledby="members-title" className="mt-10">
+        <h2 id="members-title" className="mb-3.5 font-serif text-[22px]">People on your account</h2>
         {family.loading && !family.data ? <Loading label="Loading your family" lines={2} />
           : family.error ? <ErrorState error={family.error} onRetry={family.reload} title="We couldn’t load your family" />
-          : family.data!.members.length === 0 ? <Empty title="No family members yet" image={<Still name="empty-no-family" className="aspect-[3/2]" />}>Add a child or an adult you care for, and you can book visits for them.</Empty>
           : (
-            <ul className="card rows p-0">
-              {family.data!.members.map((m) => (
-                <li key={m.id} className="flex flex-wrap items-center gap-x-6 gap-y-2 px-5 py-4">
+            <>
+              <ul className="card rows p-0">
+                <li className="member-row">
+                  <span className="initial initial-lg" aria-hidden="true">{user?.firstName.charAt(0)}</span>
                   <span className="min-w-0 flex-1">
-                    <span className="block font-medium">{m.firstName} {m.lastName}</span>
-                    <span className="fine">{m.relationship === 'child' ? 'Child' : 'Adult you care for'} · Born {birthDate(m.dateOfBirth)}</span>
+                    <span className="flex flex-wrap items-center gap-2"><span className="font-medium">{user?.firstName} {user?.lastName}</span><span className="tag">You</span></span>
+                    <span className="fine block">Account holder · Pays for all visits</span>
                   </span>
-                  <span className="flex gap-2">
-                    <button type="button" className="btn btn-secondary btn-sm" onClick={() => setEditing(m)}>Edit<span className="sr-only"> {m.firstName}</span></button>
-                    <button type="button" className="btn btn-quiet btn-sm" onClick={() => { setRemoveError(null); setRemoving(m) }}>Remove<span className="sr-only"> {m.firstName}</span></button>
-                  </span>
+                  <span className="fine flex items-center gap-1.5 font-medium">{lock}Primary</span>
                 </li>
-              ))}
-            </ul>
+                {family.data!.members.map((m) => {
+                  const visits = upcomingFor(m)
+                  return (
+                    <li key={m.id} className="member-row">
+                      <span className="initial initial-lg initial-warm" aria-hidden="true">{m.firstName.charAt(0)}</span>
+                      <span className="min-w-0 flex-1">
+                        <span className="flex flex-wrap items-center gap-2"><span className="font-medium">{m.firstName} {m.lastName}</span><span className="tag tag-warm">{m.relationship === 'child' ? 'Child' : 'Adult you care for'}</span></span>
+                        <span className="fine block">Born {birthDate(m.dateOfBirth)} · {yearsOld(m.dateOfBirth)}{visits && ` · ${visits}`}</span>
+                      </span>
+                      <span className="flex flex-wrap gap-2">
+                        <button type="button" className="btn btn-primary btn-sm" onClick={() => { setBookFor({ for: m.relationship, memberId: m.id }); navigate('/book') }}>{plus}Book for {m.firstName}</button>
+                        <button type="button" className="btn btn-secondary btn-sm" onClick={() => setEditing(m)}>Edit<span className="sr-only"> {m.firstName}</span></button>
+                        <button type="button" className="btn btn-quiet btn-sm" style={{ color: 'var(--color-muted)' }} onClick={() => { setRemoveError(null); setRemoving(m) }}>Remove<span className="sr-only"> {m.firstName}</span></button>
+                      </span>
+                    </li>
+                  )
+                })}
+              </ul>
+              {family.data!.members.length === 0 && (
+                <div className="mt-6"><Empty title="No family members yet" image={<Still name="empty-no-family" className="aspect-[3/2]" />}>Add a child or an adult you care for, and you can book visits for them.</Empty></div>
+              )}
+            </>
           )}
       </section>
 
-      <section aria-labelledby="add-title" className="card mt-8 p-6 sm:p-8">
+      <section aria-labelledby="add-title" className="card mt-10 p-6 sm:p-9">
         <h2 id="add-title">Add a family member</h2>
-        <p className="muted mt-2 mb-6">Their visits stay under your account. Children never get their own login.</p>
+        <p className="muted mt-2">Their visits stay under your account. Children never get their own login.</p>
+        <hr className="rule my-7" />
         <MemberForm submitLabel="Add family member" onSave={async (m) => { await api.addFamily(m); setStatus(`${m.firstName} was added.`); family.reload() }} />
       </section>
 
