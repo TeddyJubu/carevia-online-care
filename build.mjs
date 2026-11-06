@@ -173,6 +173,21 @@ if(!v45Story.includes('ah-track')||!v45Story.includes('clinician-45-3.jpg')||v45
 
 // Patient journey: 04.5 is the homepage and links into the portal (/book, /signin, /signup under PORTAL_URL).
 // design-04.js reads data-portal to turn each service dialog's button into "Book {service}".
+// Shows the real login state: signed in, the top pill becomes "Your account" and opens the right home
+// (patient account, doctor agenda or admin), and the menu swaps Sign in / Create an account for that home
+// (hiding For clinicians or Admin when that is already the user's home). The pill's label is its text node:
+// .nav-book span is hidden, and specular-nav.js adds a canvas inside the pill.
+// get-session is not rate limited (apps/api/src/auth.js). No API (a static preview): it stays signed out.
+const authScript=`<script type="module">const P=document.documentElement.dataset.portal||'/app';
+const pill=document.querySelector('[data-auth-pill]'),menu=document.querySelector('[data-auth-menu]');
+const number=()=>menu&&[...menu.querySelectorAll('a:not(.menu-main):not([hidden])')].forEach((a,i)=>{const n=a.querySelector('span');if(n)n.textContent=String(i+1).padStart(2,'0')});
+number();
+fetch('/api/auth/get-session',{credentials:'same-origin'}).then(r=>r.ok?r.json():null).then(s=>{const u=s&&s.user;if(!u)return;
+const home=u.role==='clinician'?P+'/doctor':u.role==='admin'?'/admin/':P+'/account';
+if(pill){pill.href=home;const t=[...pill.childNodes].find(n=>n.nodeType===3&&n.textContent.trim());if(t)t.textContent=u.role==='patient'?'Your account':u.role==='clinician'?'Your agenda':'Admin'}
+menu&&menu.querySelectorAll('[data-auth]').forEach(a=>{a.hidden=a.dataset.auth!=='in'});menu&&menu.querySelectorAll('[data-role]').forEach(a=>{a.hidden=a.dataset.role===u.role});
+const acct=menu&&menu.querySelector('[data-auth=in]');if(acct){acct.href=home;acct.firstChild.textContent=u.role==='patient'?'Your account ':u.role==='clinician'?'Your agenda ':'Admin desk '}
+number()}).catch(()=>{});</script>`;
 const portal=esc(PORTAL_URL),external='https://carevia.triple-labs-8416.chatgpt.site/';
 const v45Home=v45Story
  .replace('data-design="04.5"',`data-design="04.5" data-portal="${portal}"`)
@@ -182,7 +197,10 @@ const v45Home=v45Story
  .replace(/<a class="care-faq-contact"[\s\S]*?<\/a>/,'')
  // Service cards go straight to booking (no details popup in between): real links, so open-in-new-tab works too.
  .replace(/<button class="care-open" data-service="([^"]+)">([\s\S]*?)<\/button>/g,(m,id,inner)=>`<a class="care-open" href="${portal}/book?service=${id}">${inner.replace('>Details<','>Book<').replace(' about ',' ')}</a>`)
- .replace('<a class="nav-pill nav-book" href="#care">Find your care</a>',`<a class="nav-pill nav-book" href="${portal}/signin">Sign in</a>`)
+ .replace('<a class="nav-pill nav-book" href="#care">Find your care</a>',`<a class="nav-pill nav-book" href="${portal}/signin" data-auth-pill>Sign in</a>`)
+ // The menu lists the site's pages, not this page's sections. Account items follow the login state (authScript).
+ .replace(/<nav aria-label="Main navigation">[\s\S]*?<\/nav>/,`<nav aria-label="Main navigation" data-auth-menu><span class="mono">Care, made simpler.</span><a href="${portal}/book">Services <span>01</span></a><a href="${portal}/account" data-auth="in" hidden>Your account <span>02</span></a><a href="${portal}/signin" data-auth="out">Sign in <span>02</span></a><a href="${portal}/signup" data-auth="out">Create an account <span>03</span></a><a href="${portal}/doctor" data-role="clinician">For clinicians <span>04</span></a><a href="/admin/" data-role="admin">Admin <span>05</span></a><a class="menu-main" href="${portal}/book">Find your care</a></nav>`)
+ .replace('</body>',`${authScript}</body>`)
  .replace('<button class="button dark" data-all-care>View all care options</button>',`<button class="button dark" data-all-care>View all care options</button><a class="button light" href="${portal}/book?service=general" style="text-decoration:underline;text-decoration-color:#a7bdd0;text-underline-offset:4px">Not sure which one?</a>`)
  .replace(`<a class="button light" href="${external}" target="_blank" rel="noopener">Create your account</a>`,`<a class="button light" href="${portal}/signup">Create your account</a>`)
  .replace(`<a class="button dark" href="${external}#doctors" target="_blank" rel="noopener">Explore Carevia’s clinicians</a>`,`<a class="button dark" href="${portal}/book">Find your clinician</a>`)
@@ -191,7 +209,7 @@ const v45Home=v45Story
  .replaceAll('href="assets/carevia-mark.png"','href="assets/carevia-mark-192.png"')
  .replaceAll('src="assets/carevia-iridescent.png"','src="assets/carevia-iridescent-400.webp"');
 // Only the footer's and the FAQ's "Visit Carevia" keep the external site.
-if(!v45Home.includes('/book">Find a consultation</a>')||v45Home.includes('class="care-open" data-service')||!v45Home.includes('class="care-open" href=')||!v45Home.includes('data-portal=')||!v45Home.includes('/signin">Sign in')||!v45Home.includes('>Not sure which one?</a>')||!v45Home.includes('/signup">Create your account')||v45Home.split(external).length-1!==1||v45Home.includes('care-faq-contact"')||!v45Home.includes('/book">Find your care</a>')||!v45Home.includes('/book">Find your clinician</a>'))throw new Error('Design 04.5 portal links failed');
+if(!v45Home.includes('/book">Find a consultation</a>')||v45Home.includes('class="care-open" data-service')||!v45Home.includes('class="care-open" href=')||!v45Home.includes('data-portal=')||!v45Home.includes('/signin" data-auth-pill>Sign in</a>')||!v45Home.includes('data-auth-menu')||v45Home.includes('<a href="#about">Our approach')||!v45Home.includes('>Not sure which one?</a>')||!v45Home.includes('/signup">Create your account')||v45Home.split(external).length-1!==1||v45Home.includes('care-faq-contact"')||!v45Home.includes('/book">Find your care</a>')||!v45Home.includes('/book">Find your clinician</a>'))throw new Error('Design 04.5 portal links failed');
 await writeFile('dist/design-04-5.html',v45Home);
 await writeFile('dist/index.html',v45Home.replace('rel="canonical" href="https://carevia.triplelabs.dev/design-04-5.html"','rel="canonical" href="https://carevia.triplelabs.dev/"'));
 
