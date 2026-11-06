@@ -14,6 +14,15 @@ const homepage = (signedIn: boolean) => (signedIn ? SITE : '/')
 // A plain <a> outside the router, so /app/ paths carry the basename and the admin app gets a full load.
 const logoHref = (user: User | null) => (!user ? '/' : user.role === 'admin' ? ADMIN_HOME : `/app${homeFor(user)}`)
 
+/** "Go to your …" for whoever is signed in: patient account, doctor agenda, or the admin app (a full page load). */
+export function HomeButton({ className = 'btn btn-primary' }: { className?: string }) {
+  const { user } = useSession()
+  if (user?.role === 'admin') return <a href={ADMIN_HOME} className={className}>Go to the admin desk</a>
+  return user?.role === 'clinician'
+    ? <Link to="/doctor" className={className}>Go to your agenda</Link>
+    : <Link to="/account" className={className}>Go to your account</Link>
+}
+
 export function Header() {
   const { user, signOut } = useSession()
   const navigate = useNavigate()
@@ -39,6 +48,7 @@ export function Header() {
 export function Footer() {
   const { user } = useSession()
   const clinician = user?.role === 'clinician'
+  const admin = user?.role === 'admin'
   return (
     <footer className="app-footer on-navy">
       <div className="mx-auto grid w-[min(1200px,calc(100%-32px))] gap-10 md:grid-cols-3">
@@ -54,7 +64,7 @@ export function Footer() {
           <p className="eyebrow mb-1">Carevia</p>
           <ul className="grid">
             <li><a href={homepage(!!user)} className="inline-flex min-h-11 items-center">Homepage</a></li>
-            {clinician ? <li><Link to="/doctor" className="inline-flex min-h-11 items-center">Your agenda</Link></li> : <>
+            {admin ? <li><a href={ADMIN_HOME} className="inline-flex min-h-11 items-center">Admin desk</a></li> : clinician ? <li><Link to="/doctor" className="inline-flex min-h-11 items-center">Your agenda</Link></li> : <>
               <li><Link to="/book" className="inline-flex min-h-11 items-center">Book a visit</Link></li>
               <li><Link to="/account" className="inline-flex min-h-11 items-center">Your account</Link></li>
             </>}
@@ -108,7 +118,7 @@ export function RequireRole({ role, children }: { role: Role; children: ReactNod
       <div className="page-narrow">
         <h1>This page is for {role === 'clinician' ? 'doctors' : 'patients'}</h1>
         <p className="lede mt-4">You’re signed in as {user.email}. Sign out and sign in with the right account.</p>
-        <Link to={user.role === 'clinician' ? '/doctor' : '/account'} className="btn btn-primary mt-6">Go to your {user.role === 'clinician' ? 'agenda' : 'account'}</Link>
+        <HomeButton className="btn btn-primary mt-6" />
       </div>
     )
   }

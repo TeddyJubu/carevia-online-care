@@ -174,6 +174,10 @@ function useNext() {
   return next && next.startsWith('/') && !next.startsWith('//') ? next : null
 }
 
+// next= is honoured only when it is a page for the role that signed in: doctor pages for doctors, the rest for
+// patients. /doctors (the public list) is not a doctor page.
+const doctorPage = (path: string) => /^\/doctor(\/|\?|$)/.test(path)
+
 export function SignIn() {
   const navigate = useNavigate()
   const next = useNext()
@@ -190,7 +194,7 @@ export function SignIn() {
   }
   return (
     <AuthShell title="Sign in" lede="See your visits, get ready for the next one, and manage your family." footer={<>New to Carevia? <Link className="link" to={`/signup${next ? `?next=${encodeURIComponent(next)}` : ''}`}>Create an account</Link></>}>
-      <SignInForm onDone={(u) => u.role === 'admin' ? window.location.replace(ADMIN_HOME) : navigate(next && u.role === 'patient' ? next : homeFor(u), { replace: true })} />
+      <SignInForm onDone={(u) => u.role === 'admin' ? window.location.replace(ADMIN_HOME) : navigate(next && (u.role === 'clinician') === doctorPage(next) ? next : homeFor(u), { replace: true })} />
     </AuthShell>
   )
 }
@@ -200,7 +204,8 @@ export function SignUp() {
   const next = useNext()
   return (
     <AuthShell title="Create your account" lede="It takes a minute. You can add your children once you’re in." footer={<>Already have an account? <Link className="link" to={`/signin${next ? `?next=${encodeURIComponent(next)}` : ''}`}>Sign in</Link></>}>
-      <SignUpForm onDone={() => navigate(next ?? '/account', { replace: true })} />
+      {/* Sign-up always makes a patient, so a doctor-only next would only show "This page is for doctors". */}
+      <SignUpForm onDone={() => navigate(next && !doctorPage(next) ? next : '/account', { replace: true })} />
     </AuthShell>
   )
 }

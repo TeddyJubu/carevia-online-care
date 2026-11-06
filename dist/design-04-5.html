@@ -166,6 +166,6 @@ const home=u.role==='clinician'?P+'/doctor':u.role==='admin'?'/admin/':P+'/accou
 if(!new URLSearchParams(location.search).has('site'))return location.replace(home);
 const logo=document.querySelector('.nav-logo');if(logo)logo.href=home;
 if(pill){pill.href=home;const t=[...pill.childNodes].find(n=>n.nodeType===3&&n.textContent.trim());if(t)t.textContent=u.role==='patient'?'Your account':u.role==='clinician'?'Your agenda':'Admin'}
-menu&&menu.querySelectorAll('[data-auth]').forEach(a=>{a.hidden=a.dataset.auth!=='in'});menu&&menu.querySelectorAll('[data-role]').forEach(a=>{a.hidden=a.dataset.role===u.role});
+menu&&menu.querySelectorAll('[data-auth]').forEach(a=>{a.hidden=a.dataset.auth!=='in'});menu&&menu.querySelectorAll('[data-role]').forEach(a=>{a.hidden=true});
 const acct=menu&&menu.querySelector('[data-auth=in]');if(acct){acct.href=home;acct.firstChild.textContent=u.role==='patient'?'Your account ':u.role==='clinician'?'Your agenda ':'Admin desk '}
 number()}).catch(()=>{});</script></body></html>

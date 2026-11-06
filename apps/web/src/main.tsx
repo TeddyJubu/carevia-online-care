@@ -1,11 +1,11 @@
 import { StrictMode } from 'react'
 import { EmptyArt } from './ui/empty-art'
 import { createRoot } from 'react-dom/client'
-import { createBrowserRouter, Link, Navigate, RouterProvider, useLocation, useSearchParams } from 'react-router'
+import { createBrowserRouter, Navigate, RouterProvider, useLocation, useSearchParams } from 'react-router'
 import type { ComponentType, ReactNode } from 'react'
 import { ADMIN_HOME, homeFor, SessionProvider, useSession } from './lib/session'
 import { Loading, PageTitle } from './ui/kit'
-import { Layout, RequireRole } from './ui/shell'
+import { HomeButton, Layout, RequireRole } from './ui/shell'
 import './styles.css'
 
 function Index() {
@@ -21,7 +21,7 @@ function NotFound() {
       <EmptyArt scene="not-found" />
       <PageTitle lede="The link may be old, or the page has moved.">We couldn’t find that page</PageTitle>
       <div className="mt-8 flex flex-wrap gap-3">
-        <Link to="/account" className="btn btn-primary">Go to your account</Link>
+        <HomeButton />
         <a href="/?site" className="btn btn-secondary">Carevia homepage</a>
       </div>
     </div>

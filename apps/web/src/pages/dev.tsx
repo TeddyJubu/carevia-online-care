@@ -4,6 +4,7 @@ import { DEMO_BUILD, useDemo } from '../lib/demo'
 import { useLoad } from '../lib/load'
 import { fullDate, hhmm } from '../lib/time'
 import { Empty, ErrorState, Loading, PageTitle } from '../ui/kit'
+import { HomeButton } from '../ui/shell'
 
 // Emails the API would have sent. Only in a demo build with demo mode on the API, or in development.
 export function Outbox() {
@@ -14,7 +15,7 @@ export function Outbox() {
     return (
       <div className="page-narrow">
         <PageTitle lede="The link may be old, or the page has moved.">We couldn’t find that page</PageTitle>
-        <Link to="/account" className="btn btn-primary mt-8">Go to your account</Link>
+        <HomeButton className="btn btn-primary mt-8" />
       </div>
     )
   }

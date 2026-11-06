@@ -216,7 +216,7 @@ if(!v45Story.includes('ah-track')||!v45Story.includes('clinician-45-3.jpg')||v45
 // design-04.js reads data-portal to turn each service dialog's button into "Book {service}".
 // Shows the real login state: signed in, the top pill becomes "Your account" and opens the right home
 // (patient account, doctor agenda or admin), and the menu swaps Sign in / Create an account for that home
-// (hiding For clinicians when that is already the user's home). The pill's label is its text node:
+// (hiding For clinicians for everyone signed in: a doctor already has it as home, anyone else would hit a doctors-only page). The pill's label is its text node:
 // .nav-book span is hidden, and specular-nav.js adds a canvas inside the pill.
 // Signed in, the homepage always opens that home. Only a "Site" link (/?site) shows the marketing page; its in-page
 // links are #hash links, so ?site stays in the URL while you read. Its logo, like every Carevia logo, opens your home.
@@ -230,7 +230,7 @@ const home=u.role==='clinician'?P+'/doctor':u.role==='admin'?'/admin/':P+'/accou
 if(!new URLSearchParams(location.search).has('site'))return location.replace(home);
 const logo=document.querySelector('.nav-logo');if(logo)logo.href=home;
 if(pill){pill.href=home;const t=[...pill.childNodes].find(n=>n.nodeType===3&&n.textContent.trim());if(t)t.textContent=u.role==='patient'?'Your account':u.role==='clinician'?'Your agenda':'Admin'}
-menu&&menu.querySelectorAll('[data-auth]').forEach(a=>{a.hidden=a.dataset.auth!=='in'});menu&&menu.querySelectorAll('[data-role]').forEach(a=>{a.hidden=a.dataset.role===u.role});
+menu&&menu.querySelectorAll('[data-auth]').forEach(a=>{a.hidden=a.dataset.auth!=='in'});menu&&menu.querySelectorAll('[data-role]').forEach(a=>{a.hidden=true});
 const acct=menu&&menu.querySelector('[data-auth=in]');if(acct){acct.href=home;acct.firstChild.textContent=u.role==='patient'?'Your account ':u.role==='clinician'?'Your agenda ':'Admin desk '}
 number()}).catch(()=>{});</script>`;
 const portal=esc(PORTAL_URL),external='https://carevia.triple-labs-8416.chatgpt.site/';
