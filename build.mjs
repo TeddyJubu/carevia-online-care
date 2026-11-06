@@ -45,6 +45,11 @@ const filmStyles=`<style>.hero-film{object-fit:cover;object-position:50% 50%}
 .topbar .nav-logo,.topbar .nav-logo:is(:hover,:active,:focus-visible){width:auto;padding:0 6px;background:none!important;border-color:transparent!important;box-shadow:none!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important}.topbar .nav-logo::before,.topbar .nav-logo::after{display:none}.topbar .nav-logo .carevia-mark{width:58px;height:58px}
 /* Nav emblem: the frosted-glass blue-orange mark, shown in its own colours (the 04.2 nav whitens the plain mark). */
 .topbar .nav-logo .carevia-mark.nav-emblem{filter:none}
+/* Past the hero, the three nav pieces share one frosted bar so they stay readable over the page (scripts/design-04.js sets .is-docked). */
+.topbar::before{content:'';position:absolute;inset:-8px -6px;z-index:-1;border:1px solid #d5eaff40;border-radius:16px;background:linear-gradient(180deg,#3d6ea326,#04142326),#071e35f2;box-shadow:0 10px 24px -12px #051a33a6,inset 0 1px #ffffff26;backdrop-filter:blur(24px) saturate(160%);-webkit-backdrop-filter:blur(24px) saturate(160%);pointer-events:none;opacity:0;transform:scale(.97);transition:opacity .22s cubic-bezier(.4,0,1,1),transform .22s cubic-bezier(.4,0,1,1)}
+.topbar.is-docked::before{opacity:1;transform:none;transition-duration:.48s;transition-timing-function:cubic-bezier(.22,1,.36,1)}
+.topbar.is-docked .nav-pill{background:transparent;border-color:transparent;box-shadow:none;backdrop-filter:none;-webkit-backdrop-filter:none}
+@media(prefers-reduced-motion:reduce){.topbar::before{transition:none}}
 /* Orange specular rim (scripts/specular-nav.js): canvas spills 24px past each pill and sits at z-index -1 inside the pill's isolated stack (above its fill, below its text); 4.2's blue chroma rim is retired on the pills. */
 .specular-light{position:absolute;inset:-24px;width:calc(100% + 48px);height:calc(100% + 48px);z-index:-1;pointer-events:none;opacity:0;transition:opacity .35s}.topbar .nav-pill:is(:hover,:focus-visible) .specular-light,.hero .search-shell:hover .specular-light{opacity:1}.topbar .nav-pill::after{display:none}
 /* Calm load: everything in the hero clears from a light blur, one after another.

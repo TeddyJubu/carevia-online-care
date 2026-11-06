@@ -41,3 +41,6 @@ import{GlassPhoto}from'./glass.js';document.querySelectorAll('.hero [data-glass]
 // Load the Paper heatmap only when its card nears the viewport; the static logo stays if WebGL is unavailable.
 const heatmap=document.querySelector('[data-heatmap]');
 if(heatmap&&'IntersectionObserver'in window)new IntersectionObserver(([entry],observer)=>{if(!entry.isIntersecting)return;observer.disconnect();import('./start-heatmap.js').then(m=>m.mountHeatmap(heatmap)).catch(()=>{})},{rootMargin:'400px'}).observe(heatmap);
+// Past the hero, the nav's three pieces share one frosted bar (.topbar.is-docked, styled in build.mjs).
+const dockBar=document.querySelector('.topbar'),dockHero=document.querySelector('.hero');
+if(dockBar&&dockHero)new IntersectionObserver(([entry])=>dockBar.classList.toggle('is-docked',!entry.isIntersecting),{rootMargin:'-72px 0px 0px 0px'}).observe(dockHero);
