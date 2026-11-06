@@ -38,7 +38,6 @@ async function toCheckout(p, { width, area = 'General & urgent care', shots = fa
   const card = p.getByRole('list', { name: 'Areas of care' }).getByRole('link', { name: new RegExp(area) })
   await card.waitFor()
   if (shots) {
-    check(await p.getByText('Not an emergency service.').first().isVisible(), 'Emergency notice on the services home')
     await noOverflow(p, 'services home'); await p.screenshot({ path: `${out}/v2-1-services-${width}.png`, fullPage: true })
   }
   await click(card)

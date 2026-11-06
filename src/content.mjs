@@ -13,7 +13,7 @@ export const faqs=[
  ['Can I get a prescription or certificate?','Your doctor may issue one if it is clinically appropriate. They decide only after assessing you during the consultation.'],
  ['Do I need a subscription?','No. Carevia’s model is pay per consultation. You see the price before confirming. Prices shown on this page are examples and will be confirmed per country before launch.'],
  ['What if my video connection fails?','If the call drops, you can rejoin the same appointment. If reconnecting isn’t possible, we’ll help you reschedule it.'],
- ['What happens after the consultation?','Your clinical summary, and anything your doctor decides to issue, is available through iMED, Carevia’s clinical system. Your account shows the visit and your options for a follow-up.'],
+ ['What happens after the consultation?','Your clinical summary, and anything your doctor decides to issue, is available through iMED. Your account shows the visit and your options for a follow-up.'],
  ['How are recordings handled?','Your written consultation summary and issued documents are saved in your account. Contact support before your visit for details about audio or video recording.']
 ];
 export const guides=[

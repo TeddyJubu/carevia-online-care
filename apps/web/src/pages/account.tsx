@@ -6,7 +6,7 @@ import { useLoad, useNow } from '../lib/load'
 import { useSession } from '../lib/session'
 import { age, birthDate, dayMonth, fullDate, hhmm, lisbonDay, longDate, minutes, relDay, shortDate } from '../lib/time'
 import type { Appointment, FamilyMember } from '../lib/types'
-import { Dialog, Emergency, Empty, ErrorState, euro, Field, FormError, Loading, Markdown, Notice, PageTitle, paymentStatus, Still } from '../ui/kit'
+import { Dialog, Empty, ErrorState, euro, Field, FormError, Loading, Markdown, Notice, PageTitle, paymentStatus, Still } from '../ui/kit'
 import { toE164 } from './auth'
 import { checkInSteps, phaseOf } from './visit'
 
@@ -292,7 +292,6 @@ export function AccountHome() {
         : past.data ? <CareBoard upcoming={upcoming.data.appointments} past={past.data.appointments} now={now} />
         : <div className="mt-12"><Loading label="Loading past visits" lines={2} /></div>)}
 
-      <div className="mt-8"><Emergency compact /></div>
     </>
   )
 }

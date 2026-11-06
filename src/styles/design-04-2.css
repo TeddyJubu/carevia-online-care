@@ -167,3 +167,4 @@ main#main{position:relative;z-index:1}
 .hero .glass-image>picture>img{width:100%;height:100%;object-fit:cover;object-position:var(--focus,50% 50%);user-select:none;pointer-events:none}
 /* The poster's illustration fills the upper half, so the intro sits below it instead of across it. Scoped to 04.2 so 04.5's film hero is untouched. */
 @media(max-width:1024px){[data-design="04.2"] .hero .hero-shade{background:linear-gradient(180deg,#0d32602e,#0d326014 45%,#0d326040)}[data-design="04.2"] .hero-intro{top:57svh;transform:translateX(-50%)}}
+button.button:disabled{opacity:.45;cursor:not-allowed}
