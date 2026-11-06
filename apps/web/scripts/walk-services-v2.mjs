@@ -1,6 +1,6 @@
 // Services v2 walk (the wireframe's service flow): BASE_URL=http://localhost:5180 node scripts/walk-services-v2.mjs <outDir> [width...]
-// Per width: search and filters; (a) the demo patient books signed in, counting clicks; (b) a new patient signs up
-// at checkout; (c) someone else holds the chosen time first (SLOT_TAKEN). Needs the API in demo mode.
+// Per width: search and filters; old /book redirects; (a) the demo patient books signed in, counting clicks; (b) a new patient signs up
+// at checkout; (c) someone else holds the chosen time first (SLOT_TAKEN); (d) the demo patient books for their child. Needs the API in demo mode.
 // On localhost (or RESET=1) it resets the demo first, so earlier runs' bookings don't clash.
 import { mkdirSync } from 'node:fs'
 import { launch } from './browser.mjs'
@@ -57,9 +57,9 @@ async function toCheckout(p, { width, area = 'General & urgent care', shots = fa
   await heading(p, 'Confirm your visit')
   return clicks
 }
-async function pay(p) {
-  await p.getByLabel('I’ll be in mainland Portugal during the visit.').click()
-  await p.getByLabel('I’ve read these terms. I agree to a video consultation on them.').click()
+async function pay(p, self = true) {
+  await p.getByLabel(self ? 'I’ll be in mainland Portugal during the visit.' : 'We’ll both be in mainland Portugal during the visit.').click()
+  await p.getByLabel(self ? 'I’ve read these terms. I agree to a video consultation on them.' : 'I’ve read these terms. I agree to a video consultation on them, on their behalf.').click()
   await p.getByRole('button', { name: /^Pay €\d+ \(demo\)$/ }).click()
   return 3
 }
@@ -95,7 +95,7 @@ for (const width of widths) {
     await p.goto(base + '/app/signin')
     await p.getByLabel('Email').fill('patient@example.com'); await p.getByLabel('Password').fill('demo-password')
     await p.getByRole('button', { name: 'Sign in', exact: true }).click(); await p.waitForURL(/\/app\/account/)
-    check(await p.getByRole('link', { name: 'Quick book' }).waitFor().then(() => true, () => false), 'Account links to Services v2')
+    check(await p.getByRole('link', { name: 'Book new care' }).first().getAttribute('href') === '/app/services-v2', 'Account “Book new care” opens Services v2')
     let clicks = 0
     // The demo patient may already have a visit at a time (TIME_CLASH): check the message, then try the next time.
     for (let i = 0; ; i++) {
@@ -116,6 +116,32 @@ for (const width of widths) {
     }
     check(true, `(a) signed-in booking lands on the visit page in ${clicks} clicks`, clicks)
     await p.screenshot({ path: `${out}/v2-5-booked-${width}.png` })
+
+    // (d) the same patient books for their child (the old /book link redirects into Services v2).
+    await p.goto(base + '/app/book?service=general')
+    await heading(p, 'Choose who cares for you')
+    check(/services-v2\/doctors\?group=general/.test(p.url()), 'Old /book?service= link opens the Services v2 doctors', p.url().replace(base, ''))
+    await p.locator('article a.chip').last().click()
+    await heading(p, 'Choose your appointment')
+    await p.getByLabel(/^My child/).check()
+    await p.getByRole('button', { name: 'Continue' }).click()
+    await heading(p, 'Confirm your visit')
+    await p.getByRole('heading', { name: 'Which child is this for?' }).waitFor()
+    check(await p.getByRole('radio', { name: /Leo Patient/ }).isChecked(), 'Saved child is chosen at checkout')
+    await noOverflow(p, 'checkout for a child'); await p.screenshot({ path: `${out}/v2-6-checkout-child-${width}.png`, fullPage: true })
+    await pay(p, false)
+    await p.waitForURL(/\/app\/visits\/[^/]+\?booked=1/, { timeout: 15000 })
+    check(await p.getByText('Leo Patient').first().waitFor().then(() => true, () => false), '(d) booking for the child lands on their visit, for Leo Patient')
+    await p.context().close()
+  }
+
+  // Old /book links redirect.
+  {
+    const p = await page(width)
+    for (const [from, want] of [['/app/book', /\/app\/services-v2$/], ['/app/book/time', /\/app\/services-v2$/], ['/app/book?service=mental&doctor=3', /\/app\/services-v2\/doctors\/3\/times$/]]) {
+      await p.goto(base + from); await p.waitForURL(want, { timeout: 10000 }).catch(() => {})
+      check(want.test(p.url()), `${from} redirects`, p.url().replace(base, ''))
+    }
     await p.context().close()
   }
 

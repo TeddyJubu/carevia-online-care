@@ -173,13 +173,12 @@ The API reads `consent.md` for `/api/consent/current`. The web app imports the o
 
 | Route | Screen |
 |---|---|
-| `/app/book?service=<slug>` | J1: service and consultation type |
-| `/app/book/who` | J2: who and where, with the 112 banner |
-| `/app/book/time` | J3: doctor and time, first available |
-| `/app/book/account` | J4: sign up or sign in (skipped when signed in), then claim the hold |
-| `/app/book/family` | J4b: choose or add the family member (only for `child` or `adult`) |
-| `/app/book/consent` | J5: consent (new screen) |
-| `/app/book/pay` | J6: review and demo payment |
+| `/app/services-v2` | Booking, step 1: search and the areas of care |
+| `/app/services-v2/doctors?group=<slug>&service=<id>` | Choose who cares for you: area, service, filters, doctors with their next times |
+| `/app/services-v2/doctors/:id` | Doctor profile |
+| `/app/services-v2/doctors/:id/times?slot=<id>` | The doctor's times and who the visit is for (Me, my child, another adult); Continue holds the time |
+| `/app/services-v2/checkout` | Your details (signed out), the child or adult (from Family or new), mainland and consent boxes, demo payment; then claim, patient, consent and pay as in the Booking table |
+| `/app/book…` | Old links: `?service=<slug>` opens that area's doctors, `&doctor=<id>` that doctor's times, anything else `/app/services-v2` |
 | `/app/visits/:id` | J7: confirmation and preparation, calendar file, questions stored on the device; reminder choices and the payment card |
 | `/app/visits/:id/join` | J8: confirm email and mobile, companion option (new screen) |
 | `/app/visits/:id/waiting` | J9: device check and waiting room |

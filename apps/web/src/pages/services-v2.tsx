@@ -3,8 +3,8 @@ import { Link, useLocation, useNavigate, useParams, useSearchParams } from 'reac
 import { api, ApiError } from '../lib/api'
 import { useLoad } from '../lib/load'
 import { useSession } from '../lib/session'
-import { addDays, dayLabel, hhmm, lisbonDay, when } from '../lib/time'
-import type { Appointment, Doctor, GroupSlug, ServiceGroup, Slot } from '../lib/types'
+import { addDays, age, birthDate, dayLabel, hhmm, lisbonDay, when } from '../lib/time'
+import type { Appointment, Doctor, For, GroupSlug, ServiceGroup, Slot } from '../lib/types'
 import { DoctorAvatar, Emergency, ErrorState, euro, Field, FormError, HoldTimer, Loading, Markdown, Notice, PageTitle } from '../ui/kit'
 import { validateSignUp } from './auth'
 
@@ -67,7 +67,7 @@ export function ServicesHome() {
             ))}
           </ul>
         )}
-      <p className="fine mt-10">Booking for your child or someone you care for? <Link to="/book" className="link">Use the full booking</Link>.</p>
+      <p className="fine mt-10">You can book for yourself, your child or an adult you care for. You choose who when you pick a time.</p>
     </div>
   )
 }
@@ -173,7 +173,7 @@ function DoctorCard({ doctor: d }: { doctor: Doctor }) {
         <DoctorAvatar doctor={d} />
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-baseline justify-between gap-x-4">
-            <h3 id={`doc-${d.id}`}>{d.name}</h3>
+            <h2 id={`doc-${d.id}`} className="font-sans text-[18px] font-medium tracking-[-0.01em]">{d.name}</h2>
             <span className="text-[18px] font-medium">{euro(d.fee)}</span>
           </div>
           <p className="fine">{d.specialty} · {d.languages}{d.experience && ` · ${d.experience}`}</p>
@@ -246,6 +246,8 @@ export function ServicesDoctor() {
 
 // ---------- 4. the doctor's times ----------
 const DAYS = 3
+const WHO: [For, string, string][] = [['self', 'Me', 'Aged 18 or over'], ['child', 'My child', 'You book as parent or guardian'], ['adult', 'Another adult', 'Someone you care for']]
+const FOR_LABEL: Record<For, string> = { self: 'Me', child: 'Your child', adult: 'An adult you care for' }
 
 export function ServicesTimes() {
   const { id } = useParams()
@@ -259,6 +261,8 @@ export function ServicesTimes() {
   const [allDays, setAllDays] = useState(false)
   const [error, setError] = useState<string | null>((state as { notice?: string } | null)?.notice ?? null)
   const [pending, setPending] = useState(false)
+  // Who the visit is for is part of the hold (the API fixes it then), so it's asked here; checkout names the person.
+  const [who, setWho] = useState<For>((state as { for?: For } | null)?.for ?? 'self')
   const days = useMemo(() => {
     const m = new Map<string, Slot[]>()
     for (const s of slots.data ?? []) m.set(dayLabel(s.startsAt), [...(m.get(dayLabel(s.startsAt)) ?? []), s])
@@ -284,7 +288,7 @@ export function ServicesTimes() {
     setPending(true)
     setError(null)
     try {
-      const { appointment } = await api.hold({ slotId: picked.id, serviceId: service.id, for: 'self' })
+      const { appointment } = await api.hold({ slotId: picked.id, serviceId: service.id, for: who })
       navigate('/services-v2/checkout', { state: { appt: appointment } })
     } catch (e) {
       const x = e as ApiError
@@ -311,6 +315,18 @@ export function ServicesTimes() {
               <div className="min-w-0"><h2 className="font-sans text-[18px] font-medium">{d.name}</h2><p className="fine">{d.languages} · Video consultation</p></div>
             </div>
             <p className="mt-4">{d.specialty} · {euro(d.fee)} · <Link to={`/services-v2/doctors/${d.id}`} className="link">View profile</Link></p>
+            <fieldset className="mt-6 min-w-0">
+              <legend className="font-medium">Who is this visit for?</legend>
+              <div className="mt-3 grid gap-2 sm:grid-cols-3">
+                {WHO.map(([v, label, hint]) => (
+                  <label key={v} className="choice">
+                    <input type="radio" name="who" checked={who === v} onChange={() => setWho(v)} />
+                    <span><span className="block font-medium">{label}</span><span className="fine block">{hint}</span></span>
+                  </label>
+                ))}
+              </div>
+              {who !== 'self' && <p className="fine mt-2" aria-live="polite">You book in your own name. At checkout you choose them from your family, or add them.</p>}
+            </fieldset>
           </section>
           <section className="card" aria-labelledby="times-h" aria-busy={slots.loading}>
             <h2 id="times-h" className="font-sans text-[20px] font-medium">Available times</h2>
@@ -336,7 +352,7 @@ export function ServicesTimes() {
         </div>
         <aside className="card max-lg:hidden lg:sticky lg:top-[calc(var(--header-h)+16px)]" aria-label="Your visit">
           <h2 className="font-sans text-[18px] font-medium">{d.service}</h2>
-          <p className="mt-2">{d.name}<br />Video consultation</p>
+          <p className="mt-2">{d.name}<br />Video consultation · For {FOR_LABEL[who].toLowerCase().replace(/^me$/, 'you')}</p>
           <p className="mt-3 font-medium">{picked ? when(picked.startsAt) : 'Choose an available time'}</p>
           <p className="mt-3 font-medium">Fee {euro(d.fee)}</p>
           <FormError error={error} />
@@ -374,7 +390,7 @@ export function ServicesCheckout() {
   /** Back to this doctor's times, giving the held time back so others can book it. */
   const pickAgain = (notice: string | null) => {
     void api.release(appt.id).catch(() => {}) // already expired or released: nothing to do
-    navigate(`/services-v2/doctors/${appt.doctor.id}/times`, { replace: true, state: notice ? { notice } : null })
+    navigate(`/services-v2/doctors/${appt.doctor.id}/times`, { replace: true, state: { notice, for: appt.for } })
   }
   return <div className="page"><Steps at={2} /><Checkout appt={appt} pickAgain={pickAgain} /></div>
 }
@@ -395,6 +411,14 @@ function Checkout({ appt, pickAgain }: { appt: Appointment; pickAgain: (message:
   const [expired, setExpired] = useState(false)
   const [pending, setPending] = useState(false)
   const form = useRef<HTMLFormElement>(null)
+  // For a child or another adult: pick them from Family, or add them (signed-out patients always add).
+  const kind: For = appt.for ?? 'self'
+  const family = useLoad(() => (user && kind !== 'self' ? api.family().then((r) => r.members.filter((m) => m.relationship === kind)) : Promise.resolve([])), [user?.id, kind])
+  const [member, setMember] = useState('')
+  const members = family.data ?? []
+  const chosen = member || members[0]?.id || 'new'
+  const child = kind === 'child'
+  const picked = user ? members.find((m) => m.id === chosen) : undefined
 
   async function submit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault()
@@ -407,7 +431,16 @@ function Checkout({ appt, pickAgain }: { appt: Appointment; pickAgain: (message:
       if (!email) errs.email = 'Enter your email.'
       if (!password) errs.password = 'Enter your password.'
     }
-    if (!mainland) errs.mainland = 'Confirm you’ll be in mainland Portugal during the visit.'
+    const addNew = kind !== 'self' && (!user || chosen === 'new')
+    const newMember = { firstName: String(f.get('memberFirstName') ?? '').trim(), lastName: String(f.get('memberLastName') ?? '').trim(), dateOfBirth: String(f.get('memberDateOfBirth') ?? ''), relationship: kind as 'child' | 'adult' }
+    if (addNew) {
+      if (!newMember.firstName) errs.memberFirstName = 'Enter their first name.'
+      if (!newMember.lastName) errs.memberLastName = 'Enter their last name.'
+      if (!newMember.dateOfBirth) errs.memberDateOfBirth = 'Enter their date of birth.'
+      else if (child && age(newMember.dateOfBirth) >= 18) errs.memberDateOfBirth = 'A child must be under 18. Choose another time and pick “Another adult”.'
+      else if (!child && age(newMember.dateOfBirth) < 18) errs.memberDateOfBirth = 'This person is under 18. Choose another time and pick “My child”.'
+    }
+    if (!mainland) errs.mainland = kind === 'self' ? 'Confirm you’ll be in mainland Portugal during the visit.' : 'Confirm you’ll both be in mainland Portugal during the visit.'
     if (!agreed) errs.agreed = 'Tick the box to agree to the consultation terms.'
     setErrors(errs)
     setError(null)
@@ -434,10 +467,13 @@ function Checkout({ appt, pickAgain }: { appt: Appointment; pickAgain: (message:
       }
       // The same calls, in the same order, as the full flow: claim, patient, consent, pay.
       let a = (await api.claim(appt.id)).appointment
-      if (!a.patient) a = (await api.setPatient(a.id, null)).appointment
+      if (!a.patient) {
+        const memberId = kind === 'self' ? null : addNew ? (await api.addFamily(newMember)).member.id : chosen
+        a = (await api.setPatient(a.id, memberId)).appointment
+      }
       if (!a.consent) a = (await api.acceptConsent(a.id, consent.data!.version)).appointment
       const { appointment } = await api.pay(a.id)
-      navigate(`/visits/${appointment.id}?booked=1`)
+      navigate(`/visits/${appointment.id}?booked=1`, { replace: true }) // Back skips the paid checkout
     } catch (err) {
       const x = err as ApiError
       if (x.code === 'NOT_HELD') return navigate(`/visits/${appt.id}`) // already paid, for example in another tab
@@ -461,14 +497,13 @@ function Checkout({ appt, pickAgain }: { appt: Appointment; pickAgain: (message:
             <dt>Care</dt><dd><span className="font-medium">{appt.service.groupName}</span><br />{appt.service.name}</dd>
             <dt>Doctor and time</dt><dd><span className="font-medium">{when(appt.startsAt)}</span><br />{appt.doctor.name}</dd>
             <dt>Consultation</dt><dd>Video, in your browser</dd>
-            <dt>For</dt><dd>Me</dd>
+            <dt>For</dt><dd>{picked ? `${picked.firstName} ${picked.lastName}` : FOR_LABEL[kind]}</dd>
             <dt>Recording</dt><dd>Off. Visits are not recorded.</dd>
           </dl>
           <hr className="rule" />
           <p className="mt-3 flex items-baseline justify-between"><span>Total</span><span className="text-[22px] font-medium">{euro(appt.fee)}</span></p>
           {appt.holdExpiresAt && <p className="mt-3 flex items-center justify-between gap-3 fine">Held for you <HoldTimer expiresAt={appt.holdExpiresAt} onExpire={() => setExpired(true)} /></p>}
           <button type="button" className="link mt-4 inline-flex min-h-11 cursor-pointer items-center text-sm" onClick={() => pickAgain(null)}>Choose another time</button>
-          <p className="fine mt-1">For someone else, or another doctor? <Link to={`/book?service=${appt.service.groupSlug}`} className="link">Use the full booking</Link>.</p>
         </aside>
 
         <form ref={form} noValidate onSubmit={submit} onChange={(e) => { const n = (e.target as unknown as HTMLInputElement).name; setErrors(({ [n]: _, ...r }) => r) }} className="grid min-w-0 gap-6 lg:order-1">
@@ -507,6 +542,40 @@ function Checkout({ appt, pickAgain }: { appt: Appointment; pickAgain: (message:
             </section>
           )}
 
+          {kind !== 'self' && (
+            <section className="card grid gap-4" aria-labelledby="who-h">
+              <h2 id="who-h" className="font-sans text-[20px] font-medium">{child ? 'Which child is this for?' : 'Who is this visit for?'}</h2>
+              <p className="fine -mt-2">{child ? 'You book as their parent or guardian, and you join the visit with them.' : 'They should be with you, or able to join, at the visit.'}</p>
+              {user && family.error && <ErrorState error={family.error} onRetry={family.reload} />}
+              {user && !family.data && !family.error && <Loading lines={1} />}
+              {user && members.length > 0 && (
+                <fieldset className="grid min-w-0 gap-2">
+                  <legend className="sr-only">{child ? 'Your children' : 'People you care for'}</legend>
+                  {members.map((m) => (
+                    <label key={m.id} className="choice">
+                      <input type="radio" name="member" checked={chosen === m.id} onChange={() => setMember(m.id)} />
+                      <span><span className="block font-medium">{m.firstName} {m.lastName}</span><span className="fine block">Born {birthDate(m.dateOfBirth)}</span></span>
+                    </label>
+                  ))}
+                  <label className="choice">
+                    <input type="radio" name="member" checked={chosen === 'new'} onChange={() => setMember('new')} />
+                    <span className="font-medium">Someone else</span>
+                  </label>
+                </fieldset>
+              )}
+              {(!user || (family.data && chosen === 'new')) && (
+                <div className="grid gap-5">
+                  <div className="grid gap-5 sm:grid-cols-2">
+                    <Field label="Their first name" name="memberFirstName" autoComplete="off" error={errors.memberFirstName} />
+                    <Field label="Their last name" name="memberLastName" autoComplete="off" error={errors.memberLastName} />
+                  </div>
+                  <Field label="Their date of birth" name="memberDateOfBirth" type="date" max={lisbonDay()} error={errors.memberDateOfBirth} />
+                  <p className="fine">We only ask what the doctor needs to know who they’re seeing. They’re saved under Family in your account.</p>
+                </div>
+              )}
+            </section>
+          )}
+
           <section className="card grid gap-4" aria-labelledby="terms-h">
             <h2 id="terms-h" className="font-sans text-[20px] font-medium">{consent.data?.title ?? 'How your visit works'}</h2>
             {consent.error ? <ErrorState error={consent.error} onRetry={consent.reload} /> : !consent.data ? <Loading lines={2} /> : (
@@ -518,14 +587,14 @@ function Checkout({ appt, pickAgain }: { appt: Appointment; pickAgain: (message:
             <div>
               <label className="check">
                 <input type="checkbox" name="mainland" checked={mainland} onChange={(e) => setMainland(e.target.checked)} aria-describedby="mainland-hint mainland-err" />
-                <span>I’ll be in mainland Portugal during the visit.<span id="mainland-hint" className="fine block">Our doctors can’t see patients in Madeira, the Azores or abroad yet.</span></span>
+                <span>{kind === 'self' ? 'I’ll be in mainland Portugal during the visit.' : 'We’ll both be in mainland Portugal during the visit.'}<span id="mainland-hint" className="fine block">Our doctors can’t see patients in Madeira, the Azores or abroad yet.</span></span>
               </label>
               <p id="mainland-err" className="field-error" aria-live="polite">{errors.mainland}</p>
             </div>
             <div>
               <label className="check">
                 <input type="checkbox" name="agreed" checked={agreed} onChange={(e) => setAgreed(e.target.checked)} aria-describedby="agreed-err" />
-                <span>I’ve read these terms. I agree to a video consultation on them.</span>
+                <span>{kind === 'self' ? 'I’ve read these terms. I agree to a video consultation on them.' : 'I’ve read these terms. I agree to a video consultation on them, on their behalf.'}</span>
               </label>
               <p id="agreed-err" className="field-error" aria-live="polite">{errors.agreed}</p>
             </div>

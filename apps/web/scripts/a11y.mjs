@@ -77,40 +77,36 @@ for (const width of widths.length ? widths.map(Number) : [390, 1280]) {
   await go('/app/forgot-password', 'forgot-password')
   await go('/app/reset-password?token=x', 'reset-password')
   await go('/app/nope', '404')
-  await go('/app/book?service=general', 'J1-service')
-  await p.getByRole('radio', { name: 'Adult urgent care', exact: true }).check(); await p.getByRole('button', { name: 'Continue' }).click(); await p.waitForURL(/book\/who/)
-  await p.getByRole('button', { name: 'Continue' }).click(); await p.waitForTimeout(300)
-  rows.push(await audit(p, 'J2-who-errors', width))
-  await p.getByRole('radio', { name: /^Me / }).check(); await p.getByLabel('Yes, I’ll be in mainland Portugal').check()
-  rows.push(await audit(p, 'J2-who', width))
-  await p.getByRole('button', { name: 'Continue' }).click(); await p.waitForURL(/book\/time/)
-  await p.locator('[role=radiogroup] [role=radio]').first().waitFor()
-  rows.push(await audit(p, 'J3-time', width))
-  // Doctor profile dialog by keyboard: focus moves in, stays in, and returns to the opener on Escape.
-  const opener = p.getByRole('button', { name: /View profile/ }).first()
-  if (await opener.count()) {
-    await opener.focus(); await p.keyboard.press('Enter'); await p.waitForTimeout(400)
-    const inside = []
-    for (let i = 0; i < 6; i++) { inside.push(await p.evaluate(() => { const el = document.activeElement; return el?.closest('dialog[open]') ? true : (el?.tagName ?? 'none') + ':' + (el?.textContent ?? '').trim().slice(0, 30) })); await p.keyboard.press('Tab') }
-    rows.push(await audit(p, 'J3-profile-dialog', width))
-    await p.keyboard.press('Escape'); await p.waitForTimeout(300)
-    const back = await p.evaluate(() => document.activeElement?.textContent?.trim())
-    rows.at(-1).dialog = { focusStaysInside: inside.every((x) => x === true), trace: inside, focusReturnedTo: back }
-    console.log(`${width} dialog: focus stays inside ${inside.map(String).join(',')}, returns to "${back}"`)
-  }
+  // Booking: Services v2 (services, doctors, profile, times, checkout).
+  await go('/app/services-v2', 'S1-services')
+  await go('/app/services-v2/doctors?group=general', 'S2-doctors')
+  await p.getByRole('button', { name: 'More filters' }).click(); await p.waitForTimeout(300)
+  rows.push(await audit(p, 'S2-doctors-more-filters', width))
+  await p.getByRole('link', { name: /^Profile/ }).first().click(); await p.getByText('Professional registration').waitFor()
+  rows.push(await audit(p, 'S3-doctor-profile', width))
+  await p.getByRole('link', { name: 'Choose a time' }).click(); await p.locator('[role=radiogroup] [role=radio]').first().waitFor()
+  rows.push(await audit(p, 'S4-times', width))
+  await p.getByRole('button', { name: 'Continue' }).filter({ visible: true }).click(); await p.waitForTimeout(300)
+  rows.push(await audit(p, 'S4-times-error', width))
+  await p.getByLabel(/^My child/).check(); await p.waitForTimeout(200)
+  rows.push(await audit(p, 'S4-times-for-child', width))
+  await p.getByLabel(/^Me/).check()
   // A different time per width: one person can't have two visits at once (409 TIME_CLASH). Not the first two: a
   // demo reset books the patient a visit ~15 minutes from now, which the earliest free times can overlap (as in walk-edges).
   await p.locator('[role=radiogroup] [role=radio]').nth(width < 600 ? 2 : 4).click()
-  await p.getByRole('button', { name: /^Continue with/ }).click(); await p.waitForURL(/book\/account/)
-  rows.push(await audit(p, 'J4-account', width))
+  await p.getByRole('button', { name: 'Continue' }).filter({ visible: true }).click(); await p.waitForURL(/checkout/)
+  rows.push(await audit(p, 'S5-checkout-signed-out', width))
+  await p.getByRole('button', { name: /^Pay / }).click(); await p.waitForTimeout(400)
+  rows.push(await audit(p, 'S5-checkout-errors', width))
 
   // Patient.
   await signIn(p, 'patient@example.com', 'demo-password')
-  await p.goto(base + '/app/book/account'); await p.waitForURL(/book\/(consent|family)/).catch(() => {})
-  await p.getByRole('checkbox').waitFor()
-  rows.push(await audit(p, 'J5-consent', width))
-  await p.getByRole('checkbox').check(); await p.getByRole('button', { name: 'Agree and continue' }).click(); await p.waitForURL(/book\/pay/)
-  rows.push(await audit(p, 'J6-pay', width))
+  await p.goto(base + '/app/services-v2/doctors?group=general&service=3')
+  await p.locator('article a.chip').nth(width < 600 ? 2 : 1).click(); await p.locator('[role=radio][aria-checked=true]').waitFor()
+  await p.getByRole('button', { name: 'Continue' }).filter({ visible: true }).click(); await p.waitForURL(/checkout/)
+  rows.push(await audit(p, 'S5-checkout-signed-in', width))
+  await p.getByLabel('I’ll be in mainland Portugal during the visit.').check()
+  await p.getByLabel('I’ve read these terms. I agree to a video consultation on them.').check()
   await p.getByRole('button', { name: /^Pay / }).click(); await p.waitForURL(/visits\//)
   rows.push(await audit(p, 'J7-booked', width))
   const up = (await json(p, '/api/appointments?scope=upcoming')).appointments
@@ -168,7 +164,7 @@ for (const width of widths.length ? widths.map(Number) : [390, 1280]) {
   // Reflow: 1280 at 200% zoom is 640 CSS px; WCAG 1.4.10 is 320 CSS px.
   for (const zw of width === 1280 ? [640, 320] : []) {
     await p.setViewportSize({ width: zw, height: 800 })
-    for (const path of ['/', '/app/book?service=general', '/app/signin', '/app/signup']) {
+    for (const path of ['/', '/app/services-v2', '/app/services-v2/doctors?group=general', '/app/signin', '/app/signup']) {
       await p.goto((path === '/' ? home : base) + path); await p.waitForLoadState('networkidle').catch(() => {})
       const o = await p.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)
       console.log(`${width} reflow ${zw}px ${path}: ${o > 0 ? `OVERFLOW ${o}px` : 'ok'}`)

@@ -1,7 +1,7 @@
 import { StrictMode } from 'react'
 import { EmptyArt } from './ui/empty-art'
 import { createRoot } from 'react-dom/client'
-import { createBrowserRouter, Link, Navigate, RouterProvider } from 'react-router'
+import { createBrowserRouter, Link, Navigate, RouterProvider, useSearchParams } from 'react-router'
 import type { ComponentType, ReactNode } from 'react'
 import { homeFor, SessionProvider, useSession } from './lib/session'
 import { Loading, PageTitle } from './ui/kit'
@@ -11,7 +11,7 @@ import './styles.css'
 function Index() {
   const { user, loading } = useSession()
   if (loading) return <div className="page-narrow"><Loading /></div>
-  return <Navigate to={user ? homeFor(user) : '/book'} replace />
+  return <Navigate to={user ? homeFor(user) : '/services-v2'} replace />
 }
 
 function NotFound() {
@@ -27,6 +27,15 @@ function NotFound() {
   )
 }
 
+/** Old /book links (the homepage, emails, bookmarks) open the same place in Services v2. */
+function BookRedirect() {
+  const [params] = useSearchParams()
+  const group = params.get('service'), doctor = params.get('doctor')
+  const to = doctor && /^\d+$/.test(doctor) ? `/services-v2/doctors/${doctor}/times`
+    : group ? `/services-v2/doctors?group=${encodeURIComponent(group)}` : '/services-v2'
+  return <Navigate to={to} replace />
+}
+
 const patient = (el: ReactNode) => <RequireRole role="patient">{el}</RequireRole>
 const clinician = (el: ReactNode) => <RequireRole role="clinician">{el}</RequireRole>
 
@@ -34,7 +43,7 @@ const clinician = (el: ReactNode) => <RequireRole role="clinician">{el}</Require
 // and doctor screens. The router loads a chunk before it commits the navigation, so the current screen stays up.
 type Mod = Record<string, ComponentType>
 const files = {
-  account: () => import('./pages/account'), auth: () => import('./pages/auth'), book: () => import('./pages/book'),
+  account: () => import('./pages/account'), auth: () => import('./pages/auth'),
   call: () => import('./pages/call'), 'services-v2': () => import('./pages/services-v2'), dev: () => import('./pages/dev'), doctor: () => import('./pages/doctor'),
   visit: () => import('./pages/visit'), waiting: () => import('./pages/waiting'),
 }
@@ -52,19 +61,7 @@ const router = createBrowserRouter(
       HydrateFallback: () => null,
       children: [
         { index: true, element: <Index /> },
-        {
-          path: 'book',
-          ...page('book', 'BookingLayout'),
-          children: [
-            { index: true, ...page('book', 'BookService') },
-            { path: 'who', ...page('book', 'BookWho') },
-            { path: 'time', ...page('book', 'BookTime') },
-            { path: 'account', ...page('book', 'BookAccount') },
-            { path: 'family', ...page('book', 'BookFamily', patient) },
-            { path: 'consent', ...page('book', 'BookConsent', patient) },
-            { path: 'pay', ...page('book', 'BookPay', patient) },
-          ],
-        },
+        { path: 'book/*', element: <BookRedirect /> },
         { path: 'services-v2', ...page('services-v2', 'ServicesHome') },
         { path: 'services-v2/doctors', ...page('services-v2', 'ServicesDoctors') },
         { path: 'services-v2/doctors/:id', ...page('services-v2', 'ServicesDoctor') },

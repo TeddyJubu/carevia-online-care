@@ -8,7 +8,7 @@ import { useQuestions } from '../lib/questions'
 import { useSession } from '../lib/session'
 import { countdown, fullDate, hhmm, minutes, when } from '../lib/time'
 import type { Appointment } from '../lib/types'
-import { TimePicker } from './book'
+import { TimePicker } from './time-picker'
 import { Dialog, DoctorAvatar, Emergency, ErrorState, euro, euroCents, FormError, Loading, Markdown, Notice, PageTitle, paymentStatus } from '../ui/kit'
 
 export function useAppointment() {
@@ -141,7 +141,7 @@ export function Prepare() {
               )}
               {a.status === 'cancelled' && (
                 <div className="mt-6 flex flex-wrap items-center gap-x-6 gap-y-3">
-                  <Link to={`/book?service=${a.service.groupSlug}`} className="btn btn-primary">Book another time</Link>
+                  <Link to={`/services-v2/doctors?group=${a.service.groupSlug}&service=${a.service.id}`} className="btn btn-primary">Book another time</Link>
                   {allLink}
                 </div>
               )}
@@ -417,7 +417,7 @@ export function Done() {
             </section>
             <aside className="grid content-start gap-3" aria-label="This visit">
               <VisitCard a={a} />
-              <Link to={`/book?service=${a.service.groupSlug}&doctor=${a.doctor.id}`} className="btn btn-primary btn-block">Book a follow-up</Link>
+              <Link to={`/services-v2/doctors/${a.doctor.id}/times`} className="btn btn-primary btn-block">Book a follow-up</Link>
               <Link to="/account" className="btn btn-secondary btn-block">Back to your account</Link>
             </aside>
           </div>

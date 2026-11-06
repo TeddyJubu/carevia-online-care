@@ -49,7 +49,7 @@ export function Footer() {
           <ul className="grid">
             <li><a href={HOME} className="inline-flex min-h-11 items-center">Homepage</a></li>
             {clinician ? <li><Link to="/doctor" className="inline-flex min-h-11 items-center">Your agenda</Link></li> : <>
-              <li><Link to="/book" className="inline-flex min-h-11 items-center">Book a visit</Link></li>
+              <li><Link to="/services-v2" className="inline-flex min-h-11 items-center">Book a visit</Link></li>
               <li><Link to="/account" className="inline-flex min-h-11 items-center">Your account</Link></li>
             </>}
           </ul>
