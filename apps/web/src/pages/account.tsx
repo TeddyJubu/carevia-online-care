@@ -15,6 +15,7 @@ const errMsg = (e: unknown) => (e instanceof ApiError ? e.message : 'Something w
 
 const NAV = [
   { to: '/account', label: 'Home', end: true },
+  { to: '/appointments', label: 'Appointments' },
   { to: '/account/family', label: 'Family' },
   { to: '/account/payments', label: 'Payments' },
   { to: '/account/profile', label: 'Profile' },

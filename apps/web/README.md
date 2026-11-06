@@ -25,6 +25,7 @@ Demo accounts (mock and demo API): `patient@example.com` / `demo-password`, `doc
 Rules the code relies on:
 - The patient's questions live in `localStorage` (`carevia-questions-<id>`) and are never sent to the API.
 - After a visit Carevia shows an iMED status, never a document.
+- The visit page's Documents card (`src/ui/documents.tsx`) downloads the receipt PDF from the API and, after a completed visit, opens a panel explaining how e-prescriptions reach the patient (Receita Sem Papel, by SMS or email). `PrescriptionInfo` there is the one component to swap if that changes. Carevia never shows a prescription.
 - The receipt (`/visits/:id/receipt`) is a demo payment confirmation, never a tax invoice (fatura), and has no clinical content. Refund terms on `/account/payments` come from `cancellation.md` as written.
 - Demo mode is locked twice: `VITE_DEMO=1` at build time and `GET /api/demo` at run time.
 - Content comes from `content/patient-journey/*.md` at build time; draft notes show in development only.

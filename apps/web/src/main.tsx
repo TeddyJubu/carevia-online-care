@@ -50,7 +50,7 @@ const clinician = (el: ReactNode) => <RequireRole role="clinician">{el}</Require
 // and doctor screens. The router loads a chunk before it commits the navigation, so the current screen stays up.
 type Mod = Record<string, ComponentType>
 const files = {
-  account: () => import('./pages/account'), auth: () => import('./pages/auth'), book: () => import('./pages/book'),
+  account: () => import('./pages/account'), appointments: () => import('./pages/appointments'), auth: () => import('./pages/auth'), book: () => import('./pages/book'),
   call: () => import('./pages/call'), dev: () => import('./pages/dev'), doctors: () => import('./pages/doctors'), doctor: () => import('./pages/doctor'),
   visit: () => import('./pages/visit'), waiting: () => import('./pages/waiting'),
 }
@@ -86,6 +86,12 @@ const router = createBrowserRouter(
         { path: 'visits/:id/call', ...page('call', 'CallPage', patient) },
         { path: 'visits/:id/done', ...page('visit', 'Done', patient) },
         { path: 'visits/:id/receipt', ...page('visit', 'Receipt', patient) },
+        // Every visit on the account (pages/appointments.tsx), inside the account menu.
+        {
+          path: 'appointments',
+          ...page('account', 'AccountLayout', patient),
+          children: [{ index: true, ...page('appointments', 'AppointmentsPage') }],
+        },
         {
           path: 'account',
           ...page('account', 'AccountLayout', patient),
