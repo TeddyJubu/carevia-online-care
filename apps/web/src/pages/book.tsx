@@ -5,7 +5,7 @@ import { useLoad } from '../lib/load'
 import { useSession } from '../lib/session'
 import { addDays, age, birthDate, dayLabel, hhmm, lisbonDay, when } from '../lib/time'
 import type { Appointment, Doctor, For, GroupSlug, ServiceGroup, Slot } from '../lib/types'
-import { Icon } from '../ui/icons'
+import { CareIcon, Icon } from '../ui/icons'
 import { DoctorAvatar, ErrorState, euro, Field, FormError, HoldTimer, Loading, Markdown, Notice, PageTitle } from '../ui/kit'
 import { validateSignUp } from './auth'
 
@@ -133,7 +133,7 @@ export function ServicesHome() {
                 <li key={g.slug} id={`plate-${g.slug}`} style={{ '--span': spans[i] } as CSSProperties}
                   className="flex scroll-mt-24 flex-col gap-[18px] rounded-[14px] bg-white p-6 shadow-[0_1px_2px_#102d500d,0_10px_28px_#102d5012] outline outline-1 -outline-offset-1 outline-[#102d5012] sm:p-7 lg:col-span-(--span)">
                   <div className="flex items-center gap-4">
-                    <span className="grid size-12 place-items-center rounded-xl bg-gradient-to-b from-[#0b2648] to-[#163d6e] text-white"><Icon name={g.icon} /></span>
+                    <CareIcon name={g.icon} />
                     <span className="flex items-center gap-2.5 text-[12px] font-semibold tracking-[0.12em] text-[#1d4f91]">PLATE {pad(no)}<span aria-hidden="true" className="h-px w-6 bg-[#1d4f9140]" /></span>
                   </div>
                   <div>
