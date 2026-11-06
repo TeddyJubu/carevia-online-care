@@ -122,7 +122,8 @@ export function ServicesDoctors() {
       {(group.slug === 'certificates' || group.slug === 'renewals') && (
         <Notice className="mt-4"><span>Your doctor decides, after assessing you, whether anything needs to be issued. Booking a visit doesn’t guarantee a certificate, a test request or a renewal. Anything issued comes through iMED.</span></Notice>
       )}
-      {/* One compact row so the first doctors show without scrolling; the rarer filters fold under More filters. */}
+      {/* One compact row so the first doctors show without scrolling; the rarer filters fold under More filters.
+          Buttons: 48px high with a 6px bottom margin (the .field gap under the input) so they line up with the selects. */}
       <div className="mt-4 flex flex-wrap items-end gap-3">
         <Field as="select" label="Language" className="min-w-[150px] flex-1 sm:flex-none" value={f.language} onChange={(e) => set({ language: e.target.value })}>
           <option value="">Any language</option>{LANGUAGES.map((l) => <option key={l}>{l}</option>)}
@@ -130,10 +131,10 @@ export function ServicesDoctors() {
         <Field as="select" label="Price" className="min-w-[150px] flex-1 sm:flex-none" value={f.maxFee} onChange={(e) => set({ maxFee: e.target.value })}>
           {PRICES.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
         </Field>
-        <button type="button" className="chip mb-[22px]" aria-expanded={more} aria-controls="more-filters" onClick={() => setMore(!more)}>
+        <button type="button" className="chip mb-1.5 min-h-12" aria-expanded={more} aria-controls="more-filters" onClick={() => setMore(!more)}>
           {more ? 'Fewer filters' : `More filters${f.specialty || f.available ? ' (on)' : ''}`}
         </button>
-        {filtered && <button type="button" className="link mb-[22px] min-h-11 text-sm" onClick={clear}>Clear filters</button>}
+        {filtered && <button type="button" className="link mb-1.5 min-h-12 text-sm" onClick={clear}>Clear filters</button>}
       </div>
       {more && (
         <div id="more-filters" className="mt-1 flex flex-wrap gap-3 animate-[pop_0.45s_cubic-bezier(.22,1,.36,1)]">
