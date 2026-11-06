@@ -1,0 +1,36 @@
+# Every push to main (a merge, or a direct push) deploys to https://carevia.triplelabs.dev and then
+# fast-forwards patient-journey to match. The SSH key can only run ~/carevia/bin/receive-deploy on the VPS.
+name: Deploy
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+concurrency:
+  group: production
+  cancel-in-progress: false
+permissions:
+  contents: write
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci --ignore-scripts
+      - name: SSH access to the VPS
+        env:
+          KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          KNOWN_HOSTS: ${{ secrets.DEPLOY_KNOWN_HOSTS }}
+        run: |
+          mkdir -p ~/.ssh && chmod 700 ~/.ssh
+          printf '%s\n' "$KEY" > ~/.ssh/deploy && chmod 600 ~/.ssh/deploy
+          printf '%s\n' "$KNOWN_HOSTS" > ~/.ssh/known_hosts
+          printf 'Host sandbox\n  HostName 103.51.129.99\n  User ubuntu\n  IdentityFile ~/.ssh/deploy\n  IdentitiesOnly yes\n' > ~/.ssh/config
+      - run: deploy/vps/deploy.sh
+      # Pushes made with GITHUB_TOKEN don't start workflows, so this can't loop.
+      - name: Fast-forward patient-journey
+        run: git push origin HEAD:patient-journey || echo "::warning::patient-journey has commits main lacks, so it was not updated"
