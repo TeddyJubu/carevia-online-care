@@ -131,7 +131,7 @@ async function catalogChecks(anon) {
   record('Men’s health apostrophe U+2019', mens === 'Men’s health' && mens?.codePointAt(3) === 0x2019, mens)
 
   const doctors = await anon.get('/api/doctors')
-  record('doctors: 220 with nextAvailableAt', doctors.json?.count === 220 && doctors.json.doctors.every((doctor) => 'nextAvailableAt' in doctor), `count ${doctors.json?.count}`)
+  record('doctors: 270 with nextAvailableAt', doctors.json?.count === 270 &&doctors.json.doctors.every((doctor) => 'nextAvailableAt' in doctor), `count ${doctors.json?.count}`)
   const profile = (await anon.get('/api/doctors/0')).json?.doctor
   record('doctor 0 wireframe profile',
     profile?.name === 'Dr Emma Laurent' && profile?.initials === 'EL' && profile?.specialty === 'General practitioner'
@@ -146,7 +146,7 @@ async function catalogChecks(anon) {
     && filtered.json.doctors.every((doctor) => doctor.specialty === 'General practitioner' && doctor.fee <= 45), `count ${filtered.json?.count}`)
   const bySlug = await anon.get('/api/doctors?groupSlug=mental&sort=first-available')
   const times = bySlug.json?.doctors?.map((doctor) => doctor.nextAvailableAt ? Date.parse(doctor.nextAvailableAt) : Infinity) || []
-  record('groupSlug filter and sort=first-available', bySlug.json?.count === 48
+  record('groupSlug filter and sort=first-available', bySlug.json?.count === 60
     && bySlug.json.doctors.every((doctor) => doctor.groupSlug === 'mental') && times.every((time, i) => i === 0 || times[i - 1] <= time),
   `count ${bySlug.json?.count}`)
   expectError('invalid doctor filter is 400', await anon.get('/api/doctors?maxFee=cheap'), 400, 'INVALID_FILTER')

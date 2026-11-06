@@ -1,16 +1,17 @@
 import { PrismaClient } from '@prisma/client'
 import { GROUPS, buildDoctors } from '../src/catalog.js'
+import { CURATED_DOCTORS } from '../src/curated-doctors.js'
 import { seedDemo } from '../src/demo-seed.js'
 
 const prisma = new PrismaClient()
 
 async function main() {
-  const doctors = buildDoctors()
+  const doctors = [...buildDoctors(), ...CURATED_DOCTORS]
   const mensHealth = GROUPS[0].services[12]
   if (mensHealth !== 'Men’s health' || mensHealth.codePointAt(3) !== 0x2019) {
     throw new Error('Men’s health must use the wireframe apostrophe U+2019')
   }
-  if (doctors.length !== 220) throw new Error(`Expected 220 doctors, got ${doctors.length}`)
+  if (doctors.length !== 270) throw new Error(`Expected 270 doctors, got ${doctors.length}`)
 
   // Everything that points at the catalog goes first.
   await prisma.appointment.deleteMany()
