@@ -417,10 +417,13 @@ async function reminderChecks(demoPatient) {
   process.env.DEMO_MODE = 'true'
   const { sendDueReminders } = await import('../src/reminders.js')
   const at = new Date(Date.parse(a.startsAt) - 23 * 3_600_000)
-  const notYet = await sendDueReminders(new Date(Date.parse(a.startsAt) - 25 * 3_600_000))
+  // The job's counts cover every visit in the database (demo visits too), so "nothing yet" is checked on this visit's own messages.
+  const reminders = async () => (await patient.get('/api/dev/outbox')).json.messages.filter((m) => /^Reminder|^SMS/.test(m.subject) && m.links.some((link) => link.endsWith(`/app/visits/${id}`)))
+  await sendDueReminders(new Date(Date.parse(a.startsAt) - 25 * 3_600_000))
+  const notYet = (await reminders()).length
   const first = await sendDueReminders(at)
   const second = await sendDueReminders(new Date(at.getTime() + 5 * 60_000))
-  const mine = (await patient.get('/api/dev/outbox')).json.messages.filter((m) => /^Reminder|^SMS/.test(m.subject) && m.links.some((link) => link.endsWith(`/app/visits/${id}`)))
+  const mine = await reminders()
   const email = mine.find((m) => m.channel === 'email')
   const sms = mine.find((m) => m.channel === 'sms')
   record('reminders: nothing 25 hours before; one email and one SMS at 23 hours; nothing on the next run',

@@ -62,10 +62,13 @@ export async function catalogRoutes(app) {
       orderBy: { startsAt: 'asc' },
       select: { startsAt: true, doctor: { select: { groupId: true } } },
     })
+    // Each Lisbon midnight once, then compare times: a date formatter per slot (thousands) took most of a second.
+    const midnights = days.map((day) => lisbonTimeToUtc(day, '00:00').getTime())
     const week = new Map()
     for (const slot of slots) {
       const g = week.get(slot.doctor.groupId) ?? { counts: days.map(() => 0), next: slot.startsAt }
-      g.counts[days.indexOf(lisbonToday(slot.startsAt))] += 1
+      const t = slot.startsAt.getTime()
+      g.counts[midnights.findLastIndex((m) => m <= t)] += 1
       week.set(slot.doctor.groupId, g)
     }
     return {

@@ -58,7 +58,7 @@ await p.getByRole('link', { name: /^More times/ }).first().click(); await p.wait
 await p.goBack(); await p.waitForURL(/book\/doctors\?/)
 check((await p.getByLabel('Service', { exact: true }).locator('option:checked').textContent()) === 'Allergies', 'Back to the doctors keeps the chosen service', path())
 await p.goBack(); await p.waitForURL(/book$/)
-check((await h1()).startsWith('Find the right care'), 'Back again returns to the services home', await h1())
+check((await h1()).includes('Know which care you need'), 'Back again returns to the services home', await h1())
 await p.goForward(); await p.goForward(); await p.waitForURL(/\/times/)
 check((await h1()) === 'Choose your appointment', 'Forward twice returns to the times', await h1())
 // The third time, not the first: a demo reset books the patient a visit ~15 minutes from now, and the earliest
