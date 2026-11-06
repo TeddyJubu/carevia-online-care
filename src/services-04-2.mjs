@@ -11,7 +11,7 @@ const copy={
  renewals:{name:'Test requests & renewals',short:'Doctor consultations for test requests and treatment renewals'}
 };
 
-const blueImages={"general": "general-urgent-care", "mental": "mental-health", "nutrition": "weight-management-handwritten", "specialist": "specialist-care", "certificates": "certificates-atestado", "treatments": "treatments", "renewals": "test-requests-renewals"};
+const blueImages={"general": "general-urgent-care", "mental": "mental-health", "nutrition": "weight-management-notes", "specialist": "specialist-care", "certificates": "certificates-atestado", "treatments": "treatments", "renewals": "test-requests-renewals"};
 // The services inside each area, shown when its folder opens in the all-care popup.
 // ponytail: copied from GROUPS in apps/api/src/catalog.js; read /api/catalog instead once the homepage fetches live data.
 const categories={

@@ -1,8 +1,8 @@
 // Paper "Heatmap" shader (vendored @paper-design/shaders 0.0.82, Apache-2.0) with the settings from the Carevia Paper file.
-import {ShaderMount} from './vendor/paper-shaders/shader-mount.js?v=b6899e3b8a';
-import {heatmapFragmentShader,toProcessedHeatmap} from './vendor/paper-shaders/shaders/heatmap.js?v=b6899e3b8a';
-import {getShaderColorFromString as color} from './vendor/paper-shaders/get-shader-color-from-string.js?v=b6899e3b8a';
-import {ShaderFitOptions} from './vendor/paper-shaders/shader-sizing.js?v=b6899e3b8a';
+import {ShaderMount} from './vendor/paper-shaders/shader-mount.js?v=cea4b547dd';
+import {heatmapFragmentShader,toProcessedHeatmap} from './vendor/paper-shaders/shaders/heatmap.js?v=cea4b547dd';
+import {getShaderColorFromString as color} from './vendor/paper-shaders/get-shader-color-from-string.js?v=cea4b547dd';
+import {ShaderFitOptions} from './vendor/paper-shaders/shader-sizing.js?v=cea4b547dd';
 
 const colors=['#11206A','#1F3BA2','#2F63E7','#6BD7FF','#FFE679','#FF991E','#FF4C00'];
 
