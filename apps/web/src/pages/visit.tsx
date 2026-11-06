@@ -9,6 +9,7 @@ import { useSession } from '../lib/session'
 import { countdown, fullDate, hhmm, minutes, when } from '../lib/time'
 import type { Appointment } from '../lib/types'
 import { TimePicker } from './time-picker'
+import { Documents } from '../ui/documents'
 import { Dialog, DoctorAvatar, ErrorState, euro, euroCents, FormError, Loading, Markdown, Notice, PageTitle, paymentStatus } from '../ui/kit'
 
 export function useAppointment() {
