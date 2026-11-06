@@ -11,6 +11,10 @@
 .topbar .nav-logo:focus-visible .nav-emblem{clip-path:inset(0 0 100% 0);transition-duration:.45s}
 .topbar .nav-logo:focus-visible .nav-emblem-hover{clip-path:inset(0 0 0 0)}
 @media(hover:hover){.topbar .nav-logo:hover .nav-emblem{clip-path:inset(0 0 100% 0);transition-duration:.45s}.topbar .nav-logo:hover .nav-emblem-hover{clip-path:inset(0 0 0 0)}}
+/* Hover glow: the menu pills' orange (#ff9a4d, scripts/specular-nav.js) traced around the logo's own edges. drop-shadow sits on the link, so the wipe's clip-path doesn't cut it. */
+.topbar .nav-logo{filter:drop-shadow(0 0 0 #ff9a4d00) drop-shadow(0 0 0 #ff9a4d00)}
+.topbar .nav-logo:focus-visible{filter:drop-shadow(0 0 1.5px #ff9a4dcc) drop-shadow(0 0 9px #ff9a4d73)}
+@media(hover:hover){.topbar .nav-logo:hover{filter:drop-shadow(0 0 1.5px #ff9a4dcc) drop-shadow(0 0 9px #ff9a4d73)}}
 /* Nav: a three-column grid keeps the emblem dead centre; on desktop both pills share the wider width. */
 .topbar{display:grid;grid-template-columns:1fr auto 1fr;align-items:center}
 .topbar .nav-pill{justify-content:center}
@@ -21,8 +25,8 @@
 .topbar.is-docked::before{opacity:1;transform:none;transition-duration:.48s;transition-timing-function:cubic-bezier(.22,1,.36,1)}
 .topbar.is-docked .nav-pill{background:transparent;border-color:transparent;box-shadow:none;backdrop-filter:none;-webkit-backdrop-filter:none}
 /* Docked, the emblem settles to about 42px so it sits inside the capsule. */
-.topbar .nav-logo{transition:transform .22s cubic-bezier(.4,0,1,1)}
-.topbar.is-docked .nav-logo{transform:scale(.72);transition:transform .48s cubic-bezier(.22,1,.36,1)}
+.topbar .nav-logo{transition:transform .22s cubic-bezier(.4,0,1,1),filter .3s ease}
+.topbar.is-docked .nav-logo{transform:scale(.72);transition:transform .48s cubic-bezier(.22,1,.36,1),filter .3s ease}
 @media(max-width:600px){.topbar.is-docked .nav-logo{transform:scale(.8)}}
 @media(prefers-reduced-motion:reduce){.topbar::before,.topbar .nav-logo{transition:none}}
 /* Orange specular rim (scripts/specular-nav.js): canvas spills 24px past each pill and sits at z-index -1 inside the pill's isolated stack (above its fill, below its text); 4.2's blue chroma rim is retired on the pills. */
