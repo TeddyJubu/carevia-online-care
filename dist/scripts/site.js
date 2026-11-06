@@ -1,4 +1,4 @@
-import{GlassPhoto}from'./glass.js?v=16d85c509d';import{services,guides}from'./content.js?v=16d85c509d';
+import{GlassPhoto}from'./glass.js?v=c0009ba8a4';import{services,guides}from'./content.js?v=c0009ba8a4';
 const reduced=matchMedia('(prefers-reduced-motion: reduce)').matches;
 const ease='cubic-bezier(.22,1,.36,1)';
 const esc=s=>String(s).replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('"','&quot;');
