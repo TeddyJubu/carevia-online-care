@@ -35,7 +35,7 @@ const clinician = (el: ReactNode) => <RequireRole role="clinician">{el}</Require
 type Mod = Record<string, ComponentType>
 const files = {
   account: () => import('./pages/account'), auth: () => import('./pages/auth'), book: () => import('./pages/book'),
-  call: () => import('./pages/call'), dev: () => import('./pages/dev'), doctor: () => import('./pages/doctor'),
+  call: () => import('./pages/call'), 'services-v2': () => import('./pages/services-v2'), dev: () => import('./pages/dev'), doctor: () => import('./pages/doctor'),
   visit: () => import('./pages/visit'), waiting: () => import('./pages/waiting'),
 }
 const page = (file: keyof typeof files, name: string, wrap = (el: ReactNode) => el) => ({
@@ -65,6 +65,7 @@ const router = createBrowserRouter(
             { path: 'pay', ...page('book', 'BookPay', patient) },
           ],
         },
+        { path: 'services-v2', ...page('services-v2', 'ServicesV2') },
         { path: 'visits/:id', ...page('visit', 'Prepare', patient) },
         { path: 'visits/:id/join', ...page('visit', 'PreJoin', patient) },
         { path: 'visits/:id/reschedule', ...page('visit', 'Reschedule', patient) },

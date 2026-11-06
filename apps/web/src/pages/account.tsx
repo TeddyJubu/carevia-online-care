@@ -107,7 +107,10 @@ export function AccountHome() {
     <>
       <div className="flex flex-wrap items-end justify-between gap-4">
         <PageTitle title="Your account">Hello, {user?.firstName}</PageTitle>
-        <Link to="/book" className="btn btn-primary">Book new care</Link>
+        <div className="flex flex-wrap gap-3">
+          <Link to="/services-v2" className="btn btn-secondary">Quick book</Link>
+          <Link to="/book" className="btn btn-primary">Book new care</Link>
+        </div>
       </div>
 
       {verified && (

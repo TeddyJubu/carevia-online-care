@@ -96,6 +96,21 @@ export function SignInForm({ onDone, submitLabel = 'Sign in' }: { onDone: (u: Us
   )
 }
 
+/** Sign-up fields from a form, with the phone in E.164 and an error per bad field. Shared with Services v2 checkout. */
+export function validateSignUp(f: FormData) {
+  const b = { firstName: val(f, 'firstName'), lastName: val(f, 'lastName'), email: val(f, 'email'), phone: val(f, 'phone'), dateOfBirth: val(f, 'dateOfBirth'), password: String(f.get('password') ?? '') }
+  const errs: Errors = {}
+  if (!b.firstName) errs.firstName = 'Enter your first name.'
+  if (!b.lastName) errs.lastName = 'Enter your last name.'
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(b.email)) errs.email = 'Enter an email address, like name@example.com.'
+  const phone = toE164(b.phone)
+  if (!phone) errs.phone = 'Enter a mobile number, like 912 345 678 or +44 7700 900123.'
+  if (!b.dateOfBirth) errs.dateOfBirth = 'Enter your date of birth.'
+  else if (age(b.dateOfBirth) < 18) errs.dateOfBirth = 'You need to be 18 or over to create an account. A parent or guardian can book for a child.'
+  if (b.password.length < 8) errs.password = 'Use at least 8 characters.'
+  return { body: { ...b, phone: phone ?? b.phone }, errs }
+}
+
 export function SignUpForm({ onDone, submitLabel = 'Create account' }: { onDone: (u: User) => void; submitLabel?: string }) {
   const { refresh } = useSession()
   const { pending, error, setError, run } = useSubmit()
@@ -103,17 +118,7 @@ export function SignUpForm({ onDone, submitLabel = 'Create account' }: { onDone:
 
   function onSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault()
-    const f = new FormData(e.currentTarget)
-    const b = { firstName: val(f, 'firstName'), lastName: val(f, 'lastName'), email: val(f, 'email'), phone: val(f, 'phone'), dateOfBirth: val(f, 'dateOfBirth'), password: String(f.get('password') ?? '') }
-    const errs: Errors = {}
-    if (!b.firstName) errs.firstName = 'Enter your first name.'
-    if (!b.lastName) errs.lastName = 'Enter your last name.'
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(b.email)) errs.email = 'Enter an email address, like name@example.com.'
-    const phone = toE164(b.phone)
-    if (!phone) errs.phone = 'Enter a mobile number, like 912 345 678 or +44 7700 900123.'
-    if (!b.dateOfBirth) errs.dateOfBirth = 'Enter your date of birth.'
-    else if (age(b.dateOfBirth) < 18) errs.dateOfBirth = 'You need to be 18 or over to create an account. A parent or guardian can book for a child.'
-    if (b.password.length < 8) errs.password = 'Use at least 8 characters.'
+    const { body: b, errs } = validateSignUp(new FormData(e.currentTarget))
     setErrors(errs)
     setError(null)
     if (Object.keys(errs).length) {
@@ -122,7 +127,7 @@ export function SignUpForm({ onDone, submitLabel = 'Create account' }: { onDone:
     }
     run(async () => {
       try {
-        await api.auth.signUp({ ...b, phone: phone! })
+        await api.auth.signUp(b)
       } catch (err) {
         // Field-level codes go next to their field; everything else shows above the button.
         if (err instanceof ApiError && err.code === 'PASSWORD_COMPROMISED') return setErrors({ password: err.message })

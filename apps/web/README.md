@@ -14,6 +14,7 @@ Plan and rules: `docs/patient-journey/PLAN.md`. Endpoints: `docs/patient-journey
 | `node scripts/walk-visit.mjs <dir> [width]` | Playwright: visit, waiting room (fake camera), call, after-visit and doctor screens. Against the real API it reads ids and moves today's demo visit into the join window; set `MOCK=1` for the mock. |
 | `node scripts/a11y.mjs <dir> [width...]` | axe, overflow, focus and reduced motion on every screen, including the receipt (screen and print) and payments. Run it after a demo reset: it books visits for the demo patient. `ADMIN=0` skips `/admin/`. |
 | `node scripts/walk-reschedule.mjs <dir> [width]` | Playwright: change a visit's time; with `DROPPED_ID`, the dropped-call screen. |
+| `node scripts/walk-services-v2.mjs <dir> [width...]` | Playwright: Services v2 (`/app/services-v2`, one list and one checkout): signed-in and new-patient bookings with click counts, TIME_CLASH and SLOT_TAKEN. Resets the demo first on localhost (or `RESET=1`). |
 
 Every walk (and `a11y.mjs`, `shot.mjs`) runs local Chromium by default. With `BROWSERBASE=1` and `BROWSERBASE_API_KEY` set, it runs in a Browserbase cloud browser in Frankfurt instead and prints a replay link to share. Point it at production with `BASE_URL=https://carevia.triplelabs.dev`. The fake-camera flags only apply locally. Example: `BROWSERBASE=1 BASE_URL=https://carevia.triplelabs.dev node scripts/walk-edges.mjs out 390`.
 
