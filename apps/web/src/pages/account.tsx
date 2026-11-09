@@ -23,7 +23,6 @@ const NAV = [
   { to: '/account/family', label: 'Family', icon: icon(<><circle cx="9" cy="8" r="3.5" /><path d="M2.5 20c.8-3.5 3.4-5.5 6.5-5.5s5.7 2 6.5 5.5M16.5 5a3 3 0 0 1 0 6M18 14.6c1.9.5 3.2 2 3.6 4.4" /></>) },
   { to: '/account/payments', label: 'Payments', icon: icon(<><rect x="3" y="5.5" width="18" height="13" rx="2" /><path d="M3 10h18" /></>) },
   { to: '/account/profile', label: 'Profile', icon: icon(<><circle cx="12" cy="8" r="4" /><path d="M4.5 20.5c1-3.8 4-5.5 7.5-5.5s6.5 1.7 7.5 5.5" /></>) },
-  { to: '/account/security', label: 'Security', icon: icon(<path d="M12 3 4.5 6v5.5c0 4.6 3.2 8.3 7.5 9.5 4.3-1.2 7.5-4.9 7.5-9.5V6z" />) },
 ]
 
 // A left rail on desktop (menu, then everyone on the account), a compact scrollable row on phones.
@@ -560,12 +559,14 @@ export function ProfilePage() {
         <div role="status" aria-live="polite">{saved && <Notice tone="ok">Your profile is saved.</Notice>}</div>
         <div><button className="btn btn-primary" disabled={pending}>{pending ? 'Saving…' : 'Save changes'}</button></div>
       </form>
+      <ChangePassword />
+      <TwoFactor />
       <button type="button" className="btn btn-secondary mt-8" onClick={async () => { await signOut(); navigate('/signin') }}>Sign out</button>
     </>
   )
 }
 
-// ---------- Security ----------
+// ---------- Sign-in security, shown on Profile ----------
 
 function ChangePassword() {
   const [errors, setErrors] = useState<Errors>({})
@@ -734,16 +735,6 @@ function TwoFactor() {
         </div>
       )}
     </section>
-  )
-}
-
-export function SecurityPage() {
-  return (
-    <>
-      <PageTitle title="Security" lede="Keep your account, and your family’s visits, safe.">Security</PageTitle>
-      <ChangePassword />
-      <TwoFactor />
-    </>
   )
 }
 

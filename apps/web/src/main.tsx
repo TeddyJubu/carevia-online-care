@@ -120,7 +120,8 @@ const router = createBrowserRouter(
             { index: true, ...page('account', 'AccountHome') },
             { path: 'family', ...page('account', 'FamilyPage') },
             { path: 'profile', ...page('account', 'ProfilePage') },
-            { path: 'security', ...page('account', 'SecurityPage') },
+            // Security moved into Profile; old links still land there.
+            { path: 'security', element: <Navigate to="/account/profile" replace /> },
             { path: 'payments', ...page('account', 'PaymentsPage') },
           ],
         },

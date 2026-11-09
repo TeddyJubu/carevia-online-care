@@ -117,7 +117,7 @@ for (const width of widths.length ? widths.map(Number) : [390, 1280]) {
   const today = up.find((a) => a.patient?.kind === 'self' && Date.parse(a.startsAt) - Date.now() < 3600e3) ?? up[0]
   const child = up.find((a) => a.patient?.kind === 'family')
   for (const [path, name] of [
-    ['/app/account', 'account'], ['/app/appointments', 'appointments'], ['/app/account/family', 'account-family'], ['/app/account/profile', 'account-profile'], ['/app/account/security', 'account-security'],
+    ['/app/account', 'account'], ['/app/appointments', 'appointments'], ['/app/account/family', 'account-family'], ['/app/account/profile', 'account-profile'],
     [`/app/visits/${today.id}`, 'J7-prepare'], [`/app/visits/${today.id}/join`, 'J8-prejoin'], [`/app/visits/${today.id}/waiting`, 'J9-waiting'],
     [`/app/visits/${today.id}/call`, 'J10-call'], [`/app/visits/${child.id}/reschedule`, 'reschedule'],
     [`/app/visits/${past.find((a) => a.outcome === 'completed')?.id}/done`, 'J11-done'], ['/app/dev/outbox', 'outbox'],

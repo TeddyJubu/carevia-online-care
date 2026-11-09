@@ -187,7 +187,7 @@ The API reads `consent.md` for `/api/consent/current`. The web app imports the o
 | `/app/visits/:id/call` | J10: Daily call (Prebuilt or call object, embedded) |
 | `/app/visits/:id/done` | J11: visit status and the iMED explanation, plus "book a follow-up" |
 | `/app/visits/:id/receipt` | Printable demo payment confirmation (not a tax invoice / fatura). Payment only. |
-| `/app/account`, `/app/account/family`, `/app/account/payments`, `/app/account/profile`, `/app/account/security` | J12. Payments lists paid visits and shows the refund terms from `cancellation.md`. |
+| `/app/account`, `/app/account/family`, `/app/account/payments`, `/app/account/profile` (password and two-factor live here) | J12. Payments lists paid visits and shows the refund terms from `cancellation.md`. |
 | `/app/signin`, `/app/signup`, `/app/forgot-password`, `/app/reset-password` | Auth |
 | `/app/doctor`, `/app/doctor/visits/:id` | J13: agenda; visit room as owner, plus outcome |
 | `/app/dev/outbox` | Demo or development only |
