@@ -86,7 +86,7 @@ const filmStyles=`<style>.hero-film{object-fit:cover;object-position:50% 50%}
 @media(max-width:600px){.topbar.is-docked .nav-logo{transform:scale(.8)}}
 @media(prefers-reduced-motion:reduce){.topbar::before,.topbar .nav-logo,.topbar .nav-pill{transition:none}.topbar.is-docked .nav-pill,.topbar.is-docked::after{animation:none}}
 /* Orange specular rim (scripts/specular-nav.js): canvas spills 24px past each pill and sits at z-index -1 inside the pill's isolated stack (above its fill, below its text); 4.2's blue chroma rim is retired on the pills. */
-.specular-light{position:absolute;inset:-24px;width:calc(100% + 48px);height:calc(100% + 48px);z-index:-1;pointer-events:none;opacity:0;transition:opacity .35s}.topbar .nav-pill:is(:hover,:focus-visible) .specular-light,.hero .search-shell:hover .specular-light{opacity:1}.topbar .nav-pill::after{display:none}
+.specular-light{position:absolute;inset:-24px;width:calc(100% + 48px);height:calc(100% + 48px);z-index:-1;pointer-events:none;opacity:0;transition:opacity .35s}.topbar .nav-pill:is(:hover,:focus-visible) .specular-light,.hero .search-shell:hover .specular-light,:is(.button,.film-toggle,.dialog-close,.menu-main):is(:hover,:focus-visible) .specular-light{opacity:1}:is(.button,.menu-main){position:relative}:is(.button,.film-toggle,.dialog-close,.menu-main){isolation:isolate}.topbar .nav-pill::after{display:none}
 /* Calm load: everything in the hero clears from a light blur, one after another.
    Fill is "backwards", so once done each element drops back to filter:none; a held blur(0) would still switch off the nav pills' and search bar's backdrop blur. */
 @keyframes calm-in{from{opacity:0;filter:blur(6px);translate:0 6px}to{opacity:1;filter:none;translate:0 0}}

@@ -360,7 +360,9 @@ const settings = { radius: 10, lineColor: '#ff9a4d', baseColor: '#8a4a1f', inten
 // The hero search bar gets the same rim. Its shell clips overflow, so only the outward glow is trimmed; the rim itself sits just inside the edge.
 // The radius is read on every draw, not once: the search shell goes from a 30px pill to 16px corners when it opens,
 // and a rim drawn with the old radius cut an arc through the inside of the open box. Resizes trigger the redraws.
-const start = () => { for (const pill of document.querySelectorAll('.topbar .nav-pill, .hero .search-shell')) attach(pill, { ...settings, get radius() { return parseFloat(getComputedStyle(pill).borderTopLeftRadius) || 10; } }); };
+// Every button on the page gets the rim, not just the nav pills (the selector is shared with build.mjs's hover CSS).
+const RIMMED = '.topbar .nav-pill, .hero .search-shell, .button, .film-toggle, .dialog-close, .menu-main';
+const start = () => { for (const pill of document.querySelectorAll(RIMMED)) attach(pill, { ...settings, get radius() { return parseFloat(getComputedStyle(pill).borderTopLeftRadius) || 10; } }); };
 // Touch-only devices never see the hover rim, so they get no WebGL contexts at all. A convertible that gains a mouse attaches then.
 const canHover = matchMedia('(hover: hover) and (pointer: fine)');
 if (canHover.matches) start();
