@@ -93,8 +93,8 @@ export function DoctorsPage() {
 
 function DoctorCard({ doctor: d }: { doctor: Doctor }) {
   return (
-    // Only what picks a doctor: who, what they treat, languages, soonest time, price. Registration, experience
-    // and approach are on the next screen (times and profile), before payment.
+    // What picks a doctor: who, what they treat, qualifications, languages, soonest time, price.
+    // Approach and the full profile are on the next screen (times and profile), before payment.
     <article className="card doctor-card p-5" aria-labelledby={`doc-${d.id}`}>
       <div className="flex items-center gap-3.5">
         <DoctorAvatar doctor={d} size={48} />
@@ -103,7 +103,12 @@ function DoctorCard({ doctor: d }: { doctor: Doctor }) {
           <p className="fine">{d.specialty}</p>
         </div>
       </div>
-      <p className="mt-4 text-sm">Speaks {d.languages.split(LANG_JOINER).join(', ')}</p>
+      <dl className="mt-4 grid gap-1 text-[13px]">
+        <div><dt className="sr-only">Registration</dt><dd>Ordem dos Médicos cédula {d.cedula}</dd></div>
+        {d.experience && <div><dt className="sr-only">Experience</dt><dd>{d.experience} in practice</dd></div>}
+        {d.education && <div><dt className="sr-only">Training</dt><dd className="muted line-clamp-2">{d.education} <span className="badge ml-1">Illustrative</span></dd></div>}
+      </dl>
+      <p className="mt-3 text-sm">Speaks {d.languages.split(LANG_JOINER).join(', ')}</p>
       {d.nextAvailableAt
         ? <p className="mt-1 mb-4 text-[13px] font-medium text-ok">Next: {when(d.nextAvailableAt)}</p>
         : <p className="fine mt-1 mb-4">No open times right now</p>}
