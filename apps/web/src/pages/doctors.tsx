@@ -106,7 +106,6 @@ function DoctorCard({ doctor: d }: { doctor: Doctor }) {
       <dl className="mt-4 grid gap-1 text-[13px]">
         <div><dt className="sr-only">Registration</dt><dd>Ordem dos Médicos cédula {d.cedula}</dd></div>
         {d.experience && <div><dt className="sr-only">Experience</dt><dd>{d.experience} in practice</dd></div>}
-        {d.education && <div><dt className="sr-only">Training</dt><dd className="muted line-clamp-2">{d.education} <span className="badge ml-1">Illustrative</span></dd></div>}
       </dl>
       <p className="mt-3 text-sm">Speaks {d.languages.split(LANG_JOINER).join(', ')}</p>
       {d.nextAvailableAt
