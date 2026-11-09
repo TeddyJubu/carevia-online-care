@@ -1,8 +1,5 @@
 import { useEffect, type ReactNode } from 'react'
 import { Link, Navigate, NavLink, Outlet, useLocation, useNavigate } from 'react-router'
-import { MOCK } from '../lib/api'
-import { content, plain } from '../lib/content'
-import { DEMO_BUILD, useDemo } from '../lib/demo'
 import { ADMIN_HOME, homeFor, SITE, useSession } from '../lib/session'
 import type { Role, User } from '../lib/types'
 import { Loading } from './kit'
@@ -76,27 +73,12 @@ export function Footer() {
   )
 }
 
-function DemoBar() {
-  const demo = useDemo()
-  // A demo build shows the notice while /api/demo is answering (undefined), so the page doesn't jump down when it
-  // arrives (CLS). It is a disclaimer only: demo logins and the outbox link still wait for the API's yes.
-  if (!MOCK && !(DEMO_BUILD && demo !== null)) return null
-  return (
-    <aside className="demo-bar" aria-label="Demo notice">
-      <strong className="font-medium">{content('demo-banner').title.replace(/\.$/, '')}.</strong>{' '}
-      {plain(content('demo-banner').body)}{MOCK && ' Mock API: data lives in this tab only.'}
-      {demo && <> <Link to="/dev/outbox" className="link ml-1">Outbox</Link></>}
-    </aside>
-  )
-}
-
 export function Layout() {
   const { pathname } = useLocation()
   useEffect(() => { window.scrollTo(0, 0) }, [pathname])
   return (
     <>
       <a href="#main" className="skip">Skip to content</a>
-      <DemoBar />
       <Header />
       {/* At least a screen tall, so the footer never starts in view and jumps as the page loads (CLS). */}
       <main id="main" className="min-h-svh">

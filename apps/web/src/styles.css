@@ -110,7 +110,6 @@
   .app-footer a { color: #fff; }
   .footer-wordmark { margin-top: 48px; font-size: clamp(64px, 16vw, 200px); font-weight: 700; line-height: 0.8; letter-spacing: -0.05em; text-align: center; white-space: nowrap; color: #839bb8; -webkit-mask-image: linear-gradient(#000, #0002); mask-image: linear-gradient(#000, #0002); user-select: none; }
 
-  .demo-bar { background: #fde9d9; color: #5a2509; font-size: 14px; text-align: center; padding: 8px 16px; }
 
   /* Page containers */
   .page { width: min(1200px, calc(100% - 32px)); margin-inline: auto; padding-block: 40px 24px; }
@@ -407,7 +406,7 @@
 
 /* Printing a receipt: only the receipt, in black on white. */
 @media print {
-  .skip, .demo-bar, .app-header, .app-footer, .no-print { display: none !important; }
+  .skip, .app-header, .app-footer, .no-print { display: none !important; }
   :root, body { background: #fff; }
   main { min-height: 0 !important; }
   .receipt-page { width: 100%; padding: 0; }
