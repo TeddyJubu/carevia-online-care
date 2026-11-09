@@ -161,11 +161,8 @@
   .card { background: #fff; border: 1px solid #102d5014; border-radius: 14px; padding: 24px; }
   .card-tight { padding: 16px 20px; }
   /* Doctors page: list of cards; each new batch fades up (opacity/transform only; reduced motion is handled globally). */
-  .doctor-grid { display: grid; gap: 16px; grid-template-columns: repeat(auto-fill, minmax(min(100%, 340px), 1fr)); }
+  .doctor-grid { display: grid; gap: 16px; grid-template-columns: repeat(auto-fill, minmax(min(100%, 280px), 1fr)); }
   .doctor-card { display: flex; flex-direction: column; height: 100%; animation: pop 0.45s cubic-bezier(.22,1,.36,1) both; }
-  .doctor-facts { display: grid; grid-template-columns: auto 1fr; gap: 4px 12px; margin-top: 14px; font-size: 14px; }
-  .doctor-facts dt { color: var(--color-muted); }
-  .doctor-facts dd { margin: 0; min-width: 0; }
   .card-mist { background: var(--color-mist); border-color: transparent; }
   .rule { border: 0; border-top: 1px solid var(--color-line); margin: 0; }
   .rows > * + * { border-top: 1px solid var(--color-line); }

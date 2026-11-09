@@ -2,6 +2,7 @@ import { useMemo } from 'react'
 import { Link, useSearchParams } from 'react-router'
 import { api } from '../lib/api'
 import { useLoad } from '../lib/load'
+import { when } from '../lib/time'
 import type { Doctor } from '../lib/types'
 import { DoctorAvatar, ErrorState, euro, Field, Loading, PageTitle } from '../ui/kit'
 
@@ -92,21 +93,22 @@ export function DoctorsPage() {
 
 function DoctorCard({ doctor: d }: { doctor: Doctor }) {
   return (
-    <article className="card card-tight doctor-card" aria-labelledby={`doc-${d.id}`}>
-      <div className="flex gap-4">
-        <DoctorAvatar doctor={d} />
+    // Only what picks a doctor: who, what they treat, languages, soonest time, price. Registration, experience
+    // and approach are on the next screen (times and profile), before payment.
+    <article className="card doctor-card p-5" aria-labelledby={`doc-${d.id}`}>
+      <div className="flex items-center gap-3.5">
+        <DoctorAvatar doctor={d} size={48} />
         <div className="min-w-0">
-          <h2 id={`doc-${d.id}`} className="font-sans text-[18px] font-medium tracking-[-0.01em]">{d.name}</h2>
-          <p className="fine">{d.specialty}{d.groupName && ` · ${d.groupName}`}</p>
+          <h2 id={`doc-${d.id}`} className="font-sans text-[17px] leading-snug font-medium tracking-[-0.01em]">{d.name}</h2>
+          <p className="fine">{d.specialty}</p>
         </div>
       </div>
-      <dl className="doctor-facts">
-        <dt>Languages</dt><dd>{d.languages}</dd>
-        {d.experience && <><dt>Experience</dt><dd>{d.experience}</dd></>}
-        <dt>Registration</dt><dd>Cédula {d.cedula} <span className="badge ml-1">Demo</span></dd>
-      </dl>
-      <div className="mt-auto flex items-center justify-between gap-3 pt-4">
-        <span className="font-medium">From {euro(d.fee)}</span>
+      <p className="mt-4 text-sm">Speaks {d.languages.split(LANG_JOINER).join(', ')}</p>
+      {d.nextAvailableAt
+        ? <p className="mt-1 mb-4 text-[13px] font-medium text-ok">Next: {when(d.nextAvailableAt)}</p>
+        : <p className="fine mt-1 mb-4">No open times right now</p>}
+      <div className="mt-auto flex items-center justify-between gap-3 border-t border-line pt-4">
+        <span className="text-[17px] font-medium"><span className="sr-only">Fee </span>{euro(d.fee)}</span>
         <Link to={`/book/doctors/${d.id}/times`} className="btn btn-primary btn-sm">Book<span className="sr-only"> with {d.name}</span></Link>
       </div>
     </article>
