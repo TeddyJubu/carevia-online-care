@@ -66,7 +66,6 @@ export function ServicesHome() {
   const { user } = useSession()
   const catalog = useCatalog()
   const [q, setQ] = useState('')
-  const [open, setOpen] = useState<Record<string, boolean>>({})
   const all = catalog.data?.groups ?? []
   const term = q.trim().toLowerCase()
   const groups = all.map((g, i) => ({ g, no: i + 1, matches: term ? g.services.filter((s) => s.name.toLowerCase().includes(term)) : [] }))
@@ -103,7 +102,7 @@ export function ServicesHome() {
           <ul className="mt-3.5 grid gap-3 text-[14px]">
             <li className="flex items-center gap-3"><Icon name="stethoscope" size={16} className="text-[#9cc0ee]" />Icon: the type of care on each plate</li>
             <li className="flex items-center gap-3"><Icon name="arrow-right" size={16} className="text-[#9cc0ee]" />Field mark: a sign this is the right service</li>
-            <li className="flex items-center gap-3"><Icon name="circle-chevron-down" size={16} className="text-[#9cc0ee]" />Select any plate to see its services</li>
+            <li className="flex items-center gap-3"><Icon name="mouse-pointer-click" size={16} className="text-[#9cc0ee]" />Select any plate to choose a doctor</li>
             <li className="flex items-center gap-3"><Icon name="chart-column" size={16} className="text-[#9cc0ee]" />Open slots over the next 7 days</li>
           </ul>
         </aside>
@@ -124,20 +123,26 @@ export function ServicesHome() {
         : !groups.length ? <p className="mt-6" role="status">No matching services. Try another search.</p> : (
           <ul className="mt-10 grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-6" aria-label="Areas of care">
             {groups.map(({ g, no, matches }, i) => {
-              const expanded = open[g.slug] ?? matches.length > 0
-              const listId = `plate-${g.slug}-services`
+              // The whole plate opens the doctors page with a service already chosen: the searched one, else the first.
+              const pick = matches[0] ?? g.services[0]
               const [other, ...why] = g.confusedWith.split(':')
               const otherSlug = why.length ? byName.get(other.trim().toLowerCase()) : undefined
               const free = g.week.reduce((a, b) => a + b, 0)
               return (
                 <li key={g.slug} id={`plate-${g.slug}`} style={{ '--span': spans[i] } as CSSProperties}
-                  className="flex scroll-mt-24 flex-col gap-[18px] rounded-[14px] bg-white p-6 shadow-[0_1px_2px_#102d500d,0_10px_28px_#102d5012] outline outline-1 -outline-offset-1 outline-[#102d5012] sm:p-7 lg:col-span-(--span)">
+                  className="group relative flex scroll-mt-24 flex-col gap-[18px] rounded-[14px] bg-white p-6 shadow-[0_1px_2px_#102d500d,0_10px_28px_#102d5012] transition-shadow duration-300 hover:shadow-[0_1px_2px_#102d500d,0_16px_36px_#102d5024] outline outline-1 -outline-offset-1 outline-[#102d5012] sm:p-7 lg:col-span-(--span)">
                   <div className="flex items-center gap-4">
                     <CareIcon name={g.icon} />
                     <span className="flex items-center gap-2.5 text-[12px] font-semibold tracking-[0.12em] text-[#1d4f91]">PLATE {pad(no)}<span aria-hidden="true" className="h-px w-6 bg-[#1d4f9140]" /></span>
                   </div>
                   <div>
-                    <h3 className="font-serif text-[30px] font-normal leading-[35px]">{g.name}</h3>
+                    <h3 className="font-serif text-[30px] font-normal leading-[35px]">
+                      {/* ponytail: stretched link, its ::after covers the plate so the whole card is one link without nesting <a>s */}
+                      <Link to={`/book/doctors?group=${g.slug}${pick ? `&service=${pick.id}` : ''}`}
+                        className="no-underline outline-none after:absolute after:inset-0 after:rounded-[14px] after:content-[''] focus-visible:after:outline focus-visible:after:outline-2 focus-visible:after:outline-offset-2 focus-visible:after:outline-[#367cbb]">
+                        {g.name}
+                      </Link>
+                    </h3>
                     <p className="mt-1 text-[15px] text-[#56677a]">{g.blurb}</p>
                   </div>
                   {g.fieldMarks.length > 0 && (
@@ -170,35 +175,12 @@ export function ServicesHome() {
                   </div>
                   {g.confusedWith && (
                     <p className="border-t border-[#102d5012] pt-3.5 text-[14px] italic text-[#56677a]">
-                      Often confused with {otherSlug ? <><a href={`#plate-${otherSlug}`} className="text-ink underline underline-offset-2">{other.trim()}</a>:{why.join(':')}</> : g.confusedWith}
+                      Often confused with {otherSlug ? <><a href={`#plate-${otherSlug}`} className="relative z-10 text-ink underline underline-offset-2">{other.trim()}</a>:{why.join(':')}</> : g.confusedWith}
                     </p>
                   )}
-                  <div className="rounded-[10px] bg-[#eef3fa] outline outline-1 -outline-offset-1 outline-[#1d4f911f]">
-                    <button type="button" aria-expanded={expanded} aria-controls={listId} onClick={() => setOpen((o) => ({ ...o, [g.slug]: !expanded }))}
-                      className="flex w-full cursor-pointer items-center gap-3 border-0 bg-transparent py-3 pl-4 pr-3 text-left">
-                      <span className="min-w-0 flex-1">
-                        <span className="block font-semibold text-[#123c70]">{expanded ? 'Hide services' : `See ${g.services.length} ${g.services.length === 1 ? 'service' : 'services'}`}</span>
-                        <span aria-hidden={expanded} className={`grid transition-[grid-template-rows,opacity] duration-400 ease-(--ease) ${expanded ? 'grid-rows-[0fr] opacity-0' : 'grid-rows-[1fr] opacity-100'}`}>
-                          <span className="block min-h-0 truncate text-[14px] text-[#56677a]">{g.services.slice(0, 3).map((x) => x.name).join(', ')}{g.services.length > 3 && ` +${g.services.length - 3}`}</span>
-                        </span>
-                      </span>
-                      <span className={`grid size-9 shrink-0 place-items-center rounded-full bg-gradient-to-b from-[#0b2648] to-[#163d6e] text-white transition-transform duration-400 ease-(--ease) ${expanded ? 'rotate-180' : ''}`}><Icon name="chevron-down" size={18} /></span>
-                    </button>
-                    {/* ponytail: grid-rows 0fr->1fr animates to the list's real height, no JS measuring */}
-                    <div inert={!expanded} className={`grid transition-[grid-template-rows] duration-400 ease-(--ease) ${expanded ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]'}`}>
-                      <ul id={listId} className={`grid min-h-0 gap-1 overflow-hidden px-2 transition-[opacity,translate,padding] duration-400 ease-(--ease) ${expanded ? 'translate-y-0 pb-2 opacity-100' : '-translate-y-1 pb-0 opacity-0'}`}>
-                        {g.services.map((x) => (
-                          <li key={x.id}>
-                            <Link to={`/book/doctors?group=${g.slug}&service=${x.id}`}
-                              className={`flex items-center justify-between gap-3 rounded-lg px-3 py-2 text-[15px] no-underline hover:bg-white ${matches.some((m) => m.id === x.id) ? 'bg-white font-medium' : ''}`}>
-                              {x.name}
-                            </Link>
-                          </li>
-                        ))}
-                        <li><Link to={`/book/doctors?group=${g.slug}`} className="block rounded-lg px-3 py-2 text-[15px] font-medium hover:bg-white">All {g.name} doctors</Link></li>
-                      </ul>
-                    </div>
-                  </div>
+                  <span aria-hidden="true" className="mt-1 grid size-11 place-items-center self-end rounded-full bg-gradient-to-b from-[#0b2648] to-[#163d6e] text-white transition-transform duration-300 ease-(--ease) group-hover:scale-110">
+                    <Icon name="mouse-pointer-click" size={20} />
+                  </span>
                 </li>
               )
             })}
@@ -253,7 +235,7 @@ export function ServicesDoctors() {
         <Field as="select" label="Area of care" value={group.slug} onChange={(e) => set({ group: e.target.value, service: '', specialty: '' })}>
           {groups.map((g) => <option key={g.slug} value={g.slug}>{g.name}</option>)}
         </Field>
-        <Field as="select" label="Service" value={service.id} onChange={(e) => set({ service: e.target.value, specialty: '' })}>
+        <Field as="select" label="Service" className="field-attn" value={service.id} onChange={(e) => set({ service: e.target.value, specialty: '' })}>
           {group.services.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
         </Field>
       </div>
