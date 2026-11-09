@@ -19,6 +19,7 @@ const icon = (d: ReactNode) => <svg className="nav-ico" width="18" height="18" v
 const NAV = [
   { to: '/account', label: 'Home', end: true, icon: icon(<path d="M3.5 10.5 12 3.5l8.5 7V20a1 1 0 0 1-1 1H15v-6H9v6H4.5a1 1 0 0 1-1-1z" />) },
   { to: '/appointments', label: 'Appointments', icon: icon(<><rect x="3.5" y="5" width="17" height="15.5" rx="2" /><path d="M3.5 9.5h17M8 3v4M16 3v4" /></>) },
+  { to: '/book', label: 'Services', icon: icon(<><path d="M6 3.5v5a4 4 0 0 0 8 0v-5" /><path d="M10 12.5v2.5a5 5 0 0 0 10 0v-1.5" /><circle cx="20" cy="11.5" r="2" /></>) },
   { to: '/account/family', label: 'Family', icon: icon(<><circle cx="9" cy="8" r="3.5" /><path d="M2.5 20c.8-3.5 3.4-5.5 6.5-5.5s5.7 2 6.5 5.5M16.5 5a3 3 0 0 1 0 6M18 14.6c1.9.5 3.2 2 3.6 4.4" /></>) },
   { to: '/account/payments', label: 'Payments', icon: icon(<><rect x="3" y="5.5" width="18" height="13" rx="2" /><path d="M3 10h18" /></>) },
   { to: '/account/profile', label: 'Profile', icon: icon(<><circle cx="12" cy="8" r="4" /><path d="M4.5 20.5c1-3.8 4-5.5 7.5-5.5s6.5 1.7 7.5 5.5" /></>) },
