@@ -122,7 +122,7 @@ const filmStyles=`<style>.hero-film{object-fit:cover;object-position:50% 50%}
 /* Dark blue glass search bar (collapsed state only; the open panel stays dark so results read clearly). */
 .hero .search-shell{background:linear-gradient(180deg,#123c66a6,#06203d8c);border-color:#a9d4ff33;box-shadow:inset 0 1px 0 #ffffff47,inset 0 -1px 0 #ffffff14,0 14px 40px #04162c40;backdrop-filter:blur(14px) saturate(160%) brightness(1.06);-webkit-backdrop-filter:blur(14px) saturate(160%) brightness(1.06)}
 .hero .search-shell::before{content:'';position:absolute;inset:0;border-radius:inherit;padding:1.2px;background:linear-gradient(180deg,#cfe8ff73,#cfe8ff17 22%,#fff0 45%,#fff0 60%,#cfe8ff17 80%,#cfe8ff47);-webkit-mask:linear-gradient(#fff 0 0) content-box,linear-gradient(#fff 0 0);-webkit-mask-composite:xor;mask-composite:exclude;pointer-events:none}
-.hero .search-shell:hover{background:linear-gradient(180deg,#164572b3,#082546a1);border-color:#a9d4ff4d}
+
 .hero .search-trigger>span{color:#ffffffc7}
 /* Orange labels: one hue, three tints so 12px text keeps its contrast on each background. !important beats 4.2's per-section label colours. */
 .mono{color:#b54e14!important;font-family:"Geist Serif",Georgia,serif!important;font-weight:400!important;letter-spacing:.01em!important;text-transform:capitalize!important;font-size:13px!important}:is(.journey-heading,footer) .mono{color:#f59e5b!important}

@@ -7,6 +7,10 @@ import { ADMIN_HOME, homeFor, SessionProvider, useSession } from './lib/session'
 import { Loading, PageTitle } from './ui/kit'
 import { HomeButton, Layout, RequireRole } from './ui/shell'
 import './styles.css'
+// The homepage's orange hover rim, one module for the site, this app and admin.
+import { rim } from '../../../src/scripts/specular-rim.js'
+
+rim('.btn, .nav-pill, .chip')
 
 function Index() {
   const { user, loading } = useSession()

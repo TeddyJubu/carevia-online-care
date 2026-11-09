@@ -36,7 +36,7 @@
 .care-search[data-expanded=true] .search-shell,.care-search[data-expanded=true] .search-panel{width:100%}
 .care-search[data-expanded=true] .search-shell{border-radius:16px;border-color:#d7edff80;background:#0b2b4ae6}
 .search-shell:focus-within{box-shadow:0 0 0 3px #b2d8ff24,0 14px 40px #051b3333}
-.search-shell:hover{border-color:#d7edff80;background:#11375bd9}
+
 .search-icon{position:absolute;top:calc(50% - 10px);left:20px;pointer-events:none;color:#e1f0fc}
 .search-trigger{position:absolute;z-index:1;inset:0;width:100%;padding:0 24px 0 52px;border:0;border-radius:inherit;background:none;color:inherit;text-align:left;font-size:16px;font-weight:400}
 .search-trigger>span{opacity:.4}.search-trigger{transition:opacity .3s ease,display .3s allow-discrete}.search-trigger[hidden]{display:none;opacity:0;pointer-events:none}@starting-style{.search-trigger{opacity:0}}
@@ -102,7 +102,7 @@
 .topbar .nav-pill::before,.topbar .nav-logo::before{background:radial-gradient(circle var(--chroma-r) at calc(var(--chroma-x) - var(--chroma-ox,0px)) calc(var(--chroma-y) - var(--chroma-oy,0px)),#b8e4ff3d,transparent 75%)}
 .topbar .nav-pill::after,.topbar .nav-logo::after{box-shadow:inset 0 0 0 1px #c3eaffb3,inset 0 0 20px -8px #91ceff80;mask-image:radial-gradient(circle var(--chroma-r) at calc(var(--chroma-x) - var(--chroma-ox,0px)) calc(var(--chroma-y) - var(--chroma-oy,0px)),#000 15%,#000b 45%,transparent 100%);-webkit-mask-image:radial-gradient(circle var(--chroma-r) at calc(var(--chroma-x) - var(--chroma-ox,0px)) calc(var(--chroma-y) - var(--chroma-oy,0px)),#000 15%,#000b 45%,transparent 100%)}
 .topbar .nav-logo .carevia-mark{filter:brightness(0) invert(1)}
-.topbar .nav-pill:hover,.topbar .nav-logo:hover{border-color:#d5eaff66}
+
 .topbar .nav-pill:focus-visible,.topbar .nav-logo:focus-visible{outline:2px solid #a6c9ec;outline-offset:4px}
 .topbar .nav-pill:active,.topbar .nav-logo:active{box-shadow:0 4px 14px -8px #051a33a6,inset 0 1px #ffffff1a}
 .footer-brand-iridescent{gap:12px;font-weight:500;letter-spacing:-.025em}

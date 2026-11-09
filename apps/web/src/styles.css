@@ -76,19 +76,20 @@
   .on-navy .link { text-decoration-color: #ffffff80; }
 
   /* Pill buttons, 48px tall (above the 44px minimum). No arrow glyphs on any button. */
-  .btn { display: inline-flex; align-items: center; justify-content: center; gap: 10px; min-height: 48px; padding: 0 24px; border: 1px solid transparent; border-radius: 999px; font-size: 15px; font-weight: 500; line-height: 1.2; text-align: center; text-decoration: none; cursor: pointer; transition: background 0.25s, border-color 0.25s, transform 0.4s var(--ease), box-shadow 0.25s; }
-  .btn:hover:not(:disabled,[aria-disabled="true"]) { transform: translateY(-1px); }
+  .btn { display: inline-flex; align-items: center; justify-content: center; gap: 10px; min-height: 50px; padding: 0 28px; border: 1px solid transparent; border-radius: 5px; font-size: 15px; font-weight: 500; line-height: 1.2; text-align: center; text-decoration: none; cursor: pointer; transition: transform 0.4s var(--ease); }
+  /* Hover: the homepage's lift plus its orange rim (src/scripts/specular-rim.js); the colours stay put. */
+  .btn:hover:not(:disabled,[aria-disabled="true"]) { transform: translateY(-3px); }
   .btn:active:not(:disabled,[aria-disabled="true"]) { transform: none; }
   .btn:disabled, .btn[aria-disabled="true"] { opacity: 0.5; cursor: not-allowed; }
   .btn-primary { background: var(--color-ink); color: #fff; }
-  .btn-primary:hover:not(:disabled,[aria-disabled="true"]) { background: #244f7b; }
   .btn-secondary { background: #fff; color: var(--color-ink); border-color: #102d5040; }
-  .btn-secondary:hover:not(:disabled,[aria-disabled="true"]) { border-color: var(--color-ink); background: #fbfdff; }
   .btn-quiet { background: transparent; color: var(--color-ink); padding-inline: 12px; }
-  .btn-quiet:hover:not(:disabled,[aria-disabled="true"]) { background: #102d500d; }
   .btn-danger { background: var(--color-danger); color: #fff; }
-  .btn-danger:hover:not(:disabled,[aria-disabled="true"]) { background: #8f1d17; }
   .btn-block { width: 100%; }
+  /* The orange rim's canvas spills 24px past the element, behind its text and above its fill. */
+  .specular-light { position: absolute; inset: -24px; width: calc(100% + 48px); height: calc(100% + 48px); z-index: -1; pointer-events: none; opacity: 0; transition: opacity 0.35s; }
+  :is(.btn, .nav-pill, .chip) { position: relative; isolation: isolate; }
+  :is(.btn, .nav-pill, .chip):is(:hover, :focus-visible) .specular-light { opacity: 1; }
   .btn-sm { min-height: 44px; padding: 0 18px; font-size: 14px; }
 
   /* Frosted navy glass, as the homepage's nav pills. */
@@ -104,7 +105,7 @@
   .nav-pill { white-space: nowrap; display: inline-flex; align-items: center; justify-content: center; min-height: 44px; padding: 0 18px; border-radius: 10px; font-size: 14px; text-decoration: none; }
   /* A plain header link (no glass) beside the account pill; tighter on phones so the brand and both links fit at 390px. */
   .nav-link { color: #fff; transition: background 0.2s; }
-  .nav-link:hover, .nav-link[aria-current="page"] { background: #ffffff1a; }
+  .nav-link[aria-current="page"] { background: #ffffff1a; }
   @media (max-width: 480px) { .app-header-inner { gap: 4px; } .nav-pill { padding: 0 12px; } .brand { gap: 8px; } }
   .app-footer { background: var(--color-ink); color: #fff; padding: 56px 0 0; margin-top: 96px; overflow: hidden; }
   .app-footer a { color: #fff; }
@@ -159,7 +160,6 @@
 
   /* Chips (filters and slot times). */
   .chip { display: inline-flex; align-items: center; justify-content: center; min-height: 44px; min-width: 64px; padding: 0 16px; border: 1px solid #102d5033; border-radius: 999px; background: #fff; font-size: 15px; cursor: pointer; transition: border-color 0.2s, background 0.2s; }
-  .chip:hover { border-color: var(--color-ink); }
   .chip[aria-pressed="true"], .chip[aria-checked="true"] { background: var(--color-ink); border-color: var(--color-ink); color: #fff; }
 
   .badge { display: inline-flex; align-items: center; gap: 6px; padding: 3px 10px; border-radius: 999px; font-size: 13px; background: var(--color-mist); color: var(--color-ink); white-space: nowrap; }
