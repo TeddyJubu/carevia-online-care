@@ -107,9 +107,47 @@
   .nav-link { color: #fff; transition: background 0.2s; }
   .nav-link[aria-current="page"] { background: #ffffff1a; }
   @media (max-width: 480px) { .app-header-inner { gap: 4px; } .nav-pill { padding: 0 12px; } .brand { gap: 8px; } }
-  .app-footer { background: var(--color-ink); color: #fff; padding: 56px 0 0; margin-top: 96px; overflow: hidden; }
-  .app-footer a { color: #fff; }
-  .footer-wordmark { margin-top: 48px; font-size: clamp(64px, 16vw, 200px); font-weight: 700; line-height: 0.8; letter-spacing: -0.05em; text-align: center; white-space: nowrap; color: #839bb8; -webkit-mask-image: linear-gradient(#000, #0002); mask-image: linear-gradient(#000, #0002); user-select: none; }
+  /* Footer: the homepage's (Design 04.5) footer, value for value (build.mjs, design-04.css, design-04-2.css), so the site has one footer. */
+  .app-footer { background: var(--color-ink); color: #fff; padding: 160px 0 0; margin-top: 96px; overflow: hidden; }
+  .app-footer a { color: #fff; text-decoration: none; }
+  .footer-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 32px; width: calc(100% - 80px); max-width: 1200px; margin-inline: auto; }
+  .footer-grid h2 { color: #fff; font-size: 48px; line-height: 1; letter-spacing: -0.01em; }
+  .footer-cta { display: inline-flex; align-items: center; justify-content: center; min-height: 50px; margin-top: 40px; padding: 14px 36px; border-radius: 5px; background: #f6f6f6; color: var(--color-ink) !important; font-size: 16px; line-height: 1.2; transition: transform 0.4s var(--ease); }
+  .footer-cta:hover { transform: translateY(-3px); }
+  .footer-copyright { color: #b4c9e2; font-size: 12px; line-height: 1.5; }
+  .footer-copyright > p { margin-top: 22px; }
+  .footer-brand { display: inline-flex; align-items: center; gap: 12px; font-size: 26px; font-weight: 500; letter-spacing: -0.025em; line-height: 1.5; }
+  .footer-mark { position: relative; display: block; flex: none; width: 64px; height: 64px; overflow: hidden; }
+  .footer-mark > img { position: absolute; left: 50%; top: 50%; width: 132px; height: 132px; max-width: none; object-fit: contain; transform: translate(-50%, -50%); }
+  .footer-info { display: flex; flex-direction: column; align-items: start; font-size: 14px; line-height: 1.5; }
+  .footer-info a { display: inline-flex; align-items: center; min-height: 44px; }
+  .footer-info a:hover { text-decoration: underline; text-underline-offset: 4px; }
+  .footer-info > p:not(.footer-label) { color: #c0d2e7; }
+  .footer-label { font-family: var(--font-serif); font-size: 13px; letter-spacing: 0.01em; text-transform: capitalize; color: var(--color-accent-soft); margin-bottom: 18px; }
+  .footer-label:not(:first-child) { margin-top: 24px; }
+  .footer-wordmark { margin-top: 155px; font-size: clamp(80px, 16.7vw, 240px); font-weight: 700; line-height: 0.8; letter-spacing: -0.025em; text-align: center; white-space: nowrap; color: #839bb8; -webkit-mask-image: linear-gradient(#000, #0002); mask-image: linear-gradient(#000, #0002); }
+  @media (max-width: 1100px) {
+    .app-footer { padding-top: 100px; }
+    .footer-grid { grid-template-columns: 1fr 1fr; gap: 65px; }
+    .footer-copyright { order: 3; }
+    .footer-grid > div:nth-child(2) { order: 1; }
+    .footer-info { order: 2; }
+    .footer-wordmark { margin-top: 100px; }
+  }
+  @media (max-width: 600px) {
+    .footer-grid { gap: 50px 25px; width: calc(100% - 40px); }
+    .footer-grid > div:nth-child(2) { grid-column: 1 / -1; text-align: center; }
+    .footer-grid h2 { font-size: 34px; line-height: 1.03; }
+    .footer-cta { font-size: 14px; padding-inline: 24px; margin-top: 26px; }
+    .footer-info { font-size: 13px; }
+    .footer-label { margin-bottom: 10px; }
+    .footer-grid > .footer-info:nth-child(3) { grid-row: span 2; }
+    .footer-copyright { grid-column: 2; align-self: end; }
+    .footer-mark { width: 56px; height: 56px; }
+    .footer-mark > img { width: 116px; height: 116px; }
+    .footer-wordmark { font-size: 17vw; margin-top: 75px; }
+  }
+  @media (max-width: 360px) { .footer-grid { grid-template-columns: 1fr; } .footer-copyright, .footer-info { grid-column: auto; } .footer-grid > .footer-info:nth-child(3) { grid-row: auto; } }
 
 
   /* Page containers */
