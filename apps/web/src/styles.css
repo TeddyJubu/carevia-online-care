@@ -116,6 +116,9 @@
   .page { width: min(1200px, calc(100% - 32px)); margin-inline: auto; padding-block: 40px 24px; }
   .page-narrow { width: min(560px, calc(100% - 32px)); margin-inline: auto; padding-block: 48px 24px; }
   @media (min-width: 1025px) { .page { padding-top: 56px; } }
+  /* A page shown inside the account rail: the rail's own .page already sets width and spacing. */
+  .in-rail .page, .in-rail .page-narrow { width: 100%; margin-inline: 0; padding-block: 0; }
+  .in-rail .page-narrow { max-width: 560px; }
 
   .card { background: #fff; border: 1px solid #102d5014; border-radius: 14px; padding: 24px; }
   .card-tight { padding: 16px 20px; }

@@ -79,24 +79,30 @@ const router = createBrowserRouter(
       HydrateFallback: () => null,
       children: [
         { index: true, element: <Index /> },
-        // Booking: services > doctors > profile > times > checkout (pages/book.tsx).
-        { path: 'book', ...page('book', 'ServicesHome', (el) => <LegacyBook>{el}</LegacyBook>) },
-        { path: 'book/doctors', ...page('book', 'ServicesDoctors') },
-        { path: 'book/doctors/:id', ...page('book', 'ServicesDoctor') },
-        { path: 'book/doctors/:id/times', ...page('book', 'ServicesTimes') },
-        { path: 'book/checkout', ...page('book', 'ServicesCheckout') },
-        // The old step-by-step flow's screens (who, time, account, family, consent, pay) start again at /book.
-        { path: 'book/*', element: <Navigate to="/book" replace /> },
-        { path: 'services-v2/*', element: <FromServicesV2 /> },
-        // Public list of every doctor (pages/doctors.tsx); Book opens that doctor's times.
-        { path: 'doctors', ...page('doctors', 'DoctorsPage') },
-        { path: 'visits/:id', ...page('visit', 'Prepare', patient) },
-        { path: 'visits/:id/join', ...page('visit', 'PreJoin', patient) },
-        { path: 'visits/:id/reschedule', ...page('visit', 'Reschedule', patient) },
-        { path: 'visits/:id/waiting', ...page('waiting', 'Waiting', patient) },
+        // Signed-in patients keep the account rail here too; the call stays full width.
+        {
+          ...page('account', 'PatientRail'),
+          children: [
+            // Booking: services > doctors > profile > times > checkout (pages/book.tsx).
+            { path: 'book', ...page('book', 'ServicesHome', (el) => <LegacyBook>{el}</LegacyBook>) },
+            { path: 'book/doctors', ...page('book', 'ServicesDoctors') },
+            { path: 'book/doctors/:id', ...page('book', 'ServicesDoctor') },
+            { path: 'book/doctors/:id/times', ...page('book', 'ServicesTimes') },
+            { path: 'book/checkout', ...page('book', 'ServicesCheckout') },
+            // The old step-by-step flow's screens (who, time, account, family, consent, pay) start again at /book.
+            { path: 'book/*', element: <Navigate to="/book" replace /> },
+            { path: 'services-v2/*', element: <FromServicesV2 /> },
+            // Public list of every doctor (pages/doctors.tsx); Book opens that doctor's times.
+            { path: 'doctors', ...page('doctors', 'DoctorsPage') },
+            { path: 'visits/:id', ...page('visit', 'Prepare', patient) },
+            { path: 'visits/:id/join', ...page('visit', 'PreJoin', patient) },
+            { path: 'visits/:id/reschedule', ...page('visit', 'Reschedule', patient) },
+            { path: 'visits/:id/waiting', ...page('waiting', 'Waiting', patient) },
+            { path: 'visits/:id/done', ...page('visit', 'Done', patient) },
+            { path: 'visits/:id/receipt', ...page('visit', 'Receipt', patient) },
+          ],
+        },
         { path: 'visits/:id/call', ...page('call', 'CallPage', patient) },
-        { path: 'visits/:id/done', ...page('visit', 'Done', patient) },
-        { path: 'visits/:id/receipt', ...page('visit', 'Receipt', patient) },
         // Every visit on the account (pages/appointments.tsx), inside the account menu.
         {
           path: 'appointments',

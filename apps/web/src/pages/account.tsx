@@ -63,12 +63,18 @@ export function AccountLayout() {
             <Link to="/account/family" className="mt-1 inline-flex min-h-11 items-center text-[13px] font-medium hover:underline">Manage family</Link>
           </section>
         </div>
-        <div className="min-w-0">
+        <div className="min-w-0 in-rail">
           <Outlet />
         </div>
       </div>
     </div>
   )
+}
+
+/** Booking and visit pages are also public: a signed-in patient sees them inside the account rail, anyone else without it. */
+export function PatientRail() {
+  const { user } = useSession()
+  return user?.role === 'patient' ? <AccountLayout /> : <Outlet />
 }
 
 // ---------- Home: the next visit as a boarding pass, its progress, and the care board ----------
