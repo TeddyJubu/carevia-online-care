@@ -178,7 +178,7 @@ export function ServicesHome() {
                       Often confused with {otherSlug ? <><a href={`#plate-${otherSlug}`} className="relative z-10 text-ink underline underline-offset-2">{other.trim()}</a>:{why.join(':')}</> : g.confusedWith}
                     </p>
                   )}
-                  <span aria-hidden="true" className="mt-1 grid size-11 place-items-center self-end rounded-full bg-gradient-to-b from-[#0b2648] to-[#163d6e] text-white transition-transform duration-300 ease-(--ease) group-hover:scale-110">
+                  <span aria-hidden="true" className="pointer-events-none mt-1 grid size-11 place-items-center self-end rounded-full bg-gradient-to-b from-[#0b2648] to-[#163d6e] text-white transition-transform duration-300 ease-(--ease) group-hover:scale-110">
                     <Icon name="mouse-pointer-click" size={20} />
                   </span>
                 </li>
