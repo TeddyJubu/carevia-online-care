@@ -42,31 +42,37 @@ export function Header() {
   )
 }
 
+/** The homepage footer (Design 04.5), copied so every page on the site ends the same way. Section links go back to the homepage. */
 export function Footer() {
   const { user } = useSession()
-  const clinician = user?.role === 'clinician'
-  const admin = user?.role === 'admin'
+  const home = homepage(!!user)
   return (
     <footer className="app-footer on-navy">
-      <div className="mx-auto grid w-[min(1200px,calc(100%-32px))] gap-10 md:grid-cols-3">
+      <div className="footer-grid">
+        <div className="footer-copyright">
+          <a href={home} className="footer-brand">
+            <span className="footer-mark"><img src={`${import.meta.env.BASE_URL}brand/carevia-iridescent-400.webp`} alt="" width="1600" height="1600" /></span>
+            <span>Carevia</span>
+          </a>
+          <p>© 2026 Carevia<br />Thoughtful care. More room for living.</p>
+        </div>
         <div>
-          <p className="text-[22px] font-semibold tracking-[-0.04em]">Carevia</p>
-          <p className="mt-3 text-sm text-[#c0d2e7]">Online doctor consultations for patients in mainland Portugal.</p>
+          <h2>Your next<br />step starts<br />here.</h2>
+          <Link to="/book" className="footer-cta">Find your care</Link>
         </div>
-        <div className="text-sm">
-          <p className="eyebrow mb-3">Emergencies</p>
-          <p className="text-[#c0d2e7]">Not an emergency service. In an emergency, call <a href="tel:112" className="link text-white">112</a>.</p>
+        <div className="footer-info">
+          <p className="footer-label">The care</p>
+          <a href={`${home}#care`}>Everyday health</a>
+          <a href={`${home}#care`}>Mental wellbeing</a>
+          <a href={`${home}#care`}>Specialist support</a>
+          <p className="footer-label">The conversation</p>
+          <a href={`${home}#how`}>How it works</a>
+          <a href={`${home}#help`}>Questions &amp; answers</a>
         </div>
-        <nav aria-label="Footer" className="text-sm">
-          <p className="eyebrow mb-1">Carevia</p>
-          <ul className="grid">
-            <li><a href={homepage(!!user)} className="inline-flex min-h-11 items-center">Homepage</a></li>
-            {admin ? <li><a href={ADMIN_HOME} className="inline-flex min-h-11 items-center">Admin desk</a></li> : clinician ? <li><Link to="/doctor" className="inline-flex min-h-11 items-center">Your agenda</Link></li> : <>
-              <li><Link to="/book" className="inline-flex min-h-11 items-center">Book a visit</Link></li>
-              <li><Link to="/account" className="inline-flex min-h-11 items-center">Your account</Link></li>
-            </>}
-          </ul>
-        </nav>
+        <div className="footer-info">
+          <p className="footer-label">Stay connected</p>
+          <p>Online consultations.<br />Availability varies by country.</p>
+        </div>
       </div>
       <p className="footer-wordmark" aria-hidden="true">CAREVIA</p>
     </footer>
