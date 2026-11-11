@@ -61,6 +61,8 @@ export async function request<T>(method: string, path: string, body?: unknown): 
 
 const get = <T>(p: string) => request<T>('GET', p)
 const post = <T>(p: string, b: unknown = {}) => request<T>('POST', p, b)
+type Person = { for?: 'self'; visit?: string }
+
 const qs = (o: Record<string, string | number | undefined | null>) => {
   const s = new URLSearchParams()
   for (const [k, v] of Object.entries(o)) if (v !== undefined && v !== null && v !== '') s.set(k, String(v))
@@ -93,9 +95,10 @@ export const api = {
   doctors: (f: { groupSlug?: GroupSlug; service?: string; language?: string; sort?: 'first-available' }) =>
     get<{ doctors: Doctor[] }>(`/api/doctors${qs(f)}`),
   doctor: (id: number) => get<{ doctor: Doctor }>(`/api/doctors/${id}`),
-  slots: (doctorId: number, from: string, days = 1) =>
-    get<{ doctorId: number; slots: Slot[] }>(`/api/doctors/${doctorId}/slots${qs({ from, days })}`),
-  firstAvailable: (f: { groupSlug?: GroupSlug; serviceId?: number; language?: string; limit?: number }) =>
+  /** `person` hides times the signed-in patient already has a visit at: `for: 'self'` (new booking) or `visit` (reschedule). */
+  slots: (doctorId: number, from: string, days = 1, person: Person = {}) =>
+    get<{ doctorId: number; slots: Slot[] }>(`/api/doctors/${doctorId}/slots${qs({ from, days, ...person })}`),
+  firstAvailable: (f: { groupSlug?: GroupSlug; serviceId?: number; language?: string; limit?: number } & Person) =>
     get<{ slots: SlotWithDoctor[] }>(`/api/slots/first-available${qs(f)}`),
 
   hold: (b: { slotId: SlotId; serviceId: number; for: For }) =>

@@ -28,13 +28,15 @@ export type Picked = { id: Row['slots'][0]['id']; startsAt: string; doctor: Row[
  * The J3 doctor-and-time picker, shared by booking and reschedule: first available, day filters and language,
  * doctors with their times. `submit` gets the chosen slot; a SLOT_TAKEN error reloads the times.
  */
-export function TimePicker({ groupSlug, service, preferredDoctorId, preferredLabel = 'Your last doctor', includePreferred, back, verb, pendingLabel, submit }: {
+export function TimePicker({ groupSlug, service, preferredDoctorId, preferredLabel = 'Your last doctor', includePreferred, visit, back, verb, pendingLabel, submit }: {
   groupSlug: GroupSlug
   service: { id: number; name: string }
   preferredDoctorId?: number
   preferredLabel?: string
   /** Reschedule: always offer the preferred doctor's own times, even if they don't list this exact service. */
   includePreferred?: boolean
+  /** Reschedule: the visit being moved, so times its person already has another visit at are left out. */
+  visit?: string
   back: string
   verb: string
   pendingLabel: string
@@ -53,14 +55,14 @@ export function TimePicker({ groupSlug, service, preferredDoctorId, preferredLab
   const rows = useLoad<Row[]>(async () => {
     const list = await listRows()
     if (!includePreferred || preferredDoctorId === undefined || list.some((r) => r.doctor.id === preferredDoctorId)) return list
-    const [{ doctor }, { slots }] = await Promise.all([api.doctor(preferredDoctorId), api.slots(preferredDoctorId, mode === 'first' ? lisbonDay() : day, mode === 'first' ? 7 : 1)])
+    const [{ doctor }, { slots }] = await Promise.all([api.doctor(preferredDoctorId), api.slots(preferredDoctorId, mode === 'first' ? lisbonDay() : day, mode === 'first' ? 7 : 1, { visit })])
     if (language && !doctor.languages.split(' · ').includes(language)) return list
     return slots.length ? [{ doctor, slots: mode === 'first' ? slots.slice(0, 6) : slots }, ...list] : list
   }, [groupSlug, service.id, mode, day, language, includePreferred, preferredDoctorId])
 
   async function listRows(): Promise<Row[]> {
     if (mode === 'first') {
-      const { slots } = await api.firstAvailable({ groupSlug, serviceId: service.id, language: language || undefined, limit: 12 })
+      const { slots } = await api.firstAvailable({ groupSlug, serviceId: service.id, language: language || undefined, limit: 12, visit })
       const byDoc = new Map<number, Row>()
       for (const s of slots) {
         const r = byDoc.get(s.doctor.id) ?? { doctor: s.doctor, slots: [] }
@@ -70,7 +72,7 @@ export function TimePicker({ groupSlug, service, preferredDoctorId, preferredLab
       return [...byDoc.values()]
     }
     const { doctors } = await api.doctors({ groupSlug, service: service.name, language: language || undefined })
-    const withSlots = await Promise.all(doctors.map(async (d: Doctor) => ({ doctor: { ...d, fee: d.fee }, slots: (await api.slots(d.id, day, 1)).slots })))
+    const withSlots = await Promise.all(doctors.map(async (d: Doctor) => ({ doctor: { ...d, fee: d.fee }, slots: (await api.slots(d.id, day, 1, { visit })).slots })))
     return withSlots.filter((r) => r.slots.length)
   }
 
@@ -89,7 +91,7 @@ export function TimePicker({ groupSlug, service, preferredDoctorId, preferredLab
     } catch (e) {
       const err = e as ApiError
       setError(err.message)
-      if (err.code === 'SLOT_TAKEN') { setPicked(null); rows.reload() }
+      if (err.code === 'SLOT_TAKEN' || err.code === 'TIME_CLASH') { setPicked(null); rows.reload() }
     } finally {
       setPending(false)
     }

@@ -1,3 +1,4 @@
+import { sessionUser } from '../auth.js'
 import { languageTokens } from '../catalog.js'
 import { prisma } from '../prisma.js'
 import { addDays, lisbonTimeToUtc, lisbonToday, parseDate } from '../rules.js'
@@ -8,6 +9,29 @@ function single(value) {
   if (Array.isArray(value)) return value[0] == null ? '' : String(value[0])
   if (value == null) return ''
   return String(value)
+}
+
+/**
+ * Hides times the signed-in patient can't take because the same person already has a confirmed visit then
+ * (the clinic-wide rule is in bookings.js clashFor). `for=self` is the account holder, for a new booking;
+ * `visit=<id>` is that visit's person, minus the visit itself, for a reschedule. A Prisma `where` on Slot.
+ */
+async function notBusyWhere(request) {
+  const visitId = single(request.query.visit).trim()
+  if (!visitId && single(request.query.for) !== 'self') return {}
+  const user = await sessionUser(request)
+  if (user?.role !== 'patient') return {}
+  let person = { familyMemberId: null }
+  if (visitId) {
+    const visit = await prisma.appointment.findFirst({ where: { id: visitId, patientId: user.id }, select: { id: true, familyMemberId: true } })
+    if (!visit) return {}
+    person = { familyMemberId: visit.familyMemberId, id: { not: visit.id } }
+  }
+  const busy = await prisma.appointment.findMany({
+    where: { patientId: user.id, ...person, status: 'confirmed', endsAt: { gt: new Date() } },
+    select: { startsAt: true, endsAt: true },
+  })
+  return busy.length ? { NOT: busy.map((a) => ({ startsAt: { lt: a.endsAt }, endsAt: { gt: a.startsAt } })) } : {}
 }
 
 function toDoctor(doctor, nextAvailableAt) {
@@ -163,6 +187,7 @@ export async function catalogRoutes(app) {
     const slots = await prisma.slot.findMany({
       where: {
         ...free,
+        ...(await notBusyWhere(request)),
         doctorId: id,
         startsAt: { gt: now, gte: lisbonTimeToUtc(from, '00:00'), lt: lisbonTimeToUtc(addDays(from, days), '00:00') },
       },
@@ -188,7 +213,7 @@ export async function catalogRoutes(app) {
     // Each language is a whole word in "English · French", so `contains` cannot match part of another language.
     if (language) doctorWhere.languages = { contains: language }
     const rows = await prisma.slot.findMany({
-      where: { ...freeSlotWhere(new Date()), doctor: doctorWhere },
+      where: { ...freeSlotWhere(new Date()), ...(await notBusyWhere(request)), doctor: doctorWhere },
       orderBy: [{ startsAt: 'asc' }, { doctorId: 'asc' }],
       take: limit,
       include: { doctor: true },

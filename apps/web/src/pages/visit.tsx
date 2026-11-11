@@ -481,7 +481,7 @@ export function Reschedule() {
               lede={<>{dropped ? 'Your call dropped and the time to rejoin has passed. ' : ''}Same visit, same payment: you won’t be charged again. Now: <strong className="font-medium text-ink">{when(a.startsAt)}</strong> with {a.doctor.name}.</>}>
               Choose a new time
             </PageTitle>
-            <TimePicker groupSlug={a.service.groupSlug} service={{ id: a.service.id, name: a.service.name }} preferredDoctorId={a.doctor.id} preferredLabel="Your doctor" includePreferred
+            <TimePicker groupSlug={a.service.groupSlug} service={{ id: a.service.id, name: a.service.name }} preferredDoctorId={a.doctor.id} preferredLabel="Your doctor" includePreferred visit={a.id}
               back={`/visits/${a.id}`} verb="Move to" pendingLabel="Moving your visit…"
               submit={async (picked) => {
                 await api.reschedule(a.id, picked.id)

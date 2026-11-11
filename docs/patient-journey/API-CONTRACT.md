@@ -40,7 +40,7 @@ The admin app signs in with the same endpoint, then checks `role === "admin"`.
   - `sort=first-available`
   - in each doctor, `nextAvailableAt` (or `null`)
 - **`GET /api/doctors/:id`:** unchanged. The `education` text stays explicitly illustrative.
-- **`GET /api/doctors/:id/slots?from=YYYY-MM-DD&days=7`:** `{ doctorId, slots: [{ id, startsAt, endsAt }] }`. Returns only free slots: not booked, not under an unexpired hold, and not in the past.
+- **`GET /api/doctors/:id/slots?from=YYYY-MM-DD&days=7`:** `{ doctorId, slots: [{ id, startsAt, endsAt }] }`. Returns only free slots: not booked, not under an unexpired hold, and not in the past. A signed-in patient can add `for=self` (new booking for themself) or `visit=<appointmentId>` (moving that visit) to also leave out times that person already has a confirmed visit at. Both work on first-available too.
 - **`GET /api/slots/first-available?groupSlug=&serviceId=&language=&limit=6`:** `{ slots: [{ id, startsAt, endsAt, doctor: { id, name, initials, specialty, languages, fee, cedula } }] }`, earliest first, across doctors.
 
 The schedule is rolling: every doctor has slots on working days over the next 21 days, generated relative to today in `Europe/Lisbon` time, and kept topped up (on start-up and daily). Keep the existing per-doctor availability variety (`availabilityIndex`) so some doctors are free today and others later.
@@ -56,7 +56,7 @@ A hold reserves a slot for 10 minutes. It can start **before** the patient has a
 | 3 | `PUT /api/bookings/:id/patient` (patient) | `{ familyMemberId: string \| null }`. `null` = the patient themself. Required when `for` is `child` or `adult`. |
 | 4 | `GET /api/consent/current` | `{ version, title, body }` (Markdown) from `content/patient-journey/consent.md`, plus `{ recordingOffered: false }` |
 | 5 | `POST /api/bookings/:id/consent` (patient) | `{ version }` must equal the current version. Stores a consent record (appointment, user, version, time). `409 CONSENT_OUTDATED` if the version is stale. |
-| 6 | `POST /api/bookings/:id/pay` (patient) | `{ method: "demo" }`. Requires consent, an unexpired hold and the patient set. Creates a payment (`method: "demo", status: "paid"`) and sets `status: "confirmed"`. Sends a confirmation message (outbox): the visit's date and time in Lisbon time, the doctor's name and a link to `/app/visits/:id`; no reason for the visit, no clinical data and no patient name. Outside demo mode it returns `501 PAYMENT_UNAVAILABLE`. If the same person (the account holder or one family member) already has a confirmed visit that overlaps, it returns `409 TIME_CLASH`. |
+| 6 | `POST /api/bookings/:id/pay` (patient) | `{ method: "demo" }`. Requires consent, an unexpired hold and the patient set. Creates a payment (`method: "demo", status: "paid"`) and sets `status: "confirmed"`. Sends a confirmation message (outbox): the visit's date and time in Lisbon time, the doctor's name and a link to `/app/visits/:id`; no reason for the visit, no clinical data and no patient name. Outside demo mode it returns `501 PAYMENT_UNAVAILABLE`. If the same person (the account holder or one family member) already has a confirmed visit that overlaps, it returns `409 TIME_CLASH`. The same check runs earlier: at the hold (`POST /api/bookings`, signed in, `for: "self"`) and when the family member is chosen (`PUT /api/bookings/:id/patient`). |
 | 7 | `DELETE /api/bookings/:id` (patient or hold cookie) | Releases a hold. |
 
 ## Appointments

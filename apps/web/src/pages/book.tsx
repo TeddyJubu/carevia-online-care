@@ -377,13 +377,14 @@ export function ServicesTimes() {
   const { state } = useLocation()
   const catalog = useCatalog()
   const doctor = useLoad(() => api.doctor(Number(id)).then((r) => r.doctor), [id])
-  const slots = useLoad(() => api.slots(Number(id), lisbonDay(), 21).then((r) => r.slots), [id])
+  // Who the visit is for is part of the hold (the API fixes it then), so it's asked here; checkout names the person.
+  const [who, setWho] = useState<For>(() => (state as { for?: For } | null)?.for ?? bookFor().for ?? 'self')
+  // For "Me", times you already have a visit at are left out. A child or adult is chosen at checkout, which checks then.
+  const slots = useLoad(() => api.slots(Number(id), lisbonDay(), 21, who === 'self' ? { for: 'self' } : {}).then((r) => r.slots), [id, who])
   const [picked, setPicked] = useState<Slot | null>(null)
   const [allDays, setAllDays] = useState(false)
   const [error, setError] = useState<string | null>((state as { notice?: string } | null)?.notice ?? null)
   const [pending, setPending] = useState(false)
-  // Who the visit is for is part of the hold (the API fixes it then), so it's asked here; checkout names the person.
-  const [who, setWho] = useState<For>(() => (state as { for?: For } | null)?.for ?? bookFor().for ?? 'self')
   const days = useMemo(() => {
     const m = new Map<string, Slot[]>()
     for (const s of slots.data ?? []) m.set(dayLabel(s.startsAt), [...(m.get(dayLabel(s.startsAt)) ?? []), s])
@@ -417,7 +418,7 @@ export function ServicesTimes() {
     } catch (e) {
       const x = e as ApiError
       setError(x.code === 'SLOT_TAKEN' ? 'Someone has just booked that time. Choose another time.' : x.message)
-      if (x.code === 'SLOT_TAKEN') { setPicked(null); slots.reload() }
+      if (x.code === 'SLOT_TAKEN' || x.code === 'TIME_CLASH') { setPicked(null); slots.reload() }
     } finally {
       setPending(false)
     }

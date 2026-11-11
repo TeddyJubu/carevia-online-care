@@ -11,6 +11,8 @@ export const HOLD_COOKIE = 'carevia_hold'
 
 const hash = (token) => createHash('sha256').update(token).digest('hex')
 
+export const CLASH_MESSAGE = 'There’s already a visit for this person at this time. Choose another time.'
+
 /**
  * The same person's other confirmed visit that overlaps [startsAt, endsAt), if any: one person can't be in two calls.
  * "Person" is the account holder (familyMemberId null) or one family member, so a parent can still book themself
@@ -130,6 +132,10 @@ export async function bookingRoutes(app) {
     const patientId = user?.role === 'patient' ? user.id : null
     const token = request.cookies?.[HOLD_COOKIE] || randomBytes(32).toString('base64url')
     const tokenHash = hash(token)
+    // Refused here, not only at payment, so a patient never fills in checkout for a time they already have a visit at.
+    const clash = patientId && body.for === 'self'
+      && await clashFor({ id: '', patientId, familyMemberId: null, startsAt: slot.startsAt, endsAt: slot.endsAt })
+    if (clash) return sendError(reply, 409, 'TIME_CLASH', CLASH_MESSAGE)
 
     let created
     try {
@@ -224,6 +230,7 @@ export async function bookingRoutes(app) {
           : 'Choose an adult family member for this booking.')
       }
     }
+    if (await clashFor({ ...appointment, familyMemberId })) return sendError(reply, 409, 'TIME_CLASH', CLASH_MESSAGE)
     await prisma.appointment.update({
       where: { id: appointment.id },
       data: { familyMemberId, patientSetAt: new Date() },
@@ -269,7 +276,7 @@ export async function bookingRoutes(app) {
       return sendError(reply, 409, 'CONSENT_REQUIRED', 'Read and accept the consent before paying.')
     }
     if (await clashFor(appointment)) {
-      return sendError(reply, 409, 'TIME_CLASH', 'There’s already a visit for this person at this time. Choose another time.')
+      return sendError(reply, 409, 'TIME_CLASH', CLASH_MESSAGE)
     }
     const now = new Date()
     const confirmed = await prisma.$transaction(async (tx) => {

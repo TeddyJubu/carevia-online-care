@@ -440,7 +440,7 @@ async function reminderChecks(demoPatient) {
 }
 
 async function clashChecks() {
-  // One person can't be in two calls: a second visit at the same time is refused at payment and at reschedule.
+  // One person can't be in two calls: their other visit's time is hidden, and refused at hold, payment and reschedule.
   const patient = new Browser()
   await patient.signUp({ email: `clash-${stamp}@example.com`, firstName: 'Clash', lastName: 'Smoke' })
   const version = (await patient.get('/api/consent/current')).json.version
@@ -455,11 +455,15 @@ async function clashChecks() {
   const b = a && slots.find((y) => y.startsAt === a.startsAt && y.doctor.id !== a.doctor.id)
   if (!a || !b) return record('clash checks need two doctors free at the same time', false, `${slots.length} slots`)
   const first = await book(a)
-  const second = await book(b)
-  record('a second visit for the same person at the same time is 409 TIME_CLASH', first.paid.status === 200 && is(second.paid, 409, 'TIME_CLASH'), `${show(first.paid)} then ${show(second.paid)}`)
-  await patient.del(`/api/bookings/${second.id}`)
+  const listed = (await patient.get(`/api/doctors/${b.doctor.id}/slots?days=21&for=self`)).json?.slots ?? []
+  record('your times (for=self) leave out a time you already have a visit at', first.paid.status === 200 && listed.length > 0 && !listed.some((x) => x.id === b.id), `${listed.length} slots`)
+  const strangers = (await new Browser().get(`/api/doctors/${b.doctor.id}/slots?days=21&for=self`)).json?.slots ?? []
+  record('another patient still sees that other doctor’s time', strangers.some((x) => x.id === b.id), `${strangers.length} slots`)
+  expectError('holding a second visit for yourself at the same time is 409 TIME_CLASH', await patient.post('/api/bookings', { slotId: b.id, serviceId: 1, channel: 'video', for: 'self', inMainlandPortugal: true }), 409, 'TIME_CLASH')
   const later = slots.find((x) => x.startsAt !== a.startsAt && x.doctor.id === b.doctor.id) ?? (await freeSlot(patient, { doctorId: b.doctor.id, skip: 3 }))
   const third = await book(later)
+  const moveTo = (await patient.get(`/api/doctors/${b.doctor.id}/slots?days=21&visit=${third.id}`)).json?.slots ?? []
+  record('reschedule times (visit=) leave out the person’s other visit time', moveTo.length > 0 && !moveTo.some((x) => x.id === b.id), `${moveTo.length} slots`)
   expectError('rescheduling onto the same person’s other visit time is 409 TIME_CLASH', await patient.post(`/api/appointments/${third.id}/reschedule`, { slotId: b.id }), 409, 'TIME_CLASH')
 }
 
