@@ -216,6 +216,7 @@
   .stepper [aria-current="step"] { color: var(--color-ink); font-weight: 500; }
   .stepper [aria-current="step"] .dot { background: var(--color-ink); border-color: var(--color-ink); color: #fff; }
   .stepper .done .dot { background: var(--color-mist); border-color: transparent; color: var(--color-ink); }
+  .stepper-row ol { display: flex; flex-wrap: wrap; gap: 6px 22px; }
   .summary dt { font-size: 13px; color: var(--color-muted); }
   .summary dd { margin: 0 0 12px; }
 

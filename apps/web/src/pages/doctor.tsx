@@ -4,9 +4,9 @@ import { api, ApiError } from '../lib/api'
 import { useLoad, useNow } from '../lib/load'
 import { addDays, dayLabel, hhmm, lisbonDay, when } from '../lib/time'
 import type { Appointment, Outcome } from '../lib/types'
-import { Dialog, DoctorAvatar, Empty, ErrorState, Field, FormError, Loading, Notice, PageTitle } from '../ui/kit'
+import { DoctorAvatar, Empty, ErrorState, Field, FormError, Loading, Notice, PageTitle } from '../ui/kit'
 import { DailyRoom } from './call'
-import { phaseOf } from './visit'
+import { phaseOf, type Phase } from './visit'
 
 /** iMED is where the doctor writes the record and issues anything. Carevia only links to it. */
 function OpenImed({ className = 'btn btn-secondary' }: { className?: string }) {
@@ -25,11 +25,23 @@ const OUTCOME: Record<Outcome, string> = {
   needs_in_person: 'Needs in-person care',
   no_show: 'Patient didn’t join',
 }
+/** What the patient sees for each outcome, shown on the choice itself so the doctor reads it before recording. */
+const SEES: Record<Outcome, string> = {
+  completed: 'The patient sees that the visit is complete.',
+  ended_poor_quality: 'The appointment stays open. The patient can rejoin or choose a new time, and isn’t charged again.',
+  needs_in_person: 'The patient sees that you advise an in-person visit. Record your reasons in iMED.',
+  no_show: 'The patient sees that the call didn’t connect.',
+}
 
-function StatusBadge({ a }: { a: Appointment }) {
+/** A confirmed visit whose call is over (or whose window closed) and still has no outcome. */
+const needsOutcome = (a: Appointment, now: number) =>
+  a.status === 'confirmed' && !a.outcome && (phaseOf(a, now) === 'closed' || a.call.state === 'ended')
+
+function StatusBadge({ a, now }: { a: Appointment; now: number }) {
   if (a.status === 'cancelled') return <span className="badge">Cancelled</span>
   if (a.outcome) return <span className={`badge ${a.outcome === 'completed' ? 'badge-ok' : 'badge-warn'}`}>{OUTCOME[a.outcome]}</span>
   if (a.call.state === 'in_progress') return <span className="badge badge-ok">In call</span>
+  if (needsOutcome(a, now)) return <span className="badge badge-warn">Outcome needed</span>
   return <span className="badge">Confirmed</span>
 }
 
@@ -41,6 +53,10 @@ export function Agenda() {
   const now = useNow(30000)
   const go = (d: string) => setParams(d === lisbonDay() ? {} : { date: d })
   const d = agenda.data?.doctor
+  const list = agenda.data?.appointments ?? []
+  const live = list.filter((a) => a.status !== 'cancelled')
+  const toRecord = list.filter((a) => needsOutcome(a, now)).length
+  const next = list.find((a) => a.status === 'confirmed' && !a.outcome && Date.parse(a.endsAt) > now)
 
   return (
     <div className="page">
@@ -55,24 +71,33 @@ export function Agenda() {
         <Field label="Date" type="date" value={date} onChange={(e) => e.target.value && go(e.target.value)} className="w-48" />
       </div>
       <h2 className="mt-8" aria-live="polite">{dayLabel(`${date}T12:00:00Z`)}{dayLabel(`${date}T12:00:00Z`) === 'Today' || dayLabel(`${date}T12:00:00Z`) === 'Tomorrow' ? `, ${new Date(`${date}T12:00:00Z`).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', timeZone: 'UTC' })}` : ''}</h2>
+      {live.length > 0 && (
+        <p className="fine mt-1">
+          {live.length} visit{live.length > 1 ? 's' : ''}
+          {next && ` · next at ${hhmm(next.startsAt)}`}
+          {toRecord > 0 && <> · <span className="font-medium text-ink">{toRecord} outcome{toRecord > 1 ? 's' : ''} to record</span></>}
+        </p>
+      )}
       <div className="mt-4">
         {agenda.error ? <ErrorState error={agenda.error} onRetry={agenda.reload} />
           : agenda.loading && !agenda.data ? <Loading label="Loading your agenda" />
-          : !agenda.data!.appointments.length ? <Empty title="No visits on this day" art="caught-up">Patients book into your open times. New bookings appear here.</Empty>
+          : !list.length ? <Empty title="No visits on this day" art="caught-up">Patients book into your open times. New bookings appear here.</Empty>
           : (
             <ol className="card card-tight rows">
-              {agenda.data!.appointments.map((a) => {
-                const open = a.status === 'confirmed' && phaseOf(a, now) === 'open'
+              {list.map((a) => {
+                const open = a.status === 'confirmed' && phaseOf(a, now) === 'open' && a.call.state !== 'ended'
+                const record = needsOutcome(a, now)
+                const label = record ? 'Record outcome' : open ? 'Start visit' : 'Open visit'
                 return (
                   <li key={a.id} className="grid gap-3 py-4 sm:grid-cols-[110px_minmax(0,1fr)_auto] sm:items-center">
                     <p className="text-[20px] font-medium tabular-nums">{hhmm(a.startsAt)}<span className="fine block font-normal">until {hhmm(a.endsAt)}</span></p>
                     <div className="min-w-0">
                       <p className="font-medium">{a.patient?.displayName ?? 'Patient'} {a.patient?.kind === 'family' && <span className="fine">(booked by a parent or carer)</span>}</p>
                       <p className="fine">{a.service.groupName} · {a.service.name} · video</p>
-                      <p className="mt-1"><StatusBadge a={a} /></p>
+                      <p className="mt-1 flex flex-wrap gap-2"><StatusBadge a={a} now={now} />{a.id === next?.id && <span className="badge badge-ok">Next up</span>}</p>
                     </div>
                     {a.status !== 'cancelled' && (
-                      <Link to={`/doctor/visits/${a.id}`} className={`btn btn-sm ${open ? 'btn-primary' : 'btn-secondary'}`}>{open ? 'Start visit' : 'Open visit'}<span className="sr-only"> at {hhmm(a.startsAt)}</span></Link>
+                      <Link to={`/doctor/visits/${a.id}`} className={`btn btn-sm ${open || record ? 'btn-primary' : 'btn-secondary'}`}>{label}<span className="sr-only"> at {hhmm(a.startsAt)}</span></Link>
                     )}
                   </li>
                 )
@@ -85,50 +110,133 @@ export function Agenda() {
   )
 }
 
-// ---------- J13: the visit room, as owner, plus outcome ----------
+// ---------- J13: the visit, as one guided flow: prepare, call, outcome, then iMED ----------
+type Step = 'prepare' | 'call' | 'outcome' | 'imed'
+const STEPS: [Step, string][] = [['prepare', 'Prepare'], ['call', 'Call'], ['outcome', 'Outcome'], ['imed', 'Write it up in iMED']]
+
+/** Where the doctor is, read from the appointment itself, so a reload lands on the same step. */
+function stepOf(a: Appointment, phase: Phase, inCall: boolean, callDone: boolean): Step {
+  if (inCall) return 'call' // before the outcome check: "Ended: poor connection" can go back into the call
+  if (a.outcome) return 'imed'
+  if (phase === 'before') return 'prepare'
+  if (phase === 'closed' || callDone || a.call.state === 'ended') return 'outcome'
+  return 'call'
+}
+
+function FlowSteps({ at }: { at: Step }) {
+  const i = STEPS.findIndex(([s]) => s === at)
+  return (
+    <nav className="stepper stepper-row mt-6" aria-label="Visit steps">
+      <ol>
+        {STEPS.map(([s, label], n) => (
+          <li key={s} aria-current={n === i ? 'step' : undefined} className={n < i ? 'done' : undefined}>
+            <span className="dot" aria-hidden="true">{n + 1}</span>{label}{n < i && <span className="sr-only"> (done)</span>}
+          </li>
+        ))}
+      </ol>
+    </nav>
+  )
+}
+
 export function DoctorVisit() {
   const { id = '' } = useParams()
   const load = useLoad(() => api.appointment(id).then((r) => r.appointment), [id])
+  const day = load.data ? lisbonDay(load.data.startsAt) : ''
+  const agenda = useLoad(() => (day ? api.agenda(day) : Promise.resolve(null)), [day])
   const now = useNow(15000)
   const [inCall, setInCall] = useState(false)
-  const [confirm, setConfirm] = useState<Outcome | null>(null)
+  const [callDone, setCallDone] = useState(false)
+  const [pick, setPick] = useState<Outcome | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [pending, setPending] = useState(false)
 
+  const agendaHref = `/doctor${day && day !== lisbonDay() ? `?date=${day}` : ''}`
   if (load.error) return <div className="page-narrow"><ErrorState error={load.error} onRetry={load.reload} /><Link to="/doctor" className="link mt-4 inline-flex min-h-11 items-center">Back to your agenda</Link></div>
   if (!load.data) return <div className="page"><Loading label="Loading the visit" /></div>
   const a = load.data
   const phase = phaseOf(a, now)
-  // The API accepts an outcome while the visit is confirmed and the room has opened.
-  const canRecord = a.status === 'confirmed' && phase !== 'before'
+  const step = stepOf(a, phase, inCall, callDone)
+  // The next visit of the day that still needs the doctor, so finishing one leads straight to the next.
+  const next = agenda.data?.appointments.find((x) => x.id !== a.id && x.startsAt > a.startsAt && x.status === 'confirmed' && !x.outcome)
 
   async function record() {
-    if (!confirm) return
+    if (!pick) return
     setPending(true)
     setError(null)
-    try { load.set((await api.recordOutcome(a.id, confirm)).appointment); setConfirm(null); setInCall(false) } catch (e) { setError((e as ApiError).message) } finally { setPending(false) }
+    try { load.set((await api.recordOutcome(a.id, pick)).appointment); setPick(null); setCallDone(false); agenda.reload() } catch (e) { setError((e as ApiError).message) } finally { setPending(false) }
   }
+  const joinCall = () => { setCallDone(false); setInCall(true) }
 
   return (
     <div className="page">
-      <Link to={`/doctor${lisbonDay(a.startsAt) === lisbonDay() ? '' : `?date=${lisbonDay(a.startsAt)}`}`} className="link inline-flex min-h-11 items-center text-sm">Back to your agenda</Link>
+      <Link to={agendaHref} className="link inline-flex min-h-11 items-center text-sm">Back to your agenda</Link>
       <div className="mt-2 grid gap-8 min-[1025px]:grid-cols-[minmax(0,1fr)_320px]">
         <section>
           <PageTitle eyebrow={`${when(a.startsAt)} · ${a.service.groupName}`} title={`Visit at ${hhmm(a.startsAt)}`}>{a.patient?.displayName ?? 'Patient'}</PageTitle>
-          <div className="mt-6">
-            {inCall ? <DailyRoom appointmentId={a.id} who="clinician" onEnded={() => setInCall(false)} />
-              : a.status === 'cancelled' ? <Notice>This visit was cancelled.</Notice>
-              : phase === 'before' ? <Notice>The room opens at {hhmm(a.call.joinOpensAt)}, 10 minutes before the visit.</Notice>
-              : phase === 'closed' ? <Notice>The join window closed at {hhmm(a.call.joinClosesAt)}.</Notice>
-              : a.status === 'confirmed' ? (
+          {a.status === 'cancelled' ? <Notice className="mt-6">This visit was cancelled.</Notice> : <>
+            <FlowSteps at={step} />
+            <div className="mt-5" aria-live="polite">
+              {step === 'prepare' ? (
                 <div className="card bg-navy text-white on-navy">
-                  <p className="eyebrow">Video room</p>
+                  <p className="eyebrow">Step 1 · Prepare</p>
+                  <h2 className="mt-2 text-white">The room opens at {hhmm(a.call.joinOpensAt)}</h2>
+                  <p className="mt-2 text-[#c0d2e7]">That’s 10 minutes before the visit. Meanwhile, read the patient’s record in iMED.</p>
+                  <OpenImed className="btn mt-5 bg-white text-ink hover:bg-mist" />
+                </div>
+              ) : step === 'call' && inCall ? (
+                <>
+                  <DailyRoom appointmentId={a.id} who="clinician" onEnded={() => { setInCall(false); setCallDone(true) }} />
+                  {/* Also the way out when video is off or the call fails: the outcome must stay reachable. */}
+                  <p className="fine mt-3">When you leave the call, you’ll record the outcome here. <button type="button" className="link min-h-11" onClick={() => { setInCall(false); setCallDone(true) }}>Leave and record the outcome</button></p>
+                </>
+              ) : step === 'call' ? (
+                <div className="card bg-navy text-white on-navy">
+                  <p className="eyebrow">Step 2 · Call</p>
                   <h2 className="mt-2 text-white">Start the call when you’re ready</h2>
                   <p className="mt-2 text-[#c0d2e7]">You join as the room owner. The patient joins from their waiting room.{a.call.reconnects ? ` They have reconnected ${a.call.reconnects} time${a.call.reconnects > 1 ? 's' : ''}.` : ''}</p>
-                  <button type="button" className="btn mt-5 bg-white text-ink hover:bg-mist" onClick={() => setInCall(true)}>Start the call</button>
+                  <div className="mt-5 flex flex-wrap items-center gap-x-6 gap-y-3">
+                    <button type="button" className="btn bg-white text-ink hover:bg-mist" onClick={joinCall}>Start the call</button>
+                    <button type="button" className="link min-h-11 text-white" onClick={() => setCallDone(true)}>Patient didn’t join? Record the outcome</button>
+                  </div>
                 </div>
-              ) : <Notice tone="ok">Outcome recorded: {a.outcome ? OUTCOME[a.outcome] : 'Completed'}.</Notice>}
-          </div>
+              ) : step === 'outcome' ? (
+                <section className="card" aria-labelledby="outcome">
+                  <p className="eyebrow">Step 3 · Outcome</p>
+                  <h2 id="outcome" className="mt-2">How did the visit end?</h2>
+                  <p className="muted mt-2">Choose one. Reasons and notes go in iMED, not here.</p>
+                  {phase === 'closed' && <Notice className="mt-4">The join window closed at {hhmm(a.call.joinClosesAt)}.</Notice>}
+                  <fieldset className="mt-5 grid gap-2">
+                    <legend className="sr-only">Outcome</legend>
+                    {(Object.keys(OUTCOME) as Outcome[]).map((o) => (
+                      <label key={o} className="choice">
+                        <input type="radio" name="outcome" value={o} checked={pick === o} onChange={() => setPick(o)} />
+                        <span><span className="block font-medium">{OUTCOME[o]}</span><span className="fine">{SEES[o]}</span></span>
+                      </label>
+                    ))}
+                  </fieldset>
+                  <FormError error={error} />
+                  <div className="mt-5 flex flex-wrap gap-3">
+                    <button type="button" className="btn btn-primary" disabled={!pick || pending} onClick={record}>{pending ? 'Saving…' : 'Record outcome'}</button>
+                    {phase === 'open' && <button type="button" className="btn btn-secondary" onClick={joinCall}>{a.call.state === 'not_started' ? 'Start the call' : 'Rejoin the call'}</button>}
+                  </div>
+                </section>
+              ) : (
+                <section className="card" aria-labelledby="done">
+                  <p className="eyebrow">Step 4 · Write it up in iMED</p>
+                  <h2 id="done" className="mt-2">Outcome recorded: {a.outcome ? OUTCOME[a.outcome] : 'Completed'}</h2>
+                  <p className="muted mt-2">Write the clinical record, and issue any prescription or certificate, in iMED. Carevia keeps only the outcome.</p>
+                  <div className="mt-5 flex flex-wrap gap-3">
+                    <OpenImed className="btn btn-primary" />
+                    {a.status === 'confirmed' && phase === 'open' && <button type="button" className="btn btn-secondary" onClick={joinCall}>Start the call again</button>}
+                    {next
+                      ? <Link to={`/doctor/visits/${next.id}`} className="btn btn-secondary">Next visit at {hhmm(next.startsAt)}</Link>
+                      : <Link to={agendaHref} className="btn btn-secondary">Back to your agenda</Link>}
+                  </div>
+                  {next && <p className="fine mt-3">Next: {next.patient?.displayName ?? 'Patient'} · {next.service.name}</p>}
+                </section>
+              )}
+            </div>
+          </>}
         </section>
         <aside className="grid content-start gap-3" aria-label="Visit details">
           <div className="card card-tight">
@@ -136,37 +244,14 @@ export function DoctorVisit() {
               <dt>Patient</dt><dd>{a.patient?.displayName}{a.patient?.kind === 'family' && <span className="fine block">Booked by a parent or carer, who joins with them</span>}</dd>
               <dt>Service</dt><dd>{a.service.name}</dd>
               <dt>Time</dt><dd>{hhmm(a.startsAt)} to {hhmm(a.endsAt)}</dd>
-              <dt>Status</dt><dd><StatusBadge a={a} /></dd>
+              <dt>Status</dt><dd><StatusBadge a={a} now={now} /></dd>
               {a.preJoin?.companion && <><dt>Companion</dt><dd>The patient asked to be accompanied</dd></>}
             </dl>
             <div className="flex items-center gap-3 border-t border-line pt-3"><DoctorAvatar doctor={a.doctor} size={36} /><span className="fine">{a.doctor.name} · {a.doctor.cedula}</span></div>
           </div>
-          <OpenImed className="btn btn-secondary btn-block" />
-          {canRecord && (
-            <section className="card card-tight" aria-labelledby="outcome">
-              <h2 id="outcome" className="font-sans text-[18px] font-medium">Outcome</h2>
-              <p className="fine mt-1">Choose one. Reasons and notes go in iMED, not here.</p>
-              <div className="mt-3 grid gap-2">
-                {(Object.keys(OUTCOME) as Outcome[]).map((o) => (
-                  <button key={o} type="button" className={`btn btn-block ${a.outcome === o ? 'btn-primary' : 'btn-secondary'}`} aria-pressed={a.outcome === o} onClick={() => setConfirm(o)}>{OUTCOME[o]}</button>
-                ))}
-              </div>
-            </section>
-          )}
+          {step !== 'imed' && step !== 'prepare' && <OpenImed className="btn btn-secondary btn-block" />}
         </aside>
       </div>
-      <Dialog open={!!confirm} onClose={() => setConfirm(null)} title={confirm ? `Record “${OUTCOME[confirm]}”?` : ''}>
-        <p>{confirm === 'ended_poor_quality'
-          ? 'The appointment stays open, so the patient can rejoin or be offered a new time. They aren’t charged again.'
-          : confirm === 'needs_in_person'
-            ? 'The patient will see that you advise an in-person visit. Record your reasons in iMED.'
-            : confirm === 'no_show' ? 'The patient will see that the call didn’t connect.' : 'The patient will see that the visit is complete.'}</p>
-        <FormError error={error} />
-        <div className="mt-6 flex flex-wrap gap-3">
-          <button type="button" className="btn btn-primary" disabled={pending} onClick={record}>{pending ? 'Saving…' : 'Record outcome'}</button>
-          <button type="button" className="btn btn-secondary" onClick={() => setConfirm(null)}>Cancel</button>
-        </div>
-      </Dialog>
     </div>
   )
 }
