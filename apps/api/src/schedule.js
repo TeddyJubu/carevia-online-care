@@ -1,5 +1,5 @@
 import { prisma } from './prisma.js'
-import { lisbonToday, scheduleFor } from './rules.js'
+import { SLOT_MINUTES, lisbonTimeToUtc, lisbonToday, parseDate, scheduleFor } from './rules.js'
 
 /** Adds any missing slots for the next 21 days. Existing slots (and their appointments) are left alone. */
 export async function topUpSlots(now = new Date(), db = prisma) {
@@ -33,4 +33,48 @@ export function freeSlotWhere(now = new Date()) {
       none: { OR: [{ status: 'confirmed' }, { status: 'held', holdExpiresAt: { gt: now } }] },
     },
   }
+}
+
+// A slot is taken while a live hold or a booked visit points at it.
+export const LIVE = (now) => ({ OR: [{ status: { in: ['confirmed', 'completed'] } }, { status: 'held', holdExpiresAt: { gt: now } }] })
+
+/**
+ * Opens a time on a doctor's schedule (admin Doctors screen, and the doctor's own profile).
+ * Returns `{ slot }`, or `{ error: [status, code, message] }`.
+ */
+export async function openSlot(doctorId, date, time, db = prisma) {
+  const [hours, minutes] = String(time).split(':').map(Number)
+  if (!parseDate(date) || !/^\d{2}:\d{2}$/.test(time) || hours > 23 || minutes > 59) {
+    return { error: [400, 'VALIDATION', 'Choose a valid date and time.'] }
+  }
+  const startsAt = lisbonTimeToUtc(date, time)
+  if (startsAt <= new Date()) return { error: [400, 'SLOT_PAST', 'Choose a time that has not already passed.'] }
+  const endsAt = new Date(startsAt.getTime() + SLOT_MINUTES * 60_000)
+  // Visits are 30 minutes, so a time that overlaps another open one on this schedule is refused.
+  const clash = await db.slot.findFirst({
+    where: { doctorId, closedAt: null, startsAt: { gt: new Date(startsAt.getTime() - SLOT_MINUTES * 60_000), lt: endsAt } },
+  })
+  if (clash) return { error: [409, 'SLOT_EXISTS', 'That time overlaps one already on this schedule.'] }
+  // A time removed earlier is opened again rather than added twice.
+  const slot = await db.slot.upsert({
+    where: { doctorId_startsAt: { doctorId, startsAt } },
+    update: { closedAt: null },
+    create: { doctorId, startsAt, endsAt },
+  })
+  return { slot }
+}
+
+/** Removes an upcoming free time. Returns `{ ok: true }`, or `{ error: [status, code, message] }`. */
+export async function closeSlot(doctorId, slotId, db = prisma) {
+  const now = new Date()
+  const slot = await db.slot.findFirst({ where: { id: slotId, doctorId, closedAt: null, startsAt: { gt: now } } })
+  if (!slot) return { error: [404, 'NOT_FOUND', 'That time is not on the upcoming schedule.'] }
+  // Closed, not deleted: the hourly top-up would add a deleted time back, and old holds still point at the row.
+  // The update only matches while nothing live is on the slot, so a booking made a moment ago is not lost.
+  const { count } = await db.slot.updateMany({
+    where: { id: slot.id, closedAt: null, appointments: { none: LIVE(now) } },
+    data: { closedAt: now },
+  })
+  if (count === 0) return { error: [409, 'SLOT_BOOKED', 'This time is booked. It stays on the schedule.'] }
+  return { ok: true }
 }

@@ -33,6 +33,8 @@ export function Header() {
         <span className="flex-1" />
         {user && <a href={SITE} className="nav-pill nav-link">Site</a>}
         <NavLink to="/doctors" className="nav-pill nav-link">Doctors</NavLink>
+        {user?.role === 'clinician' && <NavLink to="/doctor" end className="nav-pill nav-link hidden sm:inline-flex">Agenda</NavLink>}
+        {user?.role === 'clinician' && <NavLink to="/doctor/profile" className="nav-pill nav-link hidden sm:inline-flex">Profile</NavLink>}
         {user?.role === 'patient' && <NavLink to="/appointments" className="nav-pill nav-link hidden sm:inline-flex">Appointments</NavLink>}
         {user
           ? <button type="button" className="nav-pill glass cursor-pointer" onClick={async () => { await signOut(); navigate('/signin') }}>Sign out</button>

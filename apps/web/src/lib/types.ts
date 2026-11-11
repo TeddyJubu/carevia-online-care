@@ -53,6 +53,9 @@ export type Doctor = {
   nextAvailableAt?: string | null
 }
 
+/** A time on the signed-in doctor's own schedule (GET /api/clinician/schedule). Removed times stay listed so they can be opened again. */
+export type OwnSlot = { id: number; startsAt: string; endsAt: string; open: boolean; booked: boolean }
+
 export type DoctorBrief = Pick<Doctor, 'id' | 'name' | 'initials' | 'specialty' | 'languages' | 'cedula'> & { fee?: number }
 
 // The contract leaves the slot id type open (the database uses integers); treat it as opaque.

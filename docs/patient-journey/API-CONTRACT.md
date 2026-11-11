@@ -119,6 +119,9 @@ The join window opens 10 minutes before `startsAt` and closes 60 minutes after `
 
 - **`GET /api/clinician/agenda?date=YYYY-MM-DD` (clinician):** `{ doctor: {...}, appointments: [ appointment ] }` for that day in Lisbon time. It includes the patient's display name, service, time, status and call state. It never includes clinical fields, because there are none.
 - **`POST /api/clinician/appointments/:id/outcome` (clinician):** `{ outcome: "completed" | "ended_poor_quality" | "needs_in_person" | "no_show" }`. Sets `status: "completed"` (or keeps `confirmed` for `ended_poor_quality`, so the patient can reconnect or reschedule). There's no free-text reason: the reason goes in iMED.
+- **`GET /api/clinician/schedule` (clinician):** the doctor's own profile (`doctor`, without the login id) and every time from now to the end of the rolling schedule (`days`, 21): `slots: [{ id, startsAt, endsAt, open, booked }]`. Removed times stay listed with `open: false` so they can be opened again. No patient names: the agenda shows who booked. Web: `/app/doctor/profile`.
+- **`POST /api/clinician/slots` (clinician):** `{ date: "YYYY-MM-DD", time: "HH:MM" }` in Lisbon time opens a 30-minute time, or reopens a removed one (same slot id). `201 { slot }`; `400 VALIDATION` or `SLOT_PAST`; `409 SLOT_EXISTS` when it overlaps an open time. Same rules as the admin Doctors screen.
+- **`DELETE /api/clinician/slots/:id` (clinician):** removes an upcoming free time on the doctor's own schedule (closed, not deleted, so the hourly top-up doesn't add it back). `409 SLOT_BOOKED` while a hold or visit is on it; another doctor's time is `404`.
 - **`GET /api/clinician/imed-link`:** `{ url }` from the `IMED_URL` setting, defaulting to `https://imed.pt/imed/home`.
 
 ## Admin (operational only)

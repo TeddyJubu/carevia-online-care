@@ -633,6 +633,24 @@ async function staffChecks(patient, doctor, admin, { today, childVisit }) {
   record('iMED link', imed.json?.url === 'https://imed.pt/imed/home', imed.json?.url)
   expectError('a patient cannot get the iMED link (403)', await patient.get('/api/clinician/imed-link'), 403, 'FORBIDDEN')
 
+  // The doctor's own open times (web /app/doctor/profile).
+  const schedule = await doctor.get('/api/clinician/schedule')
+  const free = schedule.json?.slots?.find((s) => s.open && !s.booked)
+  record('clinician schedule: own profile and upcoming times, no login id or patient names',
+    schedule.status === 200 && schedule.json.doctor?.id === 0 && free && !('clinicianUserId' in schedule.json.doctor)
+      && !/Demo Patient|patient@example\.com/.test(schedule.text), show(schedule))
+  const closed = await doctor.del(`/api/clinician/slots/${free.id}`)
+  const after = await doctor.get('/api/clinician/schedule')
+  record('clinician removes a free time', closed.status === 200 && after.json.slots.find((s) => s.id === free.id)?.open === false, show(closed))
+  const lisbon = new Intl.DateTimeFormat('sv-SE', { timeZone: 'Europe/Lisbon', dateStyle: 'short', timeStyle: 'short' }).format(new Date(free.startsAt)).split(' ')
+  const reopened = await doctor.post('/api/clinician/slots', { date: lisbon[0], time: lisbon[1] })
+  record('clinician opens a removed time again (same slot)', reopened.status === 201 && reopened.json.slot.id === free.id, show(reopened))
+  expectError('clinician cannot open an overlapping time (409)', await doctor.post('/api/clinician/slots', { date: lisbon[0], time: lisbon[1] }), 409, 'SLOT_EXISTS')
+  const taken = schedule.json.slots.find((s) => s.booked)
+  if (taken) expectError('clinician cannot remove a booked time (409)', await doctor.del(`/api/clinician/slots/${taken.id}`), 409, 'SLOT_BOOKED')
+  expectError('a clinician cannot remove another doctor’s time (404)', await doctor.del(`/api/clinician/slots/${(await freeSlot(patient)).id}`), 404, 'NOT_FOUND')
+  expectError('a patient cannot open the clinician schedule (403)', await patient.get('/api/clinician/schedule'), 403, 'FORBIDDEN')
+
   const list = await admin.get(`/api/admin/appointments?date=${today.startsAt.slice(0, 10)}`)
   const row = list.json?.appointments?.find((item) => item.id === today.id)
   record('admin appointments: operational fields, no patient details',

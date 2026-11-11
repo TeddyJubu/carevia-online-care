@@ -3,7 +3,8 @@ import { DEMO_MODE, IMED_URL } from '../config.js'
 import { dailyHint } from '../daily.js'
 import { DEMO_ACCOUNTS, seedDemo } from '../demo-seed.js'
 import { prisma } from '../prisma.js'
-import { joinState, lisbonDayRange, lisbonToday, parseDate } from '../rules.js'
+import { SCHEDULE_DAYS, addDays, joinState, lisbonDayRange, lisbonTimeToUtc, lisbonToday, parseDate } from '../rules.js'
+import { LIVE, closeSlot, openSlot } from '../schedule.js'
 import { APPOINTMENT_INCLUDE, sendError, toAppointment } from '../views.js'
 import { logAccess } from './appointments.js'
 
@@ -70,6 +71,62 @@ export async function staffRoutes(app) {
     })
     const updated = await prisma.appointment.findUnique({ where: { id: appointment.id }, include: APPOINTMENT_INCLUDE })
     return { appointment: toAppointment(updated, 'clinician') }
+  })
+
+  // ---- The doctor's own profile and open times (web /app/doctor/profile) ----
+
+  async function ownDoctor(request, reply) {
+    const user = await requireRole(request, reply, ['clinician'])
+    if (!user) return null
+    const doctor = await prisma.doctor.findUnique({ where: { clinicianUserId: user.id }, include: { group: true, service: true } })
+    if (!doctor) sendError(reply, 403, 'NO_DOCTOR_PROFILE', 'This login is not linked to a doctor profile.')
+    return doctor
+  }
+
+  // Every time from now to the end of the rolling schedule, open or removed, so a removed time can be opened again.
+  // No patient names: the agenda shows who booked.
+  app.get('/api/clinician/schedule', async (request, reply) => {
+    const doctor = await ownDoctor(request, reply)
+    if (!doctor) return
+    const now = new Date()
+    const slots = await prisma.slot.findMany({
+      where: { doctorId: doctor.id, startsAt: { gt: now, lt: lisbonTimeToUtc(addDays(lisbonToday(now), SCHEDULE_DAYS), '00:00') } },
+      orderBy: { startsAt: 'asc' },
+      select: { id: true, startsAt: true, endsAt: true, closedAt: true, appointments: { where: LIVE(now), select: { id: true }, take: 1 } },
+    })
+    const { group, service, clinicianUserId: _login, availabilityIndex: _order, groupId: _g, serviceId: _s, ...profile } = doctor
+    return {
+      doctor: { ...profile, groupName: group.name, service: service.name },
+      days: SCHEDULE_DAYS,
+      slots: slots.map((slot) => ({ id: slot.id, startsAt: slot.startsAt, endsAt: slot.endsAt, open: !slot.closedAt, booked: slot.appointments.length > 0 })),
+    }
+  })
+
+  app.post('/api/clinician/slots', {
+    schema: {
+      body: {
+        type: 'object',
+        additionalProperties: false,
+        required: ['date', 'time'],
+        properties: { date: { type: 'string', minLength: 10, maxLength: 10 }, time: { type: 'string', minLength: 5, maxLength: 5 } },
+      },
+    },
+  }, async (request, reply) => {
+    const doctor = await ownDoctor(request, reply)
+    if (!doctor) return
+    const { slot, error } = await openSlot(doctor.id, request.body.date, request.body.time)
+    if (error) return sendError(reply, ...error)
+    return reply.code(201).send({ slot: { id: slot.id, startsAt: slot.startsAt, endsAt: slot.endsAt, open: true, booked: false } })
+  })
+
+  app.delete('/api/clinician/slots/:id', { schema: { params: idParams } }, async (request, reply) => {
+    const doctor = await ownDoctor(request, reply)
+    if (!doctor) return
+    const slotId = Number(request.params.id)
+    if (!Number.isInteger(slotId)) return sendError(reply, 400, 'VALIDATION', 'Slot id must be a number.')
+    const { error } = await closeSlot(doctor.id, slotId)
+    if (error) return sendError(reply, ...error)
+    return { ok: true }
   })
 
   app.get('/api/clinician/imed-link', async (request, reply) => {

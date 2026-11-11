@@ -132,6 +132,7 @@ const router = createBrowserRouter(
         // Public doctor registration, linked from the homepage ("For doctors") like DrOnline's "Registe-se como médico".
         { path: 'join', ...page('join', 'JoinPage') },
         { path: 'doctor', ...page('doctor', 'Agenda', clinician) },
+        { path: 'doctor/profile', ...page('doctor', 'DoctorProfile', clinician) },
         { path: 'doctor/visits/:id', ...page('doctor', 'DoctorVisit', clinician) },
         // Demo or development only: the page itself checks both locks.
         { path: 'dev/outbox', ...page('dev', 'Outbox') },

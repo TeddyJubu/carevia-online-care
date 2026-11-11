@@ -1,12 +1,11 @@
 // Admin management of patients, doctors, services and doctors' schedules.
 import { requireRole } from '../auth.js'
 import { prisma } from '../prisma.js'
-import { SLOT_MINUTES, lisbonDateTime, lisbonTimeToUtc, parseDate } from '../rules.js'
+import { lisbonDateTime } from '../rules.js'
+import { LIVE, closeSlot, openSlot } from '../schedule.js'
 import { logAccess } from './appointments.js'
 
 const requireAdmin = (request, reply) => requireRole(request, reply, ['admin'])
-// A slot is taken while a live hold or a booked visit points at it.
-const LIVE = (now) => ({ OR: [{ status: { in: ['confirmed', 'completed'] } }, { status: 'held', holdExpiresAt: { gt: now } }] })
 
 function single(value) {
   if (Array.isArray(value)) return value[0] == null ? '' : String(value[0])
@@ -626,27 +625,8 @@ export async function adminCatalogRoutes(app) {
     if (id == null) return reply.code(400).send({ error: 'VALIDATION', message: 'Doctor id must be a number.' })
     const doctor = await prisma.doctor.findUnique({ where: { id } })
     if (!doctor) return reply.code(404).send({ error: 'NOT_FOUND', message: 'Doctor not found.' })
-    const { date, time } = request.body
-    const [hours, minutes] = time.split(':').map(Number)
-    if (!parseDate(date) || !/^\d{2}:\d{2}$/.test(time) || hours > 23 || minutes > 59) {
-      return reply.code(400).send({ error: 'VALIDATION', message: 'Choose a valid date and time.' })
-    }
-    const startsAt = lisbonTimeToUtc(date, time)
-    if (startsAt <= new Date()) {
-      return reply.code(400).send({ error: 'SLOT_PAST', message: 'Choose a time that has not already passed.' })
-    }
-    const endsAt = new Date(startsAt.getTime() + SLOT_MINUTES * 60_000)
-    // Visits are 30 minutes, so a time that overlaps another open one on this schedule is refused.
-    const clash = await prisma.slot.findFirst({
-      where: { doctorId: id, closedAt: null, startsAt: { gt: new Date(startsAt.getTime() - SLOT_MINUTES * 60_000), lt: endsAt } },
-    })
-    if (clash) return reply.code(409).send({ error: 'SLOT_EXISTS', message: 'That time overlaps one already on this schedule.' })
-    // A time removed earlier is opened again rather than added twice.
-    const slot = await prisma.slot.upsert({
-      where: { doctorId_startsAt: { doctorId: id, startsAt } },
-      update: { closedAt: null },
-      create: { doctorId: id, startsAt, endsAt },
-    })
+    const { slot, error } = await openSlot(id, request.body.date, request.body.time)
+    if (error) return reply.code(error[0]).send({ error: error[1], message: error[2] })
     return reply.code(201).send({ slot: toSlot(slot) })
   })
 
@@ -658,16 +638,8 @@ export async function adminCatalogRoutes(app) {
     if (doctorId == null || slotId == null) {
       return reply.code(400).send({ error: 'VALIDATION', message: 'Doctor and time must be numbers.' })
     }
-    const now = new Date()
-    const slot = await prisma.slot.findFirst({ where: { id: slotId, doctorId, closedAt: null, startsAt: { gt: now } } })
-    if (!slot) return reply.code(404).send({ error: 'NOT_FOUND', message: 'That time is not on the upcoming schedule.' })
-    // Closed, not deleted: the hourly top-up would add a deleted time back, and old holds still point at the row.
-    // The update only matches while nothing live is on the slot, so a booking made a moment ago is not lost.
-    const { count } = await prisma.slot.updateMany({
-      where: { id: slot.id, closedAt: null, appointments: { none: LIVE(now) } },
-      data: { closedAt: now },
-    })
-    if (count === 0) return reply.code(409).send({ error: 'SLOT_BOOKED', message: 'This time is booked. It stays on the schedule.' })
+    const { error } = await closeSlot(doctorId, slotId)
+    if (error) return reply.code(error[0]).send({ error: error[1], message: error[2] })
     return { ok: true }
   })
 }

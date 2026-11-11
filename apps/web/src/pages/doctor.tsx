@@ -2,9 +2,9 @@ import { useState } from 'react'
 import { Link, useParams, useSearchParams } from 'react-router'
 import { api, ApiError } from '../lib/api'
 import { useLoad, useNow } from '../lib/load'
-import { addDays, dayLabel, hhmm, lisbonDay, when } from '../lib/time'
-import type { Appointment, Outcome } from '../lib/types'
-import { DoctorAvatar, Empty, ErrorState, Field, FormError, Loading, Notice, PageTitle } from '../ui/kit'
+import { addDays, dayLabel, hhmm, lisbonDay, relDay, shortDate, when } from '../lib/time'
+import type { Appointment, Outcome, OwnSlot } from '../lib/types'
+import { DoctorAvatar, Empty, ErrorState, euro, Field, FormError, Loading, Notice, PageTitle } from '../ui/kit'
 import { DailyRoom } from './call'
 import { phaseOf, type Phase } from './visit'
 
@@ -62,7 +62,10 @@ export function Agenda() {
     <div className="page">
       <div className="flex flex-wrap items-end justify-between gap-6">
         <PageTitle eyebrow={d ? `${d.specialty} · Cédula ${d.cedula}` : 'Your agenda'} title="Your agenda">{d ? d.name : 'Your agenda'}</PageTitle>
-        <OpenImed />
+        <div className="flex flex-wrap gap-3">
+          <Link to="/doctor/profile" className="btn btn-secondary">Profile and open times</Link>
+          <OpenImed />
+        </div>
       </div>
       <div className="mt-8 flex flex-wrap items-end gap-3">
         <button type="button" className="btn btn-secondary btn-sm" onClick={() => go(addDays(date, -1))}>Previous day</button>
@@ -250,6 +253,91 @@ export function DoctorVisit() {
             <div className="flex items-center gap-3 border-t border-line pt-3"><DoctorAvatar doctor={a.doctor} size={36} /><span className="fine">{a.doctor.name} · {a.doctor.cedula}</span></div>
           </div>
           {step !== 'imed' && step !== 'prepare' && <OpenImed className="btn btn-secondary btn-block" />}
+        </aside>
+      </div>
+    </div>
+  )
+}
+
+// ---------- The doctor's profile, with the open times patients can book ----------
+export function DoctorProfile() {
+  const load = useLoad(() => api.schedule(), [])
+  const [busy, setBusy] = useState<number | 'add' | null>(null)
+  const [error, setError] = useState<string | null>(null)
+  const [date, setDate] = useState(() => addDays(lisbonDay(), 1))
+  const [time, setTime] = useState('09:00')
+
+  if (load.error) return <div className="page-narrow"><ErrorState error={load.error} onRetry={load.reload} /></div>
+  if (!load.data) return <div className="page"><Loading label="Loading your profile" /></div>
+  const { doctor: d, slots, days: span } = load.data
+  // Put a changed or new time in place, keeping the list in time order.
+  const put = (s: OwnSlot) => load.set({ ...load.data!, slots: [...slots.filter((x) => x.id !== s.id), s].sort((a, b) => a.startsAt.localeCompare(b.startsAt)) })
+  const byDay = new Map<string, OwnSlot[]>()
+  for (const s of slots) byDay.set(lisbonDay(s.startsAt), [...(byDay.get(lisbonDay(s.startsAt)) ?? []), s])
+  const days = [...byDay]
+  const open = slots.filter((s) => s.open && !s.booked).length
+  const booked = slots.filter((s) => s.booked).length
+  const today = lisbonDay(), last = addDays(today, span - 1)
+
+  async function run(key: number | 'add', fn: () => Promise<void>) {
+    setBusy(key)
+    setError(null)
+    try { await fn() } catch (e) { setError((e as ApiError).message) } finally { setBusy(null) }
+  }
+  const toggle = (s: OwnSlot) => run(s.id, async () => {
+    if (s.open) { await api.closeSlot(s.id); put({ ...s, open: false }) } else put((await api.openSlot(lisbonDay(s.startsAt), hhmm(s.startsAt))).slot)
+  })
+  const add = () => run('add', async () => { put((await api.openSlot(date, time)).slot) })
+
+  return (
+    <div className="page">
+      <Link to="/doctor" className="link inline-flex min-h-11 items-center text-sm">Back to your agenda</Link>
+      <div className="mt-2 grid gap-8 min-[1025px]:grid-cols-[minmax(0,1fr)_320px]">
+        <section aria-labelledby="times">
+          <PageTitle eyebrow={`${d.specialty} · Cédula ${d.cedula}`} title="Your profile" lede="Patients book into the times you leave open. Tap a time to open or remove it. Booked times stay until the visit.">{d.name}</PageTitle>
+          <h2 id="times" className="mt-8">Your open times</h2>
+          <p className="fine mt-1" aria-live="polite">{open} open · {booked} booked · next {span} days, Lisbon time. Dark times are open, white ones removed.</p>
+          <FormError error={error} />
+          <form className="card card-tight mt-4 flex flex-wrap items-end gap-3" onSubmit={(e) => { e.preventDefault(); add() }}>
+            <Field label="Day" type="date" value={date} min={today} max={last} required onChange={(e) => setDate(e.target.value)} className="w-48" />
+            <Field label="Start time" type="time" step={300} value={time} required onChange={(e) => setTime(e.target.value)} className="w-36" />
+            <button type="submit" className="btn btn-primary" disabled={busy === 'add'}>{busy === 'add' ? 'Adding…' : 'Add a time'}</button>
+            <p className="fine basis-full">Visits last 30 minutes, so a new time can’t overlap an open one.</p>
+          </form>
+          {!days.length ? <div className="mt-4"><Empty title="No times on your schedule" art="caught-up">Add a time above and patients can book it.</Empty></div> : (
+            <ol className="card card-tight rows mt-4">
+              {days.map(([day, list]) => (
+                <li key={day} className="grid gap-3 py-4 sm:grid-cols-[150px_minmax(0,1fr)] sm:items-start">
+                  <p className="font-medium">{relDay(list[0].startsAt)}<span className="fine block font-normal">{shortDate(list[0].startsAt)}</span></p>
+                  <div className="flex flex-wrap gap-2" role="group" aria-label={`Times on ${shortDate(list[0].startsAt)}`}>
+                    {list.map((s) => (
+                      <button key={s.id} type="button" className={`chip tabular-nums ${s.booked ? 'chip-booked' : ''}`} aria-pressed={s.booked ? undefined : s.open} disabled={s.booked || busy === s.id}
+                        title={s.booked ? 'Booked: it stays on your schedule' : s.open ? 'Open: tap to remove' : 'Removed: tap to open'}
+                        onClick={() => toggle(s)}>
+                        {hhmm(s.startsAt)}{s.booked ? <span className="ml-1.5 text-[13px] opacity-80">Booked</span> : <span className="sr-only">{s.open ? ', open' : ', removed'}</span>}
+                      </button>
+                    ))}
+                  </div>
+                </li>
+              ))}
+            </ol>
+          )}
+          <p className="fine mt-4">New weeks follow your usual pattern. Times you remove stay removed.</p>
+        </section>
+        <aside className="grid content-start gap-3" aria-label="Profile details">
+          <div className="card card-tight">
+            <div className="flex items-center gap-3 pb-3"><DoctorAvatar doctor={d} size={52} /><span><span className="block font-medium">{d.name}</span><span className="fine">{d.groupName}</span></span></div>
+            <dl className="summary border-t border-line pt-3">
+              <dt>Specialty</dt><dd>{d.specialty}</dd>
+              <dt>Cédula profissional</dt><dd>{d.cedula}</dd>
+              <dt>Languages</dt><dd>{d.languages}</dd>
+              <dt>Service</dt><dd>{d.service} · {euro(d.fee)}</dd>
+              {d.experience && <><dt>Experience</dt><dd>{d.experience}</dd></>}
+              {d.education && <><dt>Training</dt><dd>{d.education}</dd></>}
+            </dl>
+            <Link to={`/book/doctors/${d.id}`} className="btn btn-secondary btn-block">See what patients see</Link>
+          </div>
+          <p className="fine">To change these details, contact the Carevia team. Your clinical records stay in iMED.</p>
         </aside>
       </div>
     </div>

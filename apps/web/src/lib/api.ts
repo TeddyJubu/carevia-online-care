@@ -1,6 +1,6 @@
 import type {
   Appointment, CallEvent, Consent, DemoInfo, Doctor, FamilyMember, For, GroupSlug, Outcome,
-  OutboxMessage, ServiceGroup, Session, Slot, SlotId, SlotWithDoctor, User, VideoToken,
+  OutboxMessage, OwnSlot, ServiceGroup, Session, Slot, SlotId, SlotWithDoctor, User, VideoToken,
 } from './types'
 
 export const MOCK = import.meta.env.VITE_API_MOCK === '1'
@@ -129,6 +129,9 @@ export const api = {
 
   agenda: (date: string) => get<{ doctor: Doctor; appointments: Appointment[] }>(`/api/clinician/agenda?date=${date}`),
   recordOutcome: (id: string, outcome: Outcome) => post<A>(`/api/clinician/appointments/${id}/outcome`, { outcome }),
+  schedule: () => get<{ doctor: Doctor; days: number; slots: OwnSlot[] }>('/api/clinician/schedule'),
+  openSlot: (date: string, time: string) => post<{ slot: OwnSlot }>('/api/clinician/slots', { date, time }),
+  closeSlot: (id: number) => request<unknown>('DELETE', `/api/clinician/slots/${id}`),
   imedLink: () => get<{ url: string }>('/api/clinician/imed-link'),
 
   demo: () => get<DemoInfo>('/api/demo'),
