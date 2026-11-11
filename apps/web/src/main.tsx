@@ -56,7 +56,7 @@ const clinician = (el: ReactNode) => <RequireRole role="clinician">{el}</Require
 type Mod = Record<string, ComponentType>
 const files = {
   account: () => import('./pages/account'), appointments: () => import('./pages/appointments'), auth: () => import('./pages/auth'), book: () => import('./pages/book'),
-  call: () => import('./pages/call'), dev: () => import('./pages/dev'), doctors: () => import('./pages/doctors'), doctor: () => import('./pages/doctor'),
+  call: () => import('./pages/call'), dev: () => import('./pages/dev'), doctors: () => import('./pages/doctors'), doctor: () => import('./pages/doctor'), join: () => import('./pages/join'),
   visit: () => import('./pages/visit'), waiting: () => import('./pages/waiting'),
 }
 // A deploy replaces the hashed page chunks, so a tab opened before it can ask for a file that is gone.
@@ -129,6 +129,8 @@ const router = createBrowserRouter(
         { path: 'signup', ...page('auth', 'SignUp') },
         { path: 'forgot-password', ...page('auth', 'ForgotPassword') },
         { path: 'reset-password', ...page('auth', 'ResetPassword') },
+        // Public doctor registration, linked from the homepage ("For doctors") like DrOnline's "Registe-se como médico".
+        { path: 'join', ...page('join', 'JoinPage') },
         { path: 'doctor', ...page('doctor', 'Agenda', clinician) },
         { path: 'doctor/visits/:id', ...page('doctor', 'DoctorVisit', clinician) },
         // Demo or development only: the page itself checks both locks.

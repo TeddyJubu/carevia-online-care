@@ -72,6 +72,8 @@ export function Footer() {
         <div className="footer-info">
           <p className="footer-label">Stay connected</p>
           <p>Online consultations.<br />Availability varies by country.</p>
+          <p className="footer-label">For doctors</p>
+          <Link to="/join">Register as a doctor</Link>
         </div>
       </div>
       <p className="footer-wordmark" aria-hidden="true">CAREVIA</p>

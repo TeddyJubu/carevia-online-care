@@ -130,6 +130,11 @@ The join window opens 10 minutes before `startsAt` and closes 60 minutes after `
 - Doctors: `GET /api/admin/doctors?q=`, `GET`, `POST` and `PATCH /api/admin/doctors/:id`. `active: false` hides the doctor from patients, and their times can't be held (`409 SLOT_TAKEN`).
 - Schedule: `GET /api/admin/doctors/:id/slots` lists open future times. `POST` with `{ date, time }` (Lisbon) adds a time, or reopens one removed earlier (`400 SLOT_PAST`, `409 SLOT_EXISTS` if it overlaps). `DELETE /api/admin/doctors/:id/slots/:slotId` closes the time (`409 SLOT_BOOKED` while a live hold or visit is on it). Closed times keep their row, so the hourly top-up doesn't add them back.
 - Every admin or clinician read of an appointment writes an access-log row (who, which appointment, when, which endpoint).
+- Doctor applications: `GET /api/admin/doctor-applications?status=` (newest first, at most 200) and `PATCH /api/admin/doctor-applications/:id` with `{ status: new | contacted | approved | declined }`. Approving creates nothing: add the doctor and its clinician login under Doctors.
+
+## Doctor registration (public)
+
+- `POST /api/doctor-applications`: `{ firstName, lastName, email, phone (E.164), body: medicos | psicologos | nutricionistas, cedula, specialty, groupSlug?, yearsInPractice, languages, message?, consent: true }` returns `201 { id }`. No account or password is created. Five per IP per hour (`429 TOO_MANY_REQUESTS`).
 
 ## Demo mode (`DEMO_MODE=true` only)
 
@@ -189,5 +194,6 @@ The API reads `consent.md` for `/api/consent/current`. The web app imports the o
 | `/app/visits/:id/receipt` | Printable demo payment confirmation (not a tax invoice / fatura). Payment only. |
 | `/app/account`, `/app/account/family`, `/app/account/payments`, `/app/account/profile` (password and two-factor live here) | J12. Payments lists paid visits and shows the refund terms from `cancellation.md`. |
 | `/app/signin`, `/app/signup`, `/app/forgot-password`, `/app/reset-password` | Auth |
+| `/app/join` | Doctor registration: why join, three steps, and the application form. Linked from the homepage clinicians section, footer and menu ("For doctors") |
 | `/app/doctor`, `/app/doctor/visits/:id` | J13: agenda; visit room as owner, plus outcome |
 | `/app/dev/outbox` | Demo or development only |

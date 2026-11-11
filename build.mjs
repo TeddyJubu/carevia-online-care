@@ -251,6 +251,12 @@ const v45Home=v45Story
  .replace('<p class="fine center">Example prices are confirmed per country before launch.</p>','')
  .replace(`<a class="button light" href="${external}" target="_blank" rel="noopener">Create your account</a>`,`<a class="button light" href="${portal}/signup">Create your account</a>`)
  .replace(`<a class="button dark" href="${external}#doctors" target="_blank" rel="noopener">Explore Carevia’s clinicians</a>`,`<a class="button dark" href="${portal}/doctors">Find your clinician</a>`)
+ // Doctor registration (DrOnline's "É médico? Registe-se como médico" and footer "Recrutamento de Médicos"): the clinicians section,
+ // the footer and the menu open the Join Carevia form at /app/join. Existing doctors sign in from there.
+ .replace(`<a class="button dark" href="${portal}/doctors">Find your clinician</a></div></section>`,`<a class="button dark" href="${portal}/doctors">Find your clinician</a></div><p class="center doctor-join">Are you a doctor? <a href="${portal}/join">Register as a doctor</a></p></section>`)
+ .replace('<p class="mono">Stay connected</p><p>Online consultations.<br>Availability varies by country.</p></div>',`<p class="mono">Stay connected</p><p>Online consultations.<br>Availability varies by country.</p><p class="mono">For doctors</p><a href="${portal}/join">Register as a doctor</a></div>`)
+ .replace(`<a href="${portal}/doctor" data-role="clinician">For clinicians <span>05</span></a>`,`<a href="${portal}/join" data-role="clinician">For doctors <span>05</span></a>`)
+ .replace('</head>','<style>.doctor-join{margin-top:28px;font-size:17px;color:#5c6d80}.doctor-join a{color:var(--ink,#102d50);text-decoration:underline;text-underline-offset:4px;display:inline-flex;align-items:center;min-height:44px}.doctor-join a:hover{color:#b54e14}</style></head>')
  // The marks were 1254-1647px PNGs (about 0.5 MB each) shown at 40-132 CSS px; 3x copies keep them sharp on phones.
  .replaceAll('src="assets/carevia-mark.png"','src="assets/carevia-mark-192.webp"')
  .replaceAll('href="assets/carevia-mark.png"','href="assets/carevia-mark-192.png"')
@@ -258,6 +264,7 @@ const v45Home=v45Story
  .replace('aria-label="Carevia home"><img class="carevia-mark" src="assets/carevia-mark-192.webp" alt="" width="40" height="40">','aria-label="Carevia home"><img class="carevia-mark nav-emblem" src="assets/carevia-emblem-white-192.webp" alt="" width="40" height="40"><img class="carevia-mark nav-emblem nav-emblem-hover" src="assets/carevia-emblem-ring-192.webp" alt="" width="40" height="40">');
 // The old prototype site is no longer linked from this page.
 if(!v45Home.includes('/book">Find a consultation</a>')||v45Home.includes('class="care-open" data-service')||!v45Home.includes('class="care-open" href=')||!v45Home.includes('data-portal=')||!v45Home.includes('/signin" data-auth-pill>Sign in</a>')||!v45Home.includes('data-auth-menu')||!v45Home.includes('/doctors">Doctors <span>')||v45Home.includes('<a href="#about">Our approach')||!v45Home.includes('/book">Explore your options</a>')||!v45Home.includes('/book">View all care options</a>')||!v45Home.includes('disabled>Not sure which one?</button>')||v45Home.includes('Not sure which one?</a>')||v45Home.includes('Example prices are confirmed per country before launch.')||!v45Home.includes('/signup">Create your account')||v45Home.includes(external)||v45Home.includes('>Visit Carevia</a>')||v45Home.includes('care-faq-contact"')||!v45Home.includes('/book">Find your care</a>')||!v45Home.includes('/doctors">Find your clinician</a>')||v45Home.includes('data-role="admin"'))throw new Error('Design 04.5 portal links failed');
+if((v45Home.match(/\/join"/g)||[]).length!==3)throw new Error('Doctor registration links missing on the homepage');
 await writeFile('dist/design-04-5.html',v45Home);
 await writeFile('dist/index.html',v45Home.replace('rel="canonical" href="https://carevia.triplelabs.dev/design-04-5.html"','rel="canonical" href="https://carevia.triplelabs.dev/"'));
 

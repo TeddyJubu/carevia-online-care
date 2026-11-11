@@ -7,6 +7,7 @@ import { adminCatalogRoutes } from './routes/admin-catalog.js'
 import { prisma } from './prisma.js'
 import { appointmentRoutes } from './routes/appointments.js'
 import { bookingRoutes } from './routes/bookings.js'
+import { doctorApplicationRoutes } from './routes/doctor-applications.js'
 import { catalogRoutes } from './routes/catalog.js'
 import { peopleRoutes } from './routes/people.js'
 import { staffRoutes } from './routes/staff.js'
@@ -100,6 +101,7 @@ export async function buildApp({ timers = true } = {}) {
   await app.register(peopleRoutes)
   await app.register(staffRoutes)
   await app.register(adminCatalogRoutes)
+  await app.register(doctorApplicationRoutes)
 
   // Keep the 21-day schedule topped up (on start-up, then hourly; new days appear after midnight Lisbon time)
   // and sweep expired holds every minute. Reads never depend on the sweep: they check holdExpiresAt themselves.

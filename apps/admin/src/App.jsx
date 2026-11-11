@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import { getDaily, getSession, logout } from './api.js'
+import ApplicationsScreen from './ApplicationsScreen.jsx'
 import AppointmentsScreen from './AppointmentsScreen.jsx'
 import DailyScreen from './DailyScreen.jsx'
 import DeniedScreen from './DeniedScreen.jsx'
@@ -90,6 +91,7 @@ export default function App() {
           {route.section === 'patients' ? <PatientsScreen id={route.id} onSignOut={signOut} onDenied={refresh} /> : null}
           {route.section === 'doctors' ? <DoctorsScreen id={route.id} onSignOut={signOut} onDenied={refresh} /> : null}
           {route.section === 'services' ? <ServicesScreen id={route.id} onSignOut={signOut} onDenied={refresh} /> : null}
+          {route.section === 'applications' ? <ApplicationsScreen onSignOut={signOut} onDenied={refresh} /> : null}
           {route.section === 'daily' ? (
             <main className="page" id="main"><DailyScreen onSignOut={signOut} onDenied={refresh} /></main>
           ) : null}

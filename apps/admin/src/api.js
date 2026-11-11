@@ -242,3 +242,11 @@ export function redact(message, secret) {
   if (!secret) return message
   return message.split(secret).join('the key')
 }
+
+export function listDoctorApplications(status = '') {
+  return request(`/api/admin/doctor-applications${status ? `?status=${encodeURIComponent(status)}` : ''}`)
+}
+
+export function setDoctorApplicationStatus(id, status) {
+  return request(`/api/admin/doctor-applications/${encodeURIComponent(id)}`, { method: 'PATCH', body: { status } })
+}

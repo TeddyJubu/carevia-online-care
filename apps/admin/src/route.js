@@ -1,4 +1,4 @@
-const SECTIONS = new Set(['appointments', 'patients', 'doctors', 'services', 'daily'])
+const SECTIONS = new Set(['appointments', 'patients', 'doctors', 'services', 'applications', 'daily'])
 
 export function parseRoute(hash = '') {
   const path = (hash || '#/appointments').replace(/^#/, '')

@@ -346,3 +346,27 @@ model DailySettings {
   apiKey    String   @default("")
   updatedAt DateTime @updatedAt
 }
+
+// "Join Carevia" applications from the public doctor registration screen (/app/join). Not a login: an admin
+// checks the cédula with the professional body, then creates the Doctor and its clinician login by hand.
+model DoctorApplication {
+  id              String   @id @default(cuid())
+  firstName       String
+  lastName        String
+  email           String
+  phone           String
+  // "medicos" (Ordem dos Médicos), "psicologos" (Ordem dos Psicólogos) or "nutricionistas" (Ordem dos Nutricionistas).
+  body            String
+  cedula          String
+  specialty       String
+  // ServiceGroup slug the applicant would join, or "" when unsure.
+  groupSlug       String   @default("")
+  yearsInPractice Int
+  languages       String
+  message         String   @default("")
+  // new, contacted, approved or declined.
+  status          String   @default("new")
+  createdAt       DateTime @default(now())
+
+  @@index([status, createdAt])
+}
