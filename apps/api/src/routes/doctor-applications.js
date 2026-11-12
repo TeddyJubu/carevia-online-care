@@ -10,19 +10,55 @@ export const BODY_LABELS = {
 }
 export const APPLICATION_STATUSES = ['new', 'contacted', 'approved', 'declined']
 
+// Launch gates, not paperwork. Specialty's hint is filled from the application.
+export const CHECKS = [
+  { key: 'cedula', label: 'Cédula checked with the Ordem', hint: 'Number and body match the application.' },
+  { key: 'identity', label: 'Identity matches the cédula holder', hint: 'Checked on the introductory call.' },
+  { key: 'specialty', label: 'Specialty and area within competence', hint: '' },
+  { key: 'insurance', label: 'Liability insurance confirmed', hint: 'Record “confirmed” and the date. Do not store policy files.' },
+  { key: 'intro', label: 'Introductory call done', hint: 'Hours, services, how Carevia work works.' },
+]
+export const CHECK_KEYS = CHECKS.map((item) => item.key)
+
+/** Keys still unticked. Empty means approve may be recorded. Approve still creates no login. */
+export function approvalBlock(checks) {
+  const have = new Set((checks || []).map((check) => check.key))
+  return CHECK_KEYS.filter((key) => !have.has(key))
+}
+
 /** The reference an applicant quotes. CV-APP-0001, four digits, growing past 9999 without truncating. */
 export function formatApplicationReference(ref) {
   if (typeof ref !== 'number' || !Number.isInteger(ref) || ref < 1) return ''
   return `CV-APP-${String(ref).padStart(4, '0')}`
 }
 
+function checkViews(row, groupName) {
+  const byKey = new Map((row.checks || []).map((check) => [check.key, check]))
+  return CHECKS.map((item) => {
+    const hit = byKey.get(item.key)
+    const hint = item.key === 'specialty'
+      ? `${row.specialty}${groupName ? ` in ${groupName}` : ''}.`
+      : item.hint
+    return {
+      key: item.key,
+      label: item.label,
+      hint,
+      checked: Boolean(hit),
+      checkedByName: hit?.checkedByName || '',
+      checkedAt: hit?.checkedAt || null,
+    }
+  })
+}
+
 export function toApplication(row, groupName = '') {
-  const { ref, ...rest } = row
+  const { ref, checks, ...rest } = row
   return {
     ...rest,
     reference: formatApplicationReference(ref),
     bodyLabel: BODY_LABELS[row.body] || row.body,
     groupName,
+    checks: checkViews(row, groupName),
+    readyToApprove: approvalBlock(checks).length === 0,
   }
 }
 const text = (max) => ({ type: 'string', minLength: 1, maxLength: max })
@@ -78,7 +114,7 @@ export async function doctorApplicationRoutes(app) {
   app.get('/api/admin/doctor-applications', async (request, reply) => {
     if (!(await requireRole(request, reply, ['admin']))) return
     const status = APPLICATION_STATUSES.includes(request.query.status) ? request.query.status : undefined
-    const applications = await prisma.doctorApplication.findMany({ where: { status }, orderBy: { createdAt: 'desc' }, take: 200 })
+    const applications = await prisma.doctorApplication.findMany({ where: { status }, orderBy: { createdAt: 'desc' }, take: 200, include: { checks: true } })
     const names = await groupNames(applications)
     return { applications: applications.map((row) => toApplication(row, names.get(row.groupSlug) || '')) }
   })
@@ -89,10 +125,41 @@ export async function doctorApplicationRoutes(app) {
     },
   }, async (request, reply) => {
     if (!(await requireRole(request, reply, ['admin']))) return
-    const found = await prisma.doctorApplication.findUnique({ where: { id: request.params.id } })
+    const found = await prisma.doctorApplication.findUnique({ where: { id: request.params.id }, include: { checks: true } })
     if (!found) return sendError(reply, 404, 'NOT_FOUND', 'Application not found.')
     const names = await groupNames([found])
     return { application: toApplication(found, names.get(found.groupSlug) || '') }
+  })
+
+  app.put('/api/admin/doctor-applications/:id/checks/:key', {
+    schema: {
+      params: {
+        type: 'object',
+        required: ['id', 'key'],
+        properties: {
+          id: { type: 'string', minLength: 1, maxLength: 64 },
+          key: { type: 'string', enum: CHECK_KEYS },
+        },
+      },
+      body: { type: 'object', additionalProperties: false, required: ['checked'], properties: { checked: { type: 'boolean' } } },
+    },
+  }, async (request, reply) => {
+    const admin = await requireRole(request, reply, ['admin'])
+    if (!admin) return
+    const found = await prisma.doctorApplication.findUnique({ where: { id: request.params.id } })
+    if (!found) return sendError(reply, 404, 'NOT_FOUND', 'Application not found.')
+    const where = { applicationId_key: { applicationId: found.id, key: request.params.key } }
+    if (request.body.checked) {
+      const checkedByName = `${admin.firstName} ${admin.lastName}`.trim()
+      await prisma.applicationCheck.upsert({
+        where,
+        update: { checkedByUserId: admin.id, checkedByName, checkedAt: new Date() },
+        create: { applicationId: found.id, key: request.params.key, checkedByUserId: admin.id, checkedByName },
+      })
+    } else {
+      await prisma.applicationCheck.deleteMany({ where: { applicationId: found.id, key: request.params.key } })
+    }
+    return reply.send(await applicationView(found.id))
   })
 
   app.patch('/api/admin/doctor-applications/:id', {
@@ -102,12 +169,20 @@ export async function doctorApplicationRoutes(app) {
     },
   }, async (request, reply) => {
     if (!(await requireRole(request, reply, ['admin']))) return
-    const found = await prisma.doctorApplication.findUnique({ where: { id: request.params.id } })
+    const found = await prisma.doctorApplication.findUnique({ where: { id: request.params.id }, include: { checks: true } })
     if (!found) return sendError(reply, 404, 'NOT_FOUND', 'Application not found.')
-    const application = await prisma.doctorApplication.update({ where: { id: found.id }, data: { status: request.body.status } })
-    const names = await groupNames([application])
-    return { application: toApplication(application, names.get(application.groupSlug) || '') }
+    if (request.body.status === 'approved' && approvalBlock(found.checks).length) {
+      return sendError(reply, 409, 'CHECKS_INCOMPLETE', 'Tick every required check before approving. Approving records the decision and creates no login.')
+    }
+    await prisma.doctorApplication.update({ where: { id: found.id }, data: { status: request.body.status } })
+    return reply.send(await applicationView(found.id))
   })
+}
+
+async function applicationView(id) {
+  const row = await prisma.doctorApplication.findUnique({ where: { id }, include: { checks: true } })
+  const names = await groupNames([row])
+  return { application: toApplication(row, names.get(row.groupSlug) || '') }
 }
 
 async function groupNames(rows) {

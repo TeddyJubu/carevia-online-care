@@ -369,6 +369,21 @@ model DoctorApplication {
   // Public reference CV-APP-0001. Sequential, so an applicant can quote it. Not a login.
   ref             Int      @unique @default(autoincrement())
   createdAt       DateTime @default(now())
+  checks          ApplicationCheck[]
 
   @@index([status, createdAt])
+}
+
+// One row per ticked launch gate. The tick is the record: who checked it, and when.
+// Insurance is "confirmed" plus this date. Policy files are never stored.
+model ApplicationCheck {
+  id              String            @id @default(cuid())
+  applicationId   String
+  application     DoctorApplication @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  key             String
+  checkedByUserId String
+  checkedByName   String
+  checkedAt       DateTime          @default(now())
+
+  @@unique([applicationId, key])
 }

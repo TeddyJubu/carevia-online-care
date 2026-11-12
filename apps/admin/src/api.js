@@ -254,3 +254,7 @@ export function getDoctorApplication(id) {
 export function setDoctorApplicationStatus(id, status) {
   return request(`/api/admin/doctor-applications/${encodeURIComponent(id)}`, { method: 'PATCH', body: { status } })
 }
+
+export function setApplicationCheck(id, key, checked) {
+  return request(`/api/admin/doctor-applications/${encodeURIComponent(id)}/checks/${encodeURIComponent(key)}`, { method: 'PUT', body: { checked } })
+}

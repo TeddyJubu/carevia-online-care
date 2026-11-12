@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react'
-import { getDoctorApplication, listDoctorApplications, sessionFailure, setDoctorApplicationStatus } from './api.js'
+import { getDoctorApplication, listDoctorApplications, sessionFailure, setApplicationCheck, setDoctorApplicationStatus } from './api.js'
 
 const STATUSES = ['new', 'contacted', 'approved', 'declined']
 const day = (iso) => new Intl.DateTimeFormat('en-GB', { timeZone: 'Europe/Lisbon', day: 'numeric', month: 'short', year: 'numeric' }).format(new Date(iso))
+const when = (iso) => new Intl.DateTimeFormat('en-GB', { timeZone: 'Europe/Lisbon', day: 'numeric', month: 'short' }).format(new Date(iso))
 
 // Applications from the public "Join Carevia" form (/app/join). Opening a row shows the whole application.
 // Approving does not create a login: that waits for the verification checklist.
@@ -113,6 +114,25 @@ function ApplicationDetail({ id, onSignOut, onDenied }) {
       })
   }
 
+  const tick = (key, checked) => {
+    setState((current) => ({
+      ...current,
+      error: '',
+      application: current.application && {
+        ...current.application,
+        readyToApprove: false,
+        checks: current.application.checks.map((item) => (item.key === key ? { ...item, checked } : item)),
+      },
+    }))
+    setApplicationCheck(id, key, checked)
+      .then(({ application }) => setState({ phase: 'ready', application, error: '' }))
+      .catch((error) => {
+        if (sessionFailure(error, onSignOut, onDenied)) return
+        setState((current) => ({ ...current, error: error.message }))
+        getDoctorApplication(id).then((data) => setState({ phase: 'ready', application: data.application, error: error.message })).catch(() => {})
+      })
+  }
+
   const row = state.application
   return (
     <main className="page" id="main">
@@ -142,14 +162,29 @@ function ApplicationDetail({ id, onSignOut, onDenied }) {
             </div>
           </div>
           <div>
-            <h2>Status</h2>
-            <p className="help">Approve stays off until every required check is ticked. Decline stores no reason.</p>
+            <h2>Verification</h2>
+            <p className="help">Tick each item as you check it. Each tick records who checked it, and when. These are launch gates: a cédula checked with the Ordem, identity, specialty, insurance, and the introductory call. Approve records the decision and creates no login.</p>
+            <ul className="check-list">
+              {(row.checks || []).map((item) => (
+                <li key={item.key}>
+                  <label className="check-row">
+                    <input type="checkbox" checked={item.checked} onChange={(event) => tick(item.key, event.target.checked)} />
+                    <span>
+                      <strong>{item.label}</strong>
+                      <span className="help">{item.hint}</span>
+                      {item.checked ? <span className="help">{item.checkedByName} · {when(item.checkedAt)}</span> : null}
+                    </span>
+                  </label>
+                </li>
+              ))}
+            </ul>
+            <p className="help">Decline stores no reason. The applicant gets a plain email once email sending is on.</p>
             <div className="actions">
               <button type="button" className="button button-quiet" disabled={row.status === 'contacted'} onClick={() => change('contacted')}>Contacted</button>
-              <button type="button" className="button" disabled title="The verification checklist is the next step. Approve stays off until every required check is ticked.">Approve</button>
+              <button type="button" className="button" disabled={!row.readyToApprove || row.status === 'approved'} onClick={() => change('approved')}>Approve</button>
               <button type="button" className="button button-quiet" disabled={row.status === 'declined'} onClick={() => change('declined')}>Decline</button>
             </div>
-            <p className="help" role="status">Current status: {row.status}</p>
+            <p className="help" role="status">Current status: {row.status}{row.readyToApprove ? '' : '. Approve stays off until every required check is ticked.'}</p>
           </div>
         </section>
       ) : null}

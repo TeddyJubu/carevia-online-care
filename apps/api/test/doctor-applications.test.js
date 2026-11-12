@@ -1,6 +1,12 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
-import { formatApplicationReference, makeLimiter } from '../src/routes/doctor-applications.js'
+import { approvalBlock, CHECK_KEYS, formatApplicationReference, makeLimiter } from '../src/routes/doctor-applications.js'
+
+test('approve stays blocked until every launch-gate check is ticked', () => {
+  assert.deepEqual(approvalBlock([]), CHECK_KEYS)
+  assert.deepEqual(approvalBlock([{ key: 'cedula' }, { key: 'identity' }]).includes('insurance'), true)
+  assert.deepEqual(approvalBlock(CHECK_KEYS.map((key) => ({ key }))), [])
+})
 
 test('application references are CV-APP- and at least four digits', () => {
   assert.equal(formatApplicationReference(1), 'CV-APP-0001')
