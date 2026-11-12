@@ -68,6 +68,16 @@ test('An empty weekly template opens no slots', () => {
   assert.deepEqual(scheduleFor({ 1: [], 2: ['25:00', '9:00', ''] }, '2026-11-05'), [])
 })
 
+test('A weekly template skips the hour Lisbon springs past and keeps the repeated October hour', () => {
+  // 29 March 2026, 01:00–01:59 does not exist. 01:45 must not be moved forward onto 02:30.
+  const spring = scheduleFor({ 0: ['01:45', '02:30'] }, '2026-03-29')
+    .filter((slot) => slot.startsAt.toISOString().startsWith('2026-03-29'))
+  assert.deepEqual(spring.map((slot) => iso(slot.startsAt)), ['2026-03-29T01:30:00.000Z'])
+  // 25 October 2026, 01:30 happens twice. The winter occurrence is a real Lisbon time.
+  const autumn = scheduleFor({ 0: ['01:30'] }, '2026-10-25')
+  assert.equal(iso(autumn[0].startsAt), '2026-10-25T01:30:00.000Z')
+})
+
 test('A weekly template opens only the weekdays and times it lists', () => {
   // 7 November 2026 is a Saturday. Duplicates are dropped. Days with no entry are skipped.
   const slots = scheduleFor({ 6: ['11:00', '11:00'], 2: ['18:15'] }, '2026-11-07')

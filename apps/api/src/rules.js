@@ -90,7 +90,7 @@ function lisbonOffset(ms) {
 /**
  * The UTC instant of a Lisbon wall-clock time. `date` is "YYYY-MM-DD", `time` is "HH:MM".
  * A time skipped by the spring change (01:00–01:59 on the last Sunday of March) moves forward an hour;
- * a time that happens twice in October resolves to the second (winter) occurrence. Slot times never fall there.
+ * a time that happens twice in October resolves to the second (winter) occurrence.
  */
 export function lisbonTimeToUtc(date, time) {
   const d = parseDate(date)
@@ -118,6 +118,13 @@ function weekday(date) {
 /** Start (inclusive) and end (exclusive) instants of a Lisbon calendar day. */
 export function lisbonDayRange(date) {
   return { from: lisbonTimeToUtc(date, '00:00'), to: lisbonTimeToUtc(addDays(date, 1), '00:00') }
+}
+
+/** True when `instant` is exactly that Lisbon date and "HH:MM". A skipped spring-forward time is not. */
+function isLisbonTime(instant, date, time) {
+  const p = Object.fromEntries(offsetFormatter.formatToParts(instant).map((part) => [part.type, part.value]))
+  const hour = p.hour === '24' ? '00' : p.hour
+  return `${p.year}-${p.month}-${p.day}T${hour}:${p.minute}` === `${date}T${time}`
 }
 
 // ---- Rolling schedule ----
@@ -164,6 +171,8 @@ export function scheduleFor(weeklyHours, today, availabilityIndex = 0) {
     if (listedDay <= availabilityIndex) continue
     for (const time of times) {
       const startsAt = lisbonTimeToUtc(date, time)
+      // 01:00–01:59 does not exist on the spring-forward Sunday. The conversion moves it forward, onto a later time.
+      if (!startsAt || !isLisbonTime(startsAt, date, time)) continue
       slots.push({ startsAt, endsAt: new Date(startsAt.getTime() + SLOT_MINUTES * 60_000) })
     }
   }
