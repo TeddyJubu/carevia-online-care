@@ -3,7 +3,8 @@ import { DEMO_MODE } from '../config.js'
 import { createMeetingToken, createPrivateRoom } from '../daily.js'
 import { prisma } from '../prisma.js'
 import { receiptPdf, receiptNumber } from '../receipt.js'
-import { JOIN_CLOSES_MINUTES_AFTER, canReschedule, effectiveStatus, joinState, joinWindow } from '../rules.js'
+import { sendMail } from '../mail.js'
+import { JOIN_CLOSES_MINUTES_AFTER, canCancel, canReschedule, effectiveStatus, joinState, joinWindow, lisbonDateTime } from '../rules.js'
 import { clashFor, sendBookingConfirmation } from './bookings.js'
 import { APPOINTMENT_INCLUDE, sendError, toAppointment } from '../views.js'
 
@@ -36,6 +37,75 @@ async function accessible(request, reply, roles) {
     return {}
   }
   return { user, appointment }
+}
+
+const rescheduleBody = { type: 'object', additionalProperties: false, required: ['slotId'], properties: { slotId: { type: 'integer' } } }
+
+/** Cancels a confirmed visit; `by` is "patient" or "admin". Cancelling frees the slot: the unique index only covers held and confirmed. */
+async function cancelVisit(appointment, by) {
+  try {
+    await prisma.appointment.update({
+      where: { id: appointment.id, status: 'confirmed' },
+      data: { status: 'cancelled', cancelledAt: new Date(), cancelledBy: by },
+    })
+  } catch (error) {
+    if (error?.code === 'P2025') return [409, 'NOT_CONFIRMED', 'Only a confirmed visit can be cancelled.']
+    throw error
+  }
+  return null
+}
+
+/**
+ * Moves the same appointment to another slot: same id, consent and payment; never a second appointment.
+ * The partial unique index "Appointment_active_slot_key" refuses a slot that is already held or confirmed.
+ * Returns [status, code, message] on refusal, else null. Callers check who may move it, and when.
+ */
+async function moveVisit(appointment, slotId, now = new Date()) {
+  const slot = await prisma.slot.findUnique({ where: { id: slotId }, include: { doctor: { include: { group: true } } } })
+  if (!slot || slot.closedAt || !slot.doctor.active || !slot.doctor.group.active) return [404, 'SLOT_NOT_FOUND', 'That time no longer exists. Choose another time.']
+  if (slot.startsAt <= now) return [400, 'VALIDATION', 'Choose a time that hasn’t passed.']
+  if (slot.id === appointment.slotId) return [400, 'VALIDATION', 'Your visit is already at that time.']
+  if (slot.doctorId !== appointment.doctorId && slot.doctor.groupId !== appointment.service.groupId) {
+    return [400, 'SERVICE_MISMATCH', 'Choose the same doctor, or another doctor in the same area of care.']
+  }
+  if (await clashFor(appointment, slot.startsAt, slot.endsAt)) {
+    return [409, 'TIME_CLASH', 'There’s already a visit for this person at that time. Choose another time.']
+  }
+  try {
+    // The fee already paid stands: moving a visit never costs extra in this build.
+    // The Daily room expires with the old time, so a new one is made for the new time; pre-join is asked again.
+    // Old call events stay as history, so a move after a doctor no-show keeps them; doctorNoShow needs the new start + 15 min anyway.
+    await prisma.appointment.update({
+      where: { id: appointment.id, status: 'confirmed' },
+      data: {
+        slotId: slot.id, doctorId: slot.doctorId, startsAt: slot.startsAt, endsAt: slot.endsAt,
+        outcome: null, callState: 'not_started', reconnects: 0, preJoinConfirmedAt: null, companion: false,
+        dailyRoomName: null, dailyRoomUrl: null, reminderSentAt: null,
+      },
+    })
+  } catch (error) {
+    if (error?.code === 'P2002') return [409, 'SLOT_TAKEN', 'That time was just booked. Choose another time.']
+    // P2025: it stopped being confirmed (cancelled, or an outcome recorded) between the check and the update.
+    if (error?.code === 'P2025') return [409, 'CANNOT_RESCHEDULE', 'This visit can no longer be moved.']
+    throw error
+  }
+  return null
+}
+
+/** Tells the patient Carevia cancelled their visit, and what they can do (content/patient-journey/cancellation.md, "If we cancel"). */
+async function sendCancelledByUs(patient, appointment) {
+  try {
+    await sendMail({
+      template: 'booking-cancelled-by-us',
+      to: patient.email,
+      subject: 'Your Carevia visit was cancelled',
+      text: `We're sorry: your video consultation with ${appointment.doctor.name} on ${lisbonDateTime(appointment.startsAt)} (Lisbon time) was cancelled by Carevia. `
+        + 'You get a full refund to the payment method you used. To see a doctor, book another time from your account. Not an emergency service: in an emergency, call 112.',
+      links: [`${PUBLIC_APP_URL}/app/visits/${appointment.id}`],
+    })
+  } catch (error) {
+    console.warn(`[mail] booking-cancelled-by-us failed: ${error?.message}`)
+  }
 }
 
 function icsText(value) {
@@ -78,60 +148,52 @@ export async function appointmentRoutes(app) {
     const { appointment } = await accessible(request, reply, ['patient'])
     if (!appointment) return
     if (appointment.status !== 'confirmed') return sendError(reply, 409, 'NOT_CONFIRMED', 'Only a confirmed visit can be cancelled.')
-    if (new Date() >= appointment.startsAt) {
+    if (!canCancel(appointment)) {
       return sendError(reply, 409, 'TOO_LATE_TO_CANCEL', 'This visit has already started, so it can no longer be cancelled.')
     }
-    // Cancelling frees the slot: the unique index only covers held and confirmed appointments.
-    await prisma.appointment.update({ where: { id: appointment.id }, data: { status: 'cancelled', cancelledAt: new Date() } })
+    const error = await cancelVisit(appointment, 'patient')
+    if (error) return sendError(reply, ...error)
     return { appointment: toAppointment(await load(appointment.id), 'patient') }
   })
 
-  // Moves the same appointment to another slot: same id, consent and payment; never a second appointment.
-  // The partial unique index "Appointment_active_slot_key" refuses a slot that is already held or confirmed.
-  app.post('/api/appointments/:id/reschedule', {
-    schema: {
-      params: idParams,
-      body: { type: 'object', additionalProperties: false, required: ['slotId'], properties: { slotId: { type: 'integer' } } },
-    },
-  }, async (request, reply) => {
+  app.post('/api/appointments/:id/reschedule', { schema: { params: idParams, body: rescheduleBody } }, async (request, reply) => {
     const { user, appointment } = await accessible(request, reply, ['patient'])
     if (!appointment) return
-    const now = new Date()
-    if (!canReschedule(appointment, now)) {
+    if (!canReschedule(appointment)) {
       return sendError(reply, 409, 'CANNOT_RESCHEDULE', appointment.status === 'confirmed'
         ? 'This visit has started, so it can no longer be moved.'
         : 'Only a confirmed visit can be moved.')
     }
-    const slot = await prisma.slot.findUnique({ where: { id: request.body.slotId }, include: { doctor: { include: { group: true } } } })
-    if (!slot || slot.closedAt || !slot.doctor.active || !slot.doctor.group.active) return sendError(reply, 404, 'SLOT_NOT_FOUND', 'That time no longer exists. Choose another time.')
-    if (slot.startsAt <= now) return sendError(reply, 400, 'VALIDATION', 'Choose a time that hasn’t passed.')
-    if (slot.id === appointment.slotId) return sendError(reply, 400, 'VALIDATION', 'Your visit is already at that time.')
-    if (slot.doctorId !== appointment.doctorId && slot.doctor.groupId !== appointment.service.groupId) {
-      return sendError(reply, 400, 'SERVICE_MISMATCH', 'Choose the same doctor, or another doctor in the same area of care.')
-    }
-    if (await clashFor(appointment, slot.startsAt, slot.endsAt)) {
-      return sendError(reply, 409, 'TIME_CLASH', 'There’s already a visit for this person at that time. Choose another time.')
-    }
-    try {
-      // The fee already paid stands: moving a visit never costs extra in this build.
-      // The Daily room expires with the old time, so a new one is made for the new time; pre-join is asked again.
-      await prisma.appointment.update({
-        where: { id: appointment.id, status: 'confirmed' },
-        data: {
-          slotId: slot.id, doctorId: slot.doctorId, startsAt: slot.startsAt, endsAt: slot.endsAt,
-          outcome: null, callState: 'not_started', reconnects: 0, preJoinConfirmedAt: null, companion: false,
-          dailyRoomName: null, dailyRoomUrl: null, reminderSentAt: null,
-        },
-      })
-    } catch (error) {
-      if (error?.code === 'P2002') return sendError(reply, 409, 'SLOT_TAKEN', 'That time was just booked. Choose another time.')
-      // P2025: it stopped being confirmed (cancelled, or an outcome recorded) between the check and the update.
-      if (error?.code === 'P2025') return sendError(reply, 409, 'CANNOT_RESCHEDULE', 'This visit can no longer be moved.')
-      throw error
-    }
+    const error = await moveVisit(appointment, request.body.slotId)
+    if (error) return sendError(reply, ...error)
     const moved = await load(appointment.id)
     await sendBookingConfirmation(user, moved, { moved: true })
     return { appointment: toAppointment(moved, 'patient') }
+  })
+
+  // Admin override for a visit the patient can't fix alone (say the doctor didn't show): the patient's own
+  // cancel and move, minus the time limits. Still confirmed visits only, and a move still needs a free future slot.
+  app.post('/api/admin/appointments/:id/cancel', { schema: { params: idParams } }, async (request, reply) => {
+    const { appointment } = await accessible(request, reply, ['admin'])
+    if (!appointment) return
+    if (appointment.status !== 'confirmed') return sendError(reply, 409, 'NOT_CONFIRMED', 'Only a confirmed visit can be cancelled.')
+    const error = await cancelVisit(appointment, 'admin')
+    if (error) return sendError(reply, ...error)
+    const patient = await prisma.user.findUnique({ where: { id: appointment.patientId }, select: { email: true } })
+    if (patient) await sendCancelledByUs(patient, appointment)
+    return { appointment: toAppointment(await load(appointment.id), 'admin') }
+  })
+
+  app.post('/api/admin/appointments/:id/reschedule', { schema: { params: idParams, body: rescheduleBody } }, async (request, reply) => {
+    const { appointment } = await accessible(request, reply, ['admin'])
+    if (!appointment) return
+    if (appointment.status !== 'confirmed') return sendError(reply, 409, 'CANNOT_RESCHEDULE', 'Only a confirmed visit can be moved.')
+    const error = await moveVisit(appointment, request.body.slotId)
+    if (error) return sendError(reply, ...error)
+    const moved = await load(appointment.id)
+    const patient = await prisma.user.findUnique({ where: { id: appointment.patientId }, select: { email: true } })
+    if (patient) await sendBookingConfirmation(patient, moved, { moved: true })
+    return { appointment: toAppointment(moved, 'admin') }
   })
 
   // Reminder choices for this visit. The reminder itself goes out about 24 hours before (src/reminders.js).

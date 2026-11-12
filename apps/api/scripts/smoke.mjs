@@ -341,6 +341,62 @@ async function bookingChecks(patient) {
 }
 
 // Reschedule moves the same appointment; it never creates a second one.
+// Doctor no-show (15 min past the start, no clinician "joined"): the patient may cancel or move; admin can override any time.
+async function noShowChecks(admin) {
+  const patient = new Browser()
+  await patient.signUp({ email: `noshow-${stamp}@example.com`, firstName: 'Noshow', lastName: 'Smoke' })
+  const version = (await patient.get('/api/consent/current')).json.version
+  const book = async (skip) => {
+    const slot = await freeSlot(patient, { doctorId: 3, skip })
+    const id = (await patient.post('/api/bookings', { slotId: slot.id, serviceId: 1, channel: 'video', for: 'self', inMainlandPortugal: true })).json?.appointment?.id
+    await patient.post(`/api/bookings/${id}/consent`, { version })
+    await patient.post(`/api/bookings/${id}/pay`, { method: 'demo' })
+    return id
+  }
+  // Moves a visit's own times (not its slot's) so it "started" `minutesAgo` minutes ago and lasts 30.
+  const startedAgo = (id, minutesAgo) => prisma.appointment.update({
+    where: { id }, data: { startsAt: new Date(Date.now() - minutesAgo * 60_000), endsAt: new Date(Date.now() - (minutesAgo - 30) * 60_000) },
+  })
+  const doctorJoins = (id) => prisma.callEvent.create({ data: { appointmentId: id, actorRole: 'clinician', type: 'joined' } })
+
+  const a = await book(12)
+  await startedAgo(a, 10)
+  expectError('5 minutes late with no doctor: cancel is still 409 TOO_LATE_TO_CANCEL', await patient.post(`/api/appointments/${a}/cancel`), 409, 'TOO_LATE_TO_CANCEL')
+  await startedAgo(a, 20)
+  const view = await patient.get(`/api/appointments/${a}`)
+  record('the visit shows call.doctorJoined false', view.json?.appointment?.call?.doctorJoined === false, show(view))
+  const target = await freeSlot(patient, { doctorId: 3, skip: 14 })
+  const moved = await patient.post(`/api/appointments/${a}/reschedule`, { slotId: target.id })
+  record('doctor no-show: the patient moves the same visit to a new time', moved.status === 200 && moved.json.appointment.startsAt === target.startsAt, show(moved))
+  await startedAgo(a, 20)
+  await doctorJoins(a)
+  expectError('the doctor joined: cancel stays 409', await patient.post(`/api/appointments/${a}/cancel`), 409, 'TOO_LATE_TO_CANCEL')
+  expectError('the doctor joined: move stays 409 CANNOT_RESCHEDULE', await patient.post(`/api/appointments/${a}/reschedule`, { slotId: target.id }), 409, 'CANNOT_RESCHEDULE')
+  await prisma.callEvent.deleteMany({ where: { appointmentId: a } })
+  const cancelled = await patient.post(`/api/appointments/${a}/cancel`)
+  record('doctor no-show: the patient cancels, cancelledBy patient', cancelled.status === 200 && cancelled.json.appointment.status === 'cancelled' && cancelled.json.appointment.cancelledBy === 'patient', show(cancelled))
+
+  // Unresolved: join window closed, no outcome, doctor joined (so the patient can't act). Admin sees and fixes it.
+  const b = await book(12)
+  await startedAgo(b, 120)
+  await doctorJoins(b)
+  const attention = await admin.get('/api/admin/appointments?needsAttention=true')
+  record('admin needsAttention lists a confirmed visit past its join window with no outcome',
+    attention.status === 200 && attention.json.appointments.some((x) => x.id === b) && attention.json.appointments.every((x) => x.status === 'confirmed' && !x.outcome), show(attention))
+  expectError('a patient cannot use the admin cancel (403)', await patient.post(`/api/admin/appointments/${b}/cancel`), 403, 'FORBIDDEN')
+  const spot = await freeSlot(patient, { doctorId: 3, skip: 16 })
+  const adminMoved = await admin.post(`/api/admin/appointments/${b}/reschedule`, { slotId: spot.id })
+  record('admin moves a visit past its time (no time limit)', adminMoved.status === 200 && adminMoved.json.appointment.startsAt === spot.startsAt && !('patient' in adminMoved.json.appointment), show(adminMoved))
+  const after = await admin.get('/api/admin/appointments?needsAttention=true')
+  record('a moved visit leaves needsAttention', !after.json?.appointments?.some((x) => x.id === b))
+  await startedAgo(b, 120)
+  const adminCancelled = await admin.post(`/api/admin/appointments/${b}/cancel`)
+  record('admin cancels a visit past its time, cancelledBy admin', adminCancelled.status === 200 && adminCancelled.json.appointment.cancelledBy === 'admin', show(adminCancelled))
+  const note = (await patient.get('/api/dev/outbox')).json?.messages?.find((m) => /was cancelled/.test(m.subject) && m.links.some((link) => link.endsWith(`/app/visits/${b}`)))
+  record('admin cancel emails the patient', !!note, note?.text ?? 'no message')
+  expectError('admin cancelling twice is 409 NOT_CONFIRMED', await admin.post(`/api/admin/appointments/${b}/cancel`), 409, 'NOT_CONFIRMED')
+}
+
 async function rescheduleChecks(demoPatient) {
   // A new patient with a confirmed visit with doctor 3 (General & urgent care), so the demo patient's lists stay as seeded.
   const patient = new Browser()
@@ -723,6 +779,7 @@ try {
     const extra = await bookingChecks(patient)
     await familyAndProfileChecks(patient, extra)
     await rescheduleChecks(patient)
+    await noShowChecks(admin)
     await reminderChecks(patient)
     await clashChecks()
     const visits = await visitChecks(patient, doctor, admin)

@@ -19,11 +19,19 @@ export function useAppointment() {
 
 export type Phase = 'before' | 'open' | 'closed'
 
-/** Mirrors the API's canReschedule: confirmed, and not started, or the call dropped and rejoining is over. */
+/** Mirrors the API's doctorNoShow: confirmed, no outcome, 15 minutes past the start and the doctor never joined. */
+export function doctorNoShow(a: Appointment, now = Date.now()): boolean {
+  return a.status === 'confirmed' && !a.outcome && !a.call.doctorJoined && now >= Date.parse(a.startsAt) + 15 * 60_000
+}
+/** Mirrors the API's canReschedule: confirmed, and not started, the doctor didn't show, or the call dropped and rejoining is over. */
 export function canReschedule(a: Appointment, now = Date.now()): boolean {
   if (a.status !== 'confirmed') return false
-  if (now < Date.parse(a.startsAt)) return true
+  if (now < Date.parse(a.startsAt) || doctorNoShow(a, now)) return true
   return a.outcome === 'ended_poor_quality' && now >= Date.parse(a.call.joinClosesAt)
+}
+/** Mirrors the API's canCancel: confirmed, and not started or the doctor didn't show. */
+export function canCancel(a: Appointment, now = Date.now()): boolean {
+  return a.status === 'confirmed' && (now < Date.parse(a.startsAt) || doctorNoShow(a, now))
 }
 export function phaseOf(a: Appointment, now = Date.now()): Phase {
   if (now < Date.parse(a.call.joinOpensAt)) return 'before'
@@ -85,8 +93,6 @@ export function Prepare() {
   const demo = useDemo()
   const now = useNow(15000)
   const [cancelling, setCancelling] = useState(false)
-  const [cancelError, setCancelError] = useState<string | null>(null)
-  const [pending, setPending] = useState(false)
 
   return (
     <VisitGate load={load}>{(a) => {
@@ -115,6 +121,7 @@ export function Prepare() {
               <div className="mt-8"><VisitCard a={a} /></div>
               {a.status === 'confirmed' && (
                 <>
+                  {doctorNoShow(a, now) && <NoShowNotice />}
                   <div className="mt-6 flex flex-wrap items-center gap-3">
                     {phase === 'open'
                       ? <Link to={joinTo} className="btn btn-primary">Open waiting room</Link>
@@ -129,12 +136,8 @@ export function Prepare() {
                     </p>
                   )}
                   <div className="mt-6 flex flex-wrap gap-x-6">
-                    {canReschedule(a, now) && (
-                      <>
-                        <Link to={`/visits/${a.id}/reschedule`} className="link inline-flex min-h-11 items-center text-sm">Change the time</Link>
-                        <button type="button" className="link inline-flex min-h-11 items-center text-sm" onClick={() => setCancelling(true)}>Cancel this visit</button>
-                      </>
-                    )}
+                    {canReschedule(a, now) && <Link to={`/visits/${a.id}/reschedule`} className="link inline-flex min-h-11 items-center text-sm">Change the time</Link>}
+                    {canCancel(a, now) && <button type="button" className="link inline-flex min-h-11 items-center text-sm" onClick={() => setCancelling(true)}>{doctorNoShow(a, now) ? 'Cancel for a full refund' : 'Cancel this visit'}</button>}
                     {allLink}
                   </div>
                   <div className="mt-10"><Preparation a={a} /></div>
@@ -153,22 +156,40 @@ export function Prepare() {
               <Documents a={a} />
             </aside>
           </div>
-          <Dialog open={cancelling} onClose={() => setCancelling(false)} title="Cancel this visit?">
-            <p>{when(a.startsAt)} with {a.doctor.name}.</p>
-            <div className="card card-mist mt-4 max-h-[40svh] overflow-auto" tabIndex={0} role="region" aria-label="Cancellation terms"><Markdown source={content("cancellation").body} /></div>
-            <FormError error={cancelError} />
-            <div className="mt-6 flex flex-wrap gap-3">
-              <button type="button" className="btn btn-danger" disabled={pending} onClick={async () => {
-                setPending(true)
-                setCancelError(null)
-                try { load.set((await api.cancel(a.id)).appointment); setCancelling(false); navigate(`/visits/${a.id}`, { replace: true }) } catch (e) { setCancelError((e as ApiError).message) } finally { setPending(false) }
-              }}>{pending ? 'Cancelling…' : 'Cancel visit'}</button>
-              <button type="button" className="btn btn-secondary" onClick={() => setCancelling(false)}>Keep my visit</button>
-            </div>
-          </Dialog>
+          <CancelDialog a={a} open={cancelling} onClose={() => setCancelling(false)} onCancelled={(c) => { load.set(c); navigate(`/visits/${a.id}`, { replace: true }) }} />
         </div>
       )
     }}</VisitGate>
+  )
+}
+
+/** Confirms a cancel with the cancellation terms. */
+function CancelDialog({ a, open, onClose, onCancelled }: { a: Appointment; open: boolean; onClose: () => void; onCancelled: (a: Appointment) => void }) {
+  const [error, setError] = useState<string | null>(null)
+  const [pending, setPending] = useState(false)
+  return (
+    <Dialog open={open} onClose={onClose} title="Cancel this visit?">
+      <p>{when(a.startsAt)} with {a.doctor.name}.</p>
+      <div className="card card-mist mt-4 max-h-[40svh] overflow-auto" tabIndex={0} role="region" aria-label="Cancellation terms"><Markdown source={content("cancellation").body} /></div>
+      <FormError error={error} />
+      <div className="mt-6 flex flex-wrap gap-3">
+        <button type="button" className="btn btn-danger" disabled={pending} onClick={async () => {
+          setPending(true)
+          setError(null)
+          try { onCancelled((await api.cancel(a.id)).appointment); onClose() } catch (e) { setError((e as ApiError).message) } finally { setPending(false) }
+        }}>{pending ? 'Cancelling…' : 'Cancel visit'}</button>
+        <button type="button" className="btn btn-secondary" onClick={onClose}>Keep my visit</button>
+      </div>
+    </Dialog>
+  )
+}
+
+/** Shown once the doctor is 15 minutes late and never joined. */
+export function NoShowNotice({ a }: { a?: Appointment }) {
+  return (
+    <Notice tone="warn" className="mt-6">
+      <span role="status">Your doctor hasn’t joined yet. You can keep waiting, or choose a new time or a full refund{a ? <> from <Link to={`/visits/${a.id}`} className="link">your visit</Link></> : ' below'}.</span>
+    </Notice>
   )
 }
 
@@ -406,10 +427,11 @@ export const IMED_TEXT = "Your doctor records this visit in iMED, Carevia's clin
 export function Done() {
   const load = useAppointment()
   const now = useNow(30000)
+  const [cancelling, setCancelling] = useState(false)
   return (
     <VisitGate load={load}>{(a) => {
       const phase = phaseOf(a, now)
-      const status = statusCopy(a, phase)
+      const status = statusCopy(a, phase, () => setCancelling(true))
       return (
         <div className="page">
           <div className="grid gap-10 min-[1025px]:grid-cols-[minmax(0,1fr)_340px]">
@@ -431,13 +453,14 @@ export function Done() {
               <Link to="/appointments" className="btn btn-secondary btn-block">All appointments</Link>
             </aside>
           </div>
+          <CancelDialog a={a} open={cancelling} onClose={() => setCancelling(false)} onCancelled={load.set} />
         </div>
       )
     }}</VisitGate>
   )
 }
 
-function statusCopy(a: Appointment, phase: Phase): { title: string; lede: string; action?: React.ReactNode } {
+function statusCopy(a: Appointment, phase: Phase, onCancel?: () => void): { title: string; lede: string; action?: React.ReactNode } {
   const rejoin = <Link to={`/visits/${a.id}/waiting`} className="btn btn-primary">Rejoin the call</Link>
   if (a.status === 'cancelled') return { title: 'This visit was cancelled', lede: 'Nothing else to do. You can book another time whenever you need.' }
   switch (a.outcome) {
@@ -452,6 +475,14 @@ function statusCopy(a: Appointment, phase: Phase): { title: string; lede: string
         ? { title: 'The call ended because of the connection', lede: 'Your appointment is still open. Move somewhere with a stronger signal, then rejoin.', action: rejoin }
         : { title: 'The call ended because of the connection', lede: 'Your appointment stays open: it isn’t lost, and you won’t pay again. Choose a new time for the same visit.', action: <Link to={`/visits/${a.id}/reschedule`} className="btn btn-primary">Choose a new time</Link> }
     default:
+      if (doctorNoShow(a)) return {
+        title: 'Your doctor didn’t join',
+        lede: 'We’re sorry. You choose: a new time for the same visit at no extra cost, or cancel for a full refund.',
+        action: <div className="flex flex-wrap items-center gap-3">
+          <Link to={`/visits/${a.id}/reschedule`} className="btn btn-primary">Choose a new time</Link>
+          {onCancel && <button type="button" className="btn btn-secondary" onClick={onCancel}>Cancel for a full refund</button>}
+        </div>,
+      }
       return phase === 'open'
         ? { title: 'Your doctor is finishing up', lede: 'If the call dropped, you can rejoin. Otherwise your doctor will record how the visit went in a few minutes.', action: rejoin }
         : { title: 'Your doctor is finishing up', lede: 'Your doctor will record how the visit went. Check back here soon.' }
@@ -468,17 +499,18 @@ export function Reschedule() {
       if (!canReschedule(a)) {
         return (
           <div className="page-narrow">
-            <PageTitle lede="Only a confirmed visit that hasn’t started can be moved, or one whose call dropped once the time to rejoin has passed.">This visit can’t be moved</PageTitle>
+            <PageTitle lede="Only a confirmed visit that hasn’t started can be moved, one whose doctor didn’t join, or one whose call dropped once the time to rejoin has passed.">This visit can’t be moved</PageTitle>
             <Link to={`/visits/${a.id}`} className="btn btn-primary mt-8">Back to your visit</Link>
           </div>
         )
       }
       const dropped = a.outcome === 'ended_poor_quality'
+      const noShow = doctorNoShow(a)
       return (
         <div className="page">
           <div className="max-w-[760px]">
             <PageTitle eyebrow={`${a.service.groupName} · ${a.service.name}`}
-              lede={<>{dropped ? 'Your call dropped and the time to rejoin has passed. ' : ''}Same visit, same payment: you won’t be charged again. Now: <strong className="font-medium text-ink">{when(a.startsAt)}</strong> with {a.doctor.name}.</>}>
+              lede={<>{dropped ? 'Your call dropped and the time to rejoin has passed. ' : noShow ? 'Your doctor didn’t join. ' : ''}Same visit, same payment: you won’t be charged again. Now: <strong className="font-medium text-ink">{when(a.startsAt)}</strong> with {a.doctor.name}.</>}>
               Choose a new time
             </PageTitle>
             <TimePicker groupSlug={a.service.groupSlug} service={{ id: a.service.id, name: a.service.name }} preferredDoctorId={a.doctor.id} preferredLabel="Your doctor" includePreferred visit={a.id}

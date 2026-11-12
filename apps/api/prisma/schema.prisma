@@ -260,6 +260,8 @@ model Appointment {
   dailyRoomName      String?
   dailyRoomUrl       String?
   cancelledAt        DateTime?
+  // Who cancelled: "patient", "admin" or "clinician" (doctors plan E03). Null on rows cancelled before this field.
+  cancelledBy        String?
   // Reminder choices (email on, SMS off by default) and when the one reminder went out.
   remindEmail        Boolean           @default(true)
   remindSms          Boolean           @default(false)

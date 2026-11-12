@@ -126,11 +126,16 @@ export async function getDemoAdmin() {
   }
 }
 
-export function getAppointments({ date, status }) {
+export function getAppointments({ date, status, needsAttention }) {
   const query = new URLSearchParams()
   if (date) query.set('date', date)
   if (status) query.set('status', status)
+  if (needsAttention) query.set('needsAttention', 'true')
   return request(`/api/admin/appointments?${query}`)
+}
+
+export function cancelAppointment(id) {
+  return request(`/api/admin/appointments/${encodeURIComponent(id)}/cancel`, { method: 'POST' })
 }
 
 export function login(email, password) {

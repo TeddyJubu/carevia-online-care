@@ -3,7 +3,7 @@ import { DEMO_MODE, IMED_URL } from '../config.js'
 import { dailyHint } from '../daily.js'
 import { DEMO_ACCOUNTS, seedDemo } from '../demo-seed.js'
 import { prisma } from '../prisma.js'
-import { SCHEDULE_DAYS, addDays, joinState, lisbonDayRange, lisbonTimeToUtc, lisbonToday, parseDate } from '../rules.js'
+import { SCHEDULE_DAYS, addDays, joinState, needsAttentionWhere, lisbonDayRange, lisbonTimeToUtc, lisbonToday, parseDate } from '../rules.js'
 import { LIVE, closeSlot, openSlot } from '../schedule.js'
 import { APPOINTMENT_INCLUDE, sendError, toAppointment } from '../views.js'
 import { logAccess } from './appointments.js'
@@ -140,7 +140,7 @@ export async function staffRoutes(app) {
   app.get('/api/admin/appointments', async (request, reply) => {
     const user = await requireRole(request, reply, ['admin'])
     if (!user) return
-    const { date, status } = request.query
+    const { date, status, needsAttention } = request.query
     const where = {}
     if (date) {
       if (!parseDate(date)) return sendError(reply, 400, 'VALIDATION', 'date must be YYYY-MM-DD.')
@@ -151,6 +151,8 @@ export async function staffRoutes(app) {
       if (!STATUSES.includes(status)) return sendError(reply, 400, 'VALIDATION', `status must be one of ${STATUSES.join(', ')}.`)
       where.status = status
     }
+    // needsAttention=true: confirmed visits whose join window has closed with no outcome (say, the doctor didn't show).
+    if (needsAttention === 'true') Object.assign(where, needsAttentionWhere())
     // ponytail: first 200 by start time, no paging; add a cursor when one day has more than 200 visits.
     const rows = await prisma.appointment.findMany({ where, include: APPOINTMENT_INCLUDE, orderBy: { startsAt: 'asc' }, take: 200 })
     await logAccess(user, rows.map((row) => row.id), 'GET /api/admin/appointments')

@@ -1,4 +1,4 @@
-import { effectiveStatus, joinWindow } from './rules.js'
+import { doctorJoined, effectiveStatus, joinWindow } from './rules.js'
 
 export const APPOINTMENT_INCLUDE = {
   service: { include: { group: true } },
@@ -7,6 +7,8 @@ export const APPOINTMENT_INCLUDE = {
   familyMember: { select: { firstName: true, lastName: true } },
   consents: { orderBy: { acceptedAt: 'desc' }, take: 1 },
   payment: true,
+  // Only the doctor's own joins, for doctorNoShow in rules.js.
+  callEvents: { where: { actorRole: 'clinician', type: 'joined' }, select: { actorRole: true, type: true }, take: 1 },
 }
 
 export function sendError(reply, status, error, message) {
@@ -41,7 +43,8 @@ export function toAppointment(a, role, now = new Date()) {
       languages: a.doctor.languages,
       cedula: a.doctor.cedula,
     },
-    call: { joinOpensAt, joinClosesAt, state: a.callState, reconnects: a.reconnects },
+    cancelledBy: a.cancelledBy ?? null,
+    call: { joinOpensAt, joinClosesAt, state: a.callState, reconnects: a.reconnects, doctorJoined: doctorJoined(a) },
     imed: { status: 'not_connected' },
   }
   if (role === 'admin') {

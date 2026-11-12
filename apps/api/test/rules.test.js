@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
-import { canReschedule, isAdult, isMinor, lisbonToday, normalizePhone, parseDate, reminderDue } from '../src/rules.js'
+import { canCancel, canReschedule, doctorNoShow, isAdult, isMinor, lisbonToday, normalizePhone, parseDate, reminderDue } from '../src/rules.js'
 
 test('isAdult: the 18th birthday counts', () => {
   assert.equal(isAdult('2008-11-05', '2026-11-05'), true)
@@ -81,6 +81,28 @@ test('canReschedule: before the start, or after a dropped call once the join win
   assert.equal(canReschedule(visit({ outcome: null }), at('2026-11-10T12:00:00.000Z')), false) // no dropped call recorded
   assert.equal(canReschedule(visit({ status: 'completed', outcome: 'completed' }), at('2026-11-09T10:00:00.000Z')), false)
   assert.equal(canReschedule(visit({ status: 'cancelled' }), at('2026-11-09T10:00:00.000Z')), false)
+})
+
+test('doctor no-show: 15 minutes past the start with no clinician join opens cancel and move', () => {
+  const startsAt = new Date('2026-11-10T10:00:00.000Z')
+  const endsAt = new Date('2026-11-10T10:30:00.000Z')
+  const joined = { actorRole: 'clinician', type: 'joined' }
+  const visit = (more = {}) => ({ status: 'confirmed', outcome: null, startsAt, endsAt, callEvents: [], ...more })
+  const at = (iso) => new Date(iso)
+  assert.equal(doctorNoShow(visit(), at('2026-11-10T10:14:59.000Z')), false, 'under 15 minutes')
+  assert.equal(doctorNoShow(visit(), at('2026-11-10T10:15:00.000Z')), true, 'at 15 minutes')
+  assert.equal(doctorNoShow(visit(), at('2026-11-12T10:00:00.000Z')), true, 'still true after the join window closes')
+  assert.equal(doctorNoShow(visit({ callEvents: [joined] }), at('2026-11-10T10:20:00.000Z')), false, 'doctor joined')
+  assert.equal(doctorNoShow(visit({ callEvents: [{ actorRole: 'patient', type: 'joined' }] }), at('2026-11-10T10:20:00.000Z')), true, 'only the patient joined')
+  assert.equal(doctorNoShow(visit({ outcome: 'ended_poor_quality' }), at('2026-11-10T10:20:00.000Z')), false, 'an outcome was recorded')
+  assert.equal(doctorNoShow(visit({ callEvents: undefined }), at('2026-11-10T10:20:00.000Z')), false, 'fails closed without call events')
+  assert.equal(doctorNoShow(visit({ status: 'cancelled' }), at('2026-11-10T10:20:00.000Z')), false)
+  assert.equal(canReschedule(visit(), at('2026-11-10T10:20:00.000Z')), true)
+  assert.equal(canReschedule(visit({ callEvents: [joined] }), at('2026-11-10T10:20:00.000Z')), false)
+  assert.equal(canCancel(visit(), at('2026-11-10T09:59:00.000Z')), true, 'before the start')
+  assert.equal(canCancel(visit(), at('2026-11-10T10:05:00.000Z')), false, 'started, doctor may still join')
+  assert.equal(canCancel(visit(), at('2026-11-10T10:20:00.000Z')), true, 'doctor no-show')
+  assert.equal(canCancel(visit({ callEvents: [joined] }), at('2026-11-10T10:20:00.000Z')), false)
 })
 
 test('reminderDue: once, inside the last 24 hours, only for visits paid for earlier than that', () => {

@@ -154,7 +154,8 @@ function view(a: Rec): Appointment {
     patient: !a.patientSet ? null : fam ? { kind: 'family', displayName: `${fam.firstName} ${fam.lastName}` } : owner ? { kind: 'self', displayName: `${owner.firstName} ${owner.lastName}` } : null,
     consent: a.consent, payment: a.paidAt ? { status: 'paid', method: 'demo', amount: a.fee, paidAt: a.paidAt } : null,
     reminders: { ...a.remind, sentAt: null }, preJoin: a.preJoin,
-    call: { joinOpensAt: new Date(w.opens).toISOString(), joinClosesAt: new Date(w.closes).toISOString(), state: a.callState, reconnects: a.reconnects },
+    call: { joinOpensAt: new Date(w.opens).toISOString(), joinClosesAt: new Date(w.closes).toISOString(), state: a.callState, reconnects: a.reconnects, doctorJoined: a.callState !== 'not_started' }, // ponytail: the mock has no call events
+    cancelledBy: null,
     imed: { status: 'not_connected' },
   }
 }

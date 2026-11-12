@@ -174,13 +174,40 @@ export function joinWindow(appointment) {
 
 /**
  * Whether the patient may move this same appointment to another time (never a second appointment):
- * it is confirmed, and either it hasn't started yet, or the call dropped (outcome ended_poor_quality)
- * and the join window has closed, so reconnecting is no longer possible.
+ * it is confirmed, and either it hasn't started yet, the doctor didn't show (see doctorNoShow), or the call
+ * dropped (outcome ended_poor_quality) and the join window has closed, so reconnecting is no longer possible.
  */
 export function canReschedule(appointment, now = new Date()) {
   if (effectiveStatus(appointment, now) !== 'confirmed') return false
-  if (now < appointment.startsAt) return true
+  if (now < appointment.startsAt || doctorNoShow(appointment, now)) return true
   return appointment.outcome === 'ended_poor_quality' && now >= joinWindow(appointment).joinClosesAt
+}
+
+/** Whether the patient may cancel: confirmed, and not started yet or the doctor didn't show. */
+export function canCancel(appointment, now = new Date()) {
+  if (effectiveStatus(appointment, now) !== 'confirmed') return false
+  return now < appointment.startsAt || doctorNoShow(appointment, now)
+}
+
+export const DOCTOR_NO_SHOW_MINUTES = 15
+
+/** True once the doctor has joined the call (a clinician "joined" call event). Needs `callEvents` loaded. */
+export function doctorJoined(appointment) {
+  return (appointment.callEvents ?? []).some((e) => e.actorRole === 'clinician' && e.type === 'joined')
+}
+
+/**
+ * The doctor didn't show: confirmed, 15 minutes past the start, no outcome recorded and no clinician ever joined.
+ * Fails closed when call events weren't loaded, so a missing include can't open cancel or move.
+ */
+export function doctorNoShow(appointment, now = new Date()) {
+  if (!appointment.callEvents || appointment.outcome || effectiveStatus(appointment, now) !== 'confirmed') return false
+  return now.getTime() >= appointment.startsAt.getTime() + DOCTOR_NO_SHOW_MINUTES * 60_000 && !doctorJoined(appointment)
+}
+
+/** Admin "needs attention": confirmed, join window closed, no outcome. Prisma `where` for that, at `now`. */
+export function needsAttentionWhere(now = new Date()) {
+  return { status: 'confirmed', outcome: null, endsAt: { lte: new Date(now.getTime() - JOIN_CLOSES_MINUTES_AFTER * 60_000) } }
 }
 
 /** "too_early", "open" or "closed". */

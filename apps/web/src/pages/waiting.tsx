@@ -6,7 +6,7 @@ import { readQuestions } from '../lib/questions'
 import { countdown, hhmm } from '../lib/time'
 import { Notice, PageTitle, Still } from '../ui/kit'
 import { VideoOff } from './call'
-import { phaseOf, useAppointment, VisitGate } from './visit'
+import { doctorNoShow, NoShowNotice, phaseOf, useAppointment, VisitGate } from './visit'
 
 type Check = 'idle' | 'checking' | 'ok' | 'problem'
 type MediaProblem = { title: string; steps: ReactNode }
@@ -159,6 +159,7 @@ export function Waiting() {
               <PageTitle eyebrow="Waiting room" lede={phase === 'before' ? 'You’re early. That’s fine. Stay on this page.' : phase === 'open' ? 'You can join now. Your doctor will be with you shortly.' : 'The time to join has passed.'}>
                 {`${a.doctor.name} will join at ${hhmm(a.startsAt)}`}
               </PageTitle>
+              {doctorNoShow(a, now) && <NoShowNotice a={a} />}
               <div className="card card-tight mt-6 rows" aria-label="Device check">
                 <Row name="Camera" state={dev.camera} />
                 <Row name="Microphone" state={dev.mic}>

@@ -86,7 +86,8 @@ export type Appointment = {
   payment: { status: 'paid' | 'refunded'; method: 'demo'; amount: number; paidAt: string } | null
   reminders?: { email: boolean; sms: boolean; sentAt: string | null }
   preJoin: { confirmedAt: string | null; companion: boolean } | null
-  call: { joinOpensAt: string; joinClosesAt: string; state: CallState; reconnects: number }
+  cancelledBy: 'patient' | 'admin' | 'clinician' | null
+  call: { joinOpensAt: string; joinClosesAt: string; state: CallState; reconnects: number; doctorJoined: boolean }
   imed: { status: 'not_connected' }
 }
 

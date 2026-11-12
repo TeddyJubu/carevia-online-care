@@ -793,6 +793,7 @@ export function PaymentsPage() {
   const situations = [
     { title: 'Changing the time', icon: P_ICONS.move },
     { title: 'If your doctor ends the call', icon: P_ICONS.ended },
+    { title: "If your doctor doesn't join", icon: P_ICONS.alert },
     { title: 'If we cancel', icon: P_ICONS.alert },
   ]
 

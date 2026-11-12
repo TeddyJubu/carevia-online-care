@@ -1,6 +1,6 @@
 ---
 id: cancellation
-version: 2026-11-05.1
+version: 2026-11-12.1
 status: draft-legal-review
 title: Cancelling or changing your consultation
 ---
@@ -29,9 +29,18 @@ If the sound or picture is too poor for a safe assessment, your doctor may end t
 
 If your doctor decides you need to be seen in person, [whether any refund applies].
 
+## If your doctor doesn't join
+
+If your doctor hasn't joined the call 15 minutes after the start time, you choose what happens:
+
+- a full refund: cancel the visit from your account, or
+- a new time for the same visit, with the same doctor or another in the same area of care, at no extra cost: change the time from your account. You don't need to book or pay again.
+
+Both stay open until you choose. If you'd rather keep waiting, you can, while the waiting room is open. Our team also sees every visit where the doctor didn't join and may contact you to arrange either one.
+
 ## If we cancel
 
-If Carevia or your doctor has to cancel, [what the patient is offered: a full refund, a new time, or the choice of either].
+If Carevia or your doctor has to cancel, you get a full refund. If you'd rather keep the visit, we can move it to a new time at no extra cost instead.
 
 ## How refunds are paid
 
@@ -48,7 +57,7 @@ These need a decision by Carevia, and a review by its lawyer, before launch:
 5. Whether a patient can move a consultation to another time, until when, and at what cost.
 6. Whether moving a dropped or poor-quality call to a new time is always free.
 7. Whether any refund applies when the doctor decides the patient needs to be seen in person.
-8. What a patient is offered when Carevia or the doctor cancels.
+8. Decided 12 November 2026: when the doctor doesn't join, or Carevia or the doctor cancels, the patient chooses a full refund or a free new time. Needs the lawyer's review.
 9. How many days a refund takes, and who the patient contacts about one.
 10. Whether consumer withdrawal rules for services bought online apply to a booked consultation.
 11. Where the Livro de Reclamações Eletrónico and the ERS complaint details are linked.
