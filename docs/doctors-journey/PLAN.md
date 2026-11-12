@@ -43,7 +43,7 @@ Verified against the code on `main` on 12 November 2026:
 5. **No way to cancel, pause, or leave.** A doctor who is ill cannot cancel one visit properly, and admin
    hiding a doctor (`active: false`) has no rule for the visits already booked with them.
 6. **No earnings view.** Deliberately last: demo payment takes no money, so any earnings screen before a real
-   payment provider is a mock. Planned, not built, in this pass (screen D17, backlog).
+   payment provider is a mock. Planned, not built, in this pass (screen D18, backlog).
 
 ## The journey at a glance
 
