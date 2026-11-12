@@ -2,6 +2,24 @@ import assert from 'node:assert/strict'
 import test from 'node:test'
 import { approvalBlock, CHECK_KEYS, formatApplicationReference, makeLimiter } from '../src/routes/doctor-applications.js'
 import { hashInviteToken } from '../src/routes/doctor-invites.js'
+import { onboardingSteps } from '../src/routes/onboarding.js'
+
+test('setup stays incomplete until security, profile, agreement, hours and the camera are done', () => {
+  const row = { twoFactorSkippedAt: null, profileCheckedAt: null, profileFlaggedAt: null, agreementAcceptedAt: null, hoursOpenedAt: null, deviceCheckedAt: null }
+  const user = { emailVerified: true, twoFactorEnabled: false }
+  const open = onboardingSteps(row, user)
+  assert.equal(open.complete, false)
+  assert.equal(open.steps.find((step) => step.state === 'current').key, 'security')
+  const done = onboardingSteps({
+    ...row,
+    twoFactorSkippedAt: new Date(),
+    profileCheckedAt: new Date(),
+    agreementAcceptedAt: new Date(),
+    hoursOpenedAt: new Date(),
+    deviceCheckedAt: new Date(),
+  }, user)
+  assert.equal(done.complete, true)
+})
 
 test('invite tokens are stored as a hash, and the raw token is not the hash', () => {
   const token = 'example-invite-token-not-a-real-one'

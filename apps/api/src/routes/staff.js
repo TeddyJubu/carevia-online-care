@@ -7,6 +7,7 @@ import { SCHEDULE_DAYS, addDays, joinState, lisbonDayRange, lisbonTimeToUtc, lis
 import { LIVE, closeSlot, openSlot } from '../schedule.js'
 import { APPOINTMENT_INCLUDE, sendError, toAppointment } from '../views.js'
 import { logAccess } from './appointments.js'
+import { onboardingBlock } from './onboarding.js'
 
 const STATUSES = ['held', 'confirmed', 'completed', 'cancelled', 'expired']
 const OUTCOMES = ['completed', 'ended_poor_quality', 'needs_in_person', 'no_show']
@@ -22,6 +23,7 @@ export async function staffRoutes(app) {
     if (!parseDate(date)) return sendError(reply, 400, 'VALIDATION', 'date must be YYYY-MM-DD.')
     const doctor = await prisma.doctor.findUnique({ where: { clinicianUserId: user.id } })
     if (!doctor) return sendError(reply, 403, 'NO_DOCTOR_PROFILE', 'This login is not linked to a doctor profile.')
+    if (await onboardingBlock(user.id)) return sendError(reply, 409, 'ONBOARDING_INCOMPLETE', 'Finish setting up your practice before opening the agenda.')
     const { from, to } = lisbonDayRange(date)
     const rows = await prisma.appointment.findMany({
       where: { doctorId: doctor.id, startsAt: { gte: from, lt: to }, status: { in: ['confirmed', 'completed', 'cancelled'] } },

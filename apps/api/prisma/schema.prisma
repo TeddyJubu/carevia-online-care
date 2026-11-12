@@ -80,6 +80,7 @@ model User {
   doctor           Doctor?
   consentRecords   ConsentRecord[]
   familyMembers    FamilyMember[]
+  onboarding       ClinicianOnboarding?
 }
 
 model Session {
@@ -404,4 +405,20 @@ model ClinicianInvite {
   sentAt        DateTime  @default(now())
   acceptedAt    DateTime?
   revokedAt     DateTime?
+}
+
+// One row per clinician who came in through an invite. Seeded demo doctors have none, so their agenda stays open.
+// The agenda stays closed until every step is done. Going live is the doctor's act, in the last step.
+model ClinicianOnboarding {
+  userId               String    @id
+  user                 User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  profileCheckedAt     DateTime?
+  profileFlaggedAt     DateTime?
+  profileFlag          String    @default("")
+  agreementVersion     String?
+  agreementAcceptedAt  DateTime?
+  twoFactorSkippedAt   DateTime?
+  hoursOpenedAt        DateTime?
+  deviceCheckedAt      DateTime?
+  wentLiveAt           DateTime?
 }

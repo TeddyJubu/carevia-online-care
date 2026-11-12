@@ -9,6 +9,7 @@ import { appointmentRoutes } from './routes/appointments.js'
 import { bookingRoutes } from './routes/bookings.js'
 import { doctorApplicationRoutes } from './routes/doctor-applications.js'
 import { doctorInviteRoutes } from './routes/doctor-invites.js'
+import { onboardingRoutes } from './routes/onboarding.js'
 import { catalogRoutes } from './routes/catalog.js'
 import { peopleRoutes } from './routes/people.js'
 import { staffRoutes } from './routes/staff.js'
@@ -104,6 +105,7 @@ export async function buildApp({ timers = true } = {}) {
   await app.register(adminCatalogRoutes)
   await app.register(doctorApplicationRoutes)
   await app.register(doctorInviteRoutes)
+  await app.register(onboardingRoutes)
 
   // Keep the 21-day schedule topped up (on start-up, then hourly; new days appear after midnight Lisbon time)
   // and sweep expired holds every minute. Reads never depend on the sweep: they check holdExpiresAt themselves.

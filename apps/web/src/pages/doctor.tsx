@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Link, useParams, useSearchParams } from 'react-router'
+import { Link, Navigate, useParams, useSearchParams } from 'react-router'
 import { api, ApiError } from '../lib/api'
 import { useLoad, useNow } from '../lib/load'
 import { addDays, dayLabel, hhmm, lisbonDay, relDay, shortDate, when } from '../lib/time'
@@ -35,7 +35,7 @@ const SEES: Record<Outcome, string> = {
 }
 
 /** A confirmed visit whose call is over (or whose window closed) and still has no outcome. */
-function Unlinked() {
+export function Unlinked() {
   const { signOut } = useSession()
   return (
     <div className="page-narrow">
@@ -60,7 +60,8 @@ function StatusBadge({ a, now }: { a: Appointment; now: number }) {
 export function Agenda() {
   const [params, setParams] = useSearchParams()
   const date = /^\d{4}-\d{2}-\d{2}$/.test(params.get('date') ?? '') ? params.get('date')! : lisbonDay()
-  const agenda = useLoad(() => api.agenda(date), [date])
+  const gate = useLoad(() => api.onboarding(), [])
+  const agenda = useLoad(() => (gate.data && (!gate.data.required || gate.data.complete) ? api.agenda(date) : Promise.resolve(null)), [date, gate.data?.required, gate.data?.complete])
   const now = useNow(30000)
   const go = (d: string) => setParams(d === lisbonDay() ? {} : { date: d })
   const d = agenda.data?.doctor
@@ -68,7 +69,9 @@ export function Agenda() {
   const live = list.filter((a) => a.status !== 'cancelled')
   const toRecord = list.filter((a) => needsOutcome(a, now)).length
   const next = list.find((a) => a.status === 'confirmed' && !a.outcome && Date.parse(a.endsAt) > now)
-  if (agenda.error?.code === 'NO_DOCTOR_PROFILE') return <Unlinked />
+  if (gate.loading && !gate.data) return <div className="page"><Loading label="Loading your agenda" /></div>
+  if (gate.data?.required && !gate.data.complete) return <Navigate to="/doctor/welcome" replace />
+  if (agenda.error?.code === 'NO_DOCTOR_PROFILE' || gate.error?.code === 'NO_DOCTOR_PROFILE') return <Unlinked />
 
   return (
     <div className="page">
@@ -274,12 +277,14 @@ export function DoctorVisit() {
 
 // ---------- The doctor's profile, with the open times patients can book ----------
 export function DoctorProfile() {
+  const gate = useLoad(() => api.onboarding(), [])
   const load = useLoad(() => api.schedule(), [])
   const [busy, setBusy] = useState<number | 'add' | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [date, setDate] = useState(() => addDays(lisbonDay(), 1))
   const [time, setTime] = useState('09:00')
 
+  if (gate.data?.required && !gate.data.complete) return <Navigate to="/doctor/welcome" replace />
   if (load.error?.code === 'NO_DOCTOR_PROFILE') return <Unlinked />
   if (load.error) return <div className="page-narrow"><ErrorState error={load.error} onRetry={load.reload} /></div>
   if (!load.data) return <div className="page"><Loading label="Loading your profile" /></div>

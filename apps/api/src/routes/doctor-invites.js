@@ -222,6 +222,9 @@ export async function doctorInviteRoutes(app) {
       where: { userId: doctor.clinicianUserId, providerId: 'credential' },
       data: { password: await hashPassword(request.body.password) },
     })
+    // Opening the invite proves this inbox. The setup checklist still asks for two-factor.
+    await prisma.user.update({ where: { id: doctor.clinicianUserId }, data: { emailVerified: true } })
+    await prisma.clinicianOnboarding.upsert({ where: { userId: doctor.clinicianUserId }, update: {}, create: { userId: doctor.clinicianUserId } })
     await prisma.clinicianInvite.update({
       where: { id: invite.id },
       data: { acceptedAt: new Date(), tokenHash: null, expiresAt: null },

@@ -71,6 +71,14 @@ const qs = (o: Record<string, string | number | undefined | null>) => {
 }
 
 type SignUp = { email: string; password: string; firstName: string; lastName: string; phone: string; dateOfBirth: string }
+export type Onboarding = {
+  required: boolean
+  complete: boolean
+  demo?: boolean
+  steps: { key: string; title: string; done: boolean; detail: string; state: 'done' | 'current' | 'later' }[]
+  profile?: { name: string; specialty: string; cedula: string; fee: number; languages: string; experience: string; education: string; shown: boolean; flagged: boolean }
+  agreement?: { version: string; statements: string[]; draft: boolean }
+}
 type A = { appointment: Appointment }
 
 export const api = {
@@ -133,6 +141,11 @@ export const api = {
   updateMe: (b: { firstName?: string; lastName?: string; phone?: string }) => request<{ user: User }>('PATCH', '/api/me', b),
 
   agenda: (date: string) => get<{ doctor: Doctor; appointments: Appointment[] }>(`/api/clinician/agenda?date=${date}`),
+  onboarding: () => get<Onboarding>('/api/clinician/onboarding'),
+  skipTwoFactor: () => post<{ ok: boolean }>('/api/clinician/onboarding/skip-two-factor'),
+  checkProfile: (b: { languages: string; experience: string; education: string; decision: 'confirm' | 'flag'; message?: string }) =>
+    post<{ ok: boolean }>('/api/clinician/onboarding/profile', b),
+  acceptAgreement: (version: string) => post<{ ok: boolean }>('/api/clinician/onboarding/agreement', { version }),
   recordOutcome: (id: string, outcome: Outcome) => post<A>(`/api/clinician/appointments/${id}/outcome`, { outcome }),
   schedule: () => get<{ doctor: Doctor; days: number; slots: OwnSlot[] }>('/api/clinician/schedule'),
   openSlot: (date: string, time: string) => post<{ slot: OwnSlot }>('/api/clinician/slots', { date, time }),
