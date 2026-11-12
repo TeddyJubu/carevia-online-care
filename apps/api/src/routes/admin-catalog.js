@@ -273,6 +273,7 @@ export async function adminCatalogRoutes(app) {
     return {
       groups: groups.map((group) => ({
         id: group.id,
+        slug: group.slug,
         name: group.name,
         blurb: group.blurb,
         fieldMarks: group.fieldMarks,

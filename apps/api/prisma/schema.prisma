@@ -205,6 +205,8 @@ model Doctor {
   clinician         User?         @relation(fields: [clinicianUserId], references: [id], onDelete: SetNull)
   slots             Slot[]
   appointments      Appointment[]
+  invite            ClinicianInvite?
+  applications      DoctorApplication[]
 
   @@index([specialty])
   @@index([fee])
@@ -347,8 +349,8 @@ model DailySettings {
   updatedAt DateTime @updatedAt
 }
 
-// "Join Carevia" applications from the public doctor registration screen (/app/join). Not a login: an admin
-// checks the cédula with the professional body, then creates the Doctor and its clinician login by hand.
+// "Join Carevia" applications from the public doctor registration screen (/app/join). Not a login.
+// Approve records the decision only. The invite creates the hidden profile and the clinician login.
 model DoctorApplication {
   id              String   @id @default(cuid())
   firstName       String
@@ -368,6 +370,9 @@ model DoctorApplication {
   status          String   @default("new")
   // Public reference CV-APP-0001. Sequential, so an applicant can quote it. Not a login.
   ref             Int      @unique @default(autoincrement())
+  // Set when the invite creates the profile. Approve does not set this.
+  doctorId        Int?     @unique
+  doctor          Doctor?  @relation(fields: [doctorId], references: [id])
   createdAt       DateTime @default(now())
   checks          ApplicationCheck[]
 
@@ -386,4 +391,17 @@ model ApplicationCheck {
   checkedAt       DateTime          @default(now())
 
   @@unique([applicationId, key])
+}
+
+// One clinician login per doctor. The raw invite token is only in the email, never stored or logged.
+model ClinicianInvite {
+  id            String    @id @default(cuid())
+  doctorId      Int       @unique
+  doctor        Doctor    @relation(fields: [doctorId], references: [id], onDelete: Cascade)
+  email         String
+  tokenHash     String?
+  expiresAt     DateTime?
+  sentAt        DateTime  @default(now())
+  acceptedAt    DateTime?
+  revokedAt     DateTime?
 }

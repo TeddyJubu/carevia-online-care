@@ -1,6 +1,7 @@
 import { useState, type FormEvent, type ReactNode } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router'
 import { api, ApiError } from '../lib/api'
+import { useLoad } from '../lib/load'
 import { DEMO_BUILD, useDemo } from '../lib/demo'
 import { ADMIN_HOME, homeFor, useSession } from '../lib/session'
 import { age, lisbonDay } from '../lib/time'
@@ -235,8 +236,57 @@ export function ForgotPassword() {
   )
 }
 
+function AcceptInvite({ token }: { token: string }) {
+  const navigate = useNavigate()
+  const { refresh } = useSession()
+  const email = useLoad(() => api.auth.previewInvite(token).then((r) => r.email), [token])
+  const { pending, error, run } = useSubmit()
+  const [fieldError, setFieldError] = useState<Errors>({})
+  if (email.error) {
+    return (
+      <AuthShell title="This invite can’t be used" lede={email.error.message}>
+        <p className="fine">Link expired, or already used? Ask the Carevia team to send a new invite.</p>
+      </AuthShell>
+    )
+  }
+  return (
+    <AuthShell title="Set your password" lede="This password signs you in to your agenda. Your patients never see it. Carevia never asks for your iMED password.">
+      <form noValidate className="grid gap-5" onSubmit={(e) => {
+        e.preventDefault()
+        const f = new FormData(e.currentTarget)
+        const pw = String(f.get('password') ?? ''), again = String(f.get('again') ?? '')
+        const errs: Errors = {}
+        if (pw.length < 8) errs.password = 'Use at least 8 characters.'
+        else if (pw !== again) errs.again = 'The two passwords don’t match.'
+        setFieldError(errs)
+        if (Object.keys(errs).length) return
+        run(async () => {
+          try { await api.auth.acceptInvite(token, pw) } catch (err) {
+            if (err instanceof ApiError && (err.code === 'PASSWORD_COMPROMISED' || err.code === 'PASSWORD_CHECK_UNAVAILABLE')) {
+              return setFieldError({ password: err.message })
+            }
+            throw err
+          }
+          await api.auth.signIn(email.data || '', pw)
+          await refresh()
+          navigate('/doctor', { replace: true })
+        })
+      }}>
+        <Field label="Email" name="email" type="email" value={email.data ?? ''} readOnly onChange={() => {}} hint="From the invite. It can’t be changed here." />
+        <Field label="New password" name="password" type="password" autoComplete="new-password" hint="At least 8 characters." error={fieldError.password} />
+        <Field label="Type it again" name="again" type="password" autoComplete="new-password" error={fieldError.again} />
+        <p className="fine">Setting a password starts your setup. It takes about ten minutes.</p>
+        <FormError error={error} />
+        <button className="btn btn-primary btn-block" disabled={pending || !email.data}>{pending ? 'Saving…' : 'Save password and continue'}</button>
+      </form>
+    </AuthShell>
+  )
+}
+
 export function ResetPassword() {
   const [params] = useSearchParams()
+  const invite = params.get('invite') ?? ''
+  if (invite) return <AcceptInvite token={invite} />
   const token = params.get('token') ?? ''
   const { pending, error, run } = useSubmit()
   const [fieldError, setFieldError] = useState<Errors>({})

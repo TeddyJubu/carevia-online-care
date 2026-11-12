@@ -5,6 +5,7 @@ import { useLoad, useNow } from '../lib/load'
 import { addDays, dayLabel, hhmm, lisbonDay, relDay, shortDate, when } from '../lib/time'
 import type { Appointment, Outcome, OwnSlot } from '../lib/types'
 import { DoctorAvatar, Empty, ErrorState, euro, Field, FormError, Loading, Notice, PageTitle } from '../ui/kit'
+import { useSession } from '../lib/session'
 import { DailyRoom } from './call'
 import { phaseOf, type Phase } from './visit'
 
@@ -34,6 +35,16 @@ const SEES: Record<Outcome, string> = {
 }
 
 /** A confirmed visit whose call is over (or whose window closed) and still has no outcome. */
+function Unlinked() {
+  const { signOut } = useSession()
+  return (
+    <div className="page-narrow">
+      <PageTitle lede="Ask the Carevia team to link this login to your doctor profile. Until then there is no agenda here.">Your login isn’t linked to a doctor profile yet</PageTitle>
+      <button type="button" className="btn btn-secondary mt-8" onClick={() => signOut().then(() => { window.location.assign('/app/signin') })}>Sign out</button>
+    </div>
+  )
+}
+
 const needsOutcome = (a: Appointment, now: number) =>
   a.status === 'confirmed' && !a.outcome && (phaseOf(a, now) === 'closed' || a.call.state === 'ended')
 
@@ -57,6 +68,7 @@ export function Agenda() {
   const live = list.filter((a) => a.status !== 'cancelled')
   const toRecord = list.filter((a) => needsOutcome(a, now)).length
   const next = list.find((a) => a.status === 'confirmed' && !a.outcome && Date.parse(a.endsAt) > now)
+  if (agenda.error?.code === 'NO_DOCTOR_PROFILE') return <Unlinked />
 
   return (
     <div className="page">
@@ -154,6 +166,7 @@ export function DoctorVisit() {
   const [pending, setPending] = useState(false)
 
   const agendaHref = `/doctor${day && day !== lisbonDay() ? `?date=${day}` : ''}`
+  if (load.error?.code === 'NO_DOCTOR_PROFILE') return <Unlinked />
   if (load.error) return <div className="page-narrow"><ErrorState error={load.error} onRetry={load.reload} /><Link to="/doctor" className="link mt-4 inline-flex min-h-11 items-center">Back to your agenda</Link></div>
   if (!load.data) return <div className="page"><Loading label="Loading the visit" /></div>
   const a = load.data
@@ -267,6 +280,7 @@ export function DoctorProfile() {
   const [date, setDate] = useState(() => addDays(lisbonDay(), 1))
   const [time, setTime] = useState('09:00')
 
+  if (load.error?.code === 'NO_DOCTOR_PROFILE') return <Unlinked />
   if (load.error) return <div className="page-narrow"><ErrorState error={load.error} onRetry={load.reload} /></div>
   if (!load.data) return <div className="page"><Loading label="Loading your profile" /></div>
   const { doctor: d, slots, days: span } = load.data

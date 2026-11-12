@@ -258,3 +258,23 @@ export function setDoctorApplicationStatus(id, status) {
 export function setApplicationCheck(id, key, checked) {
   return request(`/api/admin/doctor-applications/${encodeURIComponent(id)}/checks/${encodeURIComponent(key)}`, { method: 'PUT', body: { checked } })
 }
+
+export function inviteApplicant(id, body) {
+  return request(`/api/admin/doctor-applications/${encodeURIComponent(id)}/invite`, { method: 'POST', body })
+}
+
+export function getDoctorLogin(id) {
+  return request(`/api/admin/doctors/${id}/login`)
+}
+
+export function inviteDoctor(id, email) {
+  return request(`/api/admin/doctors/${id}/invite`, { method: 'POST', body: { email } })
+}
+
+export function resendDoctorInvite(id) {
+  return request(`/api/admin/doctors/${id}/invite/resend`, { method: 'POST', body: {} })
+}
+
+export function revokeDoctorInvite(id) {
+  return request(`/api/admin/doctors/${id}/invite/revoke`, { method: 'POST', body: {} })
+}

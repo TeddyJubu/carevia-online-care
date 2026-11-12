@@ -1,4 +1,5 @@
 import { requireRole } from '../auth.js'
+import { loginState } from './doctor-invites.js'
 import { prisma } from '../prisma.js'
 import { sendError } from '../views.js'
 
@@ -51,7 +52,7 @@ function checkViews(row, groupName) {
 }
 
 export function toApplication(row, groupName = '') {
-  const { ref, checks, ...rest } = row
+  const { ref, checks, doctor: _doctor, ...rest } = row
   return {
     ...rest,
     reference: formatApplicationReference(ref),
@@ -125,10 +126,9 @@ export async function doctorApplicationRoutes(app) {
     },
   }, async (request, reply) => {
     if (!(await requireRole(request, reply, ['admin']))) return
-    const found = await prisma.doctorApplication.findUnique({ where: { id: request.params.id }, include: { checks: true } })
+    const found = await prisma.doctorApplication.findUnique({ where: { id: request.params.id } })
     if (!found) return sendError(reply, 404, 'NOT_FOUND', 'Application not found.')
-    const names = await groupNames([found])
-    return { application: toApplication(found, names.get(found.groupSlug) || '') }
+    return applicationView(found.id)
   })
 
   app.put('/api/admin/doctor-applications/:id/checks/:key', {
@@ -180,9 +180,14 @@ export async function doctorApplicationRoutes(app) {
 }
 
 async function applicationView(id) {
-  const row = await prisma.doctorApplication.findUnique({ where: { id }, include: { checks: true } })
+  const row = await prisma.doctorApplication.findUnique({
+    where: { id },
+    include: { checks: true, doctor: { include: { clinician: true, invite: true } } },
+  })
   const names = await groupNames([row])
-  return { application: toApplication(row, names.get(row.groupSlug) || '') }
+  const application = toApplication(row, names.get(row.groupSlug) || '')
+  application.login = loginState(row.doctor)
+  return { application }
 }
 
 async function groupNames(rows) {

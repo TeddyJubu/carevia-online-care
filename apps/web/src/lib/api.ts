@@ -84,6 +84,8 @@ export const api = {
     requestReset: (email: string) =>
       post<unknown>('/api/auth/request-password-reset', { email, redirectTo: `${location.origin}/app/reset-password` }),
     resetPassword: (token: string, newPassword: string) => post<unknown>('/api/auth/reset-password', { token, newPassword }),
+    previewInvite: (token: string) => post<{ email: string }>('/api/doctor-invites/preview', { token }),
+    acceptInvite: (token: string, password: string) => post<{ email: string }>('/api/doctor-invites/accept', { token, password }),
     changePassword: (currentPassword: string, newPassword: string) =>
       post<unknown>('/api/auth/change-password', { currentPassword, newPassword, revokeOtherSessions: true }),
     enableTwoFactor: (password: string) => post<{ totpURI: string; backupCodes: string[] }>('/api/auth/two-factor/enable', { password }),

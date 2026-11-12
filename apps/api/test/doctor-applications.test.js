@@ -1,6 +1,14 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
 import { approvalBlock, CHECK_KEYS, formatApplicationReference, makeLimiter } from '../src/routes/doctor-applications.js'
+import { hashInviteToken } from '../src/routes/doctor-invites.js'
+
+test('invite tokens are stored as a hash, and the raw token is not the hash', () => {
+  const token = 'example-invite-token-not-a-real-one'
+  assert.equal(hashInviteToken(token), hashInviteToken(token))
+  assert.notEqual(hashInviteToken(token), token)
+  assert.notEqual(hashInviteToken(token), hashInviteToken(`${token}x`))
+})
 
 test('approve stays blocked until every launch-gate check is ticked', () => {
   assert.deepEqual(approvalBlock([]), CHECK_KEYS)
