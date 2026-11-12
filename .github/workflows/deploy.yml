@@ -28,6 +28,7 @@ jobs:
       BETTER_AUTH_SECRET: ci-only-not-a-real-secret-0123456789abcdef
       DAILY_API_URL: http://127.0.0.1:4090/v1 # the smoke script's fake Daily
       HOLD_LIMIT: 1000 # the smoke makes ~17 holds from one IP; production keeps the default 10
+      DEMO_ADMIN_PASSWORD: ci-only-admin-password # throwaway CI database; production's is in ~/carevia/api.env
       LOG_LEVEL: warn
     steps:
       - uses: actions/checkout@v5
