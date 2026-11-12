@@ -73,6 +73,7 @@ model User {
   dateOfBirth      String
   role             Role            @default(patient)
   twoFactorEnabled Boolean?        @default(false)
+  disabledAt       DateTime?
   twoFactors       TwoFactor[]
   sessions         Session[]
   accounts         Account[]
@@ -204,6 +205,10 @@ model Doctor {
   // The clinician login for this doctor profile, if any.
   clinicianUserId   String?       @unique
   clinician         User?         @relation(fields: [clinicianUserId], references: [id], onDelete: SetNull)
+  pausedAt          DateTime?
+  pausedUntil       DateTime?
+  closedDownAt      DateTime?
+  practiceRequests  PracticeRequest[]
   slots             Slot[]
   appointments      Appointment[]
   invite            ClinicianInvite?
@@ -405,6 +410,21 @@ model ClinicianInvite {
   sentAt        DateTime  @default(now())
   acceptedAt    DateTime?
   revokedAt     DateTime?
+}
+
+// A doctor's request to pause or leave. It notifies the team and changes nothing else:
+// booked visits stay, and hiding or disabling the login is an admin step.
+model PracticeRequest {
+  id        String   @id @default(cuid())
+  doctorId  Int
+  doctor    Doctor   @relation(fields: [doctorId], references: [id], onDelete: Cascade)
+  kind      String
+  fromDate  String   @default("")
+  untilDate String   @default("")
+  message   String   @default("")
+  createdAt DateTime @default(now())
+
+  @@index([doctorId, createdAt])
 }
 
 // One row per clinician who came in through an invite. Seeded demo doctors have none, so their agenda stays open.

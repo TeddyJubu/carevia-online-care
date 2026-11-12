@@ -142,6 +142,9 @@ export const api = {
 
   agenda: (date: string) => get<{ doctor: Doctor; appointments: Appointment[]; week?: { date: string; count: number }[] }>(`/api/clinician/agenda?date=${date}`),
   history: () => get<{ appointments: Appointment[] }>('/api/clinician/history'),
+  timeOff: (from: string, to: string) => post<{ closed: number }>('/api/clinician/time-off', { from, to }),
+  practiceRequest: (b: { kind: 'pause' | 'leave'; from?: string; until?: string; message?: string }) => post<{ id: string }>('/api/clinician/practice-request', b),
+  cancelVisit: (id: string) => post<{ appointment: Appointment }>(`/api/clinician/appointments/${id}/cancel`),
   onboarding: () => get<Onboarding>('/api/clinician/onboarding'),
   skipTwoFactor: () => post<{ ok: boolean }>('/api/clinician/onboarding/skip-two-factor'),
   checkProfile: (b: { languages: string; experience: string; education: string; decision: 'confirm' | 'flag'; message?: string }) =>

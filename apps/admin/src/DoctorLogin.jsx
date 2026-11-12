@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { getDoctorLogin, inviteDoctor, resendDoctorInvite, revokeDoctorInvite } from './api.js'
+import { closeDownDoctor, getDoctorLogin, inviteDoctor, pauseDoctor, resendDoctorInvite, revokeDoctorInvite } from './api.js'
 
 const day = (iso) => new Intl.DateTimeFormat('en-GB', { timeZone: 'Europe/Lisbon', day: 'numeric', month: 'short', year: 'numeric' }).format(new Date(iso))
 
@@ -7,6 +7,7 @@ const day = (iso) => new Intl.DateTimeFormat('en-GB', { timeZone: 'Europe/Lisbon
 export default function DoctorLogin({ id }) {
   const [login, setLogin] = useState(null)
   const [email, setEmail] = useState('')
+  const [until, setUntil] = useState('')
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
 
@@ -59,6 +60,18 @@ export default function DoctorLogin({ id }) {
         </form>
       )}
       <p className="help">One login per doctor. A patient account cannot become a clinician account here.</p>
+      <div>
+        <h2>Pause or close down</h2>
+        <p className="help">Refused while a confirmed future visit exists, and the visits are named. Pause hides the profile and keeps the login. Close down also disables the login and keeps the account, so access logs still name them.</p>
+        <label className="field">
+          <span>Pause until (optional)</span>
+          <input type="date" value={until} onChange={(event) => setUntil(event.target.value)} />
+        </label>
+        <div className="actions">
+          <button type="button" className="button button-quiet" disabled={busy} onClick={() => run(() => pauseDoctor(id, until))}>Pause this doctor</button>
+          <button type="button" className="button" disabled={busy} onClick={() => run(() => closeDownDoctor(id))}>Close down</button>
+        </div>
+      </div>
     </section>
   )
 }

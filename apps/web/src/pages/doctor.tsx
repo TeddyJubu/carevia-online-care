@@ -45,6 +45,16 @@ export function Unlinked() {
   )
 }
 
+function PracticeStopped({ message }: { message: string }) {
+  const { signOut } = useSession()
+  return (
+    <div className="page-narrow">
+      <PageTitle lede={message}>Your practice is not open</PageTitle>
+      <button type="button" className="btn btn-secondary mt-8" onClick={() => signOut().then(() => { window.location.assign('/app/signin') })}>Sign out</button>
+    </div>
+  )
+}
+
 const needsOutcome = (a: Appointment, now: number) =>
   a.status === 'confirmed' && !a.outcome && (phaseOf(a, now) === 'closed' || a.call.state === 'ended')
 
@@ -72,6 +82,7 @@ export function Agenda() {
   if (gate.loading && !gate.data) return <div className="page"><Loading label="Loading your agenda" /></div>
   if (gate.data?.required && !gate.data.complete) return <Navigate to="/doctor/welcome" replace />
   if (agenda.error?.code === 'NO_DOCTOR_PROFILE' || gate.error?.code === 'NO_DOCTOR_PROFILE') return <Unlinked />
+  if (agenda.error?.code === 'PAUSED' || agenda.error?.code === 'ACCOUNT_DISABLED') return <PracticeStopped message={agenda.error.message} />
 
   return (
     <div className="page">
@@ -176,6 +187,7 @@ export function DoctorVisit() {
   const [inCall, setInCall] = useState(false)
   const [callDone, setCallDone] = useState(false)
   const [pick, setPick] = useState<Outcome | null>(null)
+  const [confirmCancel, setConfirmCancel] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [pending, setPending] = useState(false)
 
@@ -279,6 +291,21 @@ export function DoctorVisit() {
             </dl>
             <div className="flex items-center gap-3 border-t border-line pt-3"><DoctorAvatar doctor={a.doctor} size={36} /><span className="fine">{a.doctor.name} · {a.doctor.cedula}</span></div>
           </div>
+          {a.status === 'confirmed' && !a.outcome && (
+            confirmCancel ? (
+              <div className="card card-tight grid gap-3">
+                <p>Cancel the {hhmm(a.startsAt)} visit with {a.patient?.displayName ?? 'this patient'}?</p>
+                <p className="fine">The patient is told the visit is cancelled and can book a new time in {a.service.groupName}. The visit is kept as cancelled.</p>
+                <FormError error={error} />
+                <button type="button" className="btn btn-primary" disabled={pending} onClick={async () => {
+                  setPending(true)
+                  setError(null)
+                  try { load.set((await api.cancelVisit(a.id)).appointment); setConfirmCancel(false) } catch (e) { setError((e as ApiError).message) } finally { setPending(false) }
+                }}>{pending ? 'Cancelling…' : 'Cancel this visit'}</button>
+                <button type="button" className="btn btn-secondary" onClick={() => setConfirmCancel(false)}>Keep the visit</button>
+              </div>
+            ) : <button type="button" className="btn btn-secondary" onClick={() => setConfirmCancel(true)}>I can’t do this visit</button>
+          )}
           {step !== 'imed' && step !== 'prepare' && <OpenImed className="btn btn-secondary btn-block" />}
         </aside>
       </div>
@@ -294,6 +321,7 @@ export function DoctorProfile() {
   const [error, setError] = useState<string | null>(null)
   const [date, setDate] = useState(() => addDays(lisbonDay(), 1))
   const [time, setTime] = useState('09:00')
+  const [note, setNote] = useState<string | null>(null)
 
   if (gate.data?.required && !gate.data.complete) return <Navigate to="/doctor/welcome" replace />
   if (load.error?.code === 'NO_DOCTOR_PROFILE') return <Unlinked />
@@ -353,6 +381,48 @@ export function DoctorProfile() {
             </ol>
           )}
           <p className="fine mt-4">New weeks follow your usual pattern. Times you remove stay removed.</p>
+          <form className="card card-tight mt-6 grid gap-4" onSubmit={(e) => {
+            e.preventDefault()
+            const form = new FormData(e.currentTarget)
+            run('add', async () => {
+              const closed = await api.timeOff(String(form.get('offFrom')), String(form.get('offTo')))
+              setNote(`Closed ${closed.closed} open times. Booked visits were left as they were.`)
+              load.reload()
+            })
+          }}>
+            <h2>Time off</h2>
+            <p className="fine">Closes every open time in the range. If a visit is booked in it, we name the visits and close nothing.</p>
+            <div className="flex flex-wrap gap-3">
+              <Field label="From" name="offFrom" type="date" required className="w-48" />
+              <Field label="To" name="offTo" type="date" required className="w-48" />
+            </div>
+            <button className="btn btn-secondary" type="submit" disabled={busy === 'add'}>Close these days</button>
+          </form>
+          <form className="card card-tight mt-4 grid gap-4" onSubmit={(e) => {
+            e.preventDefault()
+            const form = new FormData(e.currentTarget)
+            run('add', async () => {
+              await api.practiceRequest({
+                kind: String(form.get('kind')) === 'leave' ? 'leave' : 'pause',
+                from: String(form.get('pauseFrom') || ''),
+                until: String(form.get('pauseUntil') || ''),
+                message: String(form.get('note') || ''),
+              })
+              setNote('Request sent. Booked visits stay until the team deals with each one.')
+            })
+          }}>
+            <h2>Pause, or leave Carevia</h2>
+            <p className="fine">This tells the Carevia team. It does not hide your profile or cancel a visit.</p>
+            <label className="check"><input type="radio" name="kind" value="pause" defaultChecked /><span>Pause for a while</span></label>
+            <label className="check"><input type="radio" name="kind" value="leave" /><span>Leave Carevia</span></label>
+            <div className="flex flex-wrap gap-3">
+              <Field label="From" name="pauseFrom" type="date" className="w-48" />
+              <Field label="Until" name="pauseUntil" type="date" className="w-48" />
+            </div>
+            <Field as="textarea" label="Message to the Carevia team (optional)" name="note" rows={3} hint="Operational only. Nothing clinical." />
+            <button className="btn btn-secondary" type="submit">Send request</button>
+          </form>
+          {note && <Notice className="mt-4" tone="ok">{note}</Notice>}
         </section>
         <aside className="grid content-start gap-3" aria-label="Profile details">
           <div className="card card-tight">

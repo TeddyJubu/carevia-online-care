@@ -278,3 +278,11 @@ export function resendDoctorInvite(id) {
 export function revokeDoctorInvite(id) {
   return request(`/api/admin/doctors/${id}/invite/revoke`, { method: 'POST', body: {} })
 }
+
+export function pauseDoctor(id, until) {
+  return request(`/api/admin/doctors/${id}/pause`, { method: 'POST', body: until ? { until } : {} })
+}
+
+export function closeDownDoctor(id) {
+  return request(`/api/admin/doctors/${id}/close-down`, { method: 'POST', body: {} })
+}

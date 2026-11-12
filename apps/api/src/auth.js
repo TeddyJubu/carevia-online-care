@@ -157,6 +157,13 @@ export async function requireRole(request, reply, roles) {
     reply.code(403).send({ error: 'TWO_FACTOR_REQUIRED', message: 'Turn on two-factor login for this account first.' })
     return null
   }
+  if (user.role === 'clinician') {
+    const row = await prisma.user.findUnique({ where: { id: user.id }, select: { disabledAt: true } })
+    if (row?.disabledAt) {
+      reply.code(403).send({ error: 'ACCOUNT_DISABLED', message: 'This login has been closed. Contact the Carevia team. There is no agenda here.' })
+      return null
+    }
+  }
   return user
 }
 
