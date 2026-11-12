@@ -54,6 +54,7 @@ export async function upsertAccount(prisma, account) {
     role: account.role,
     emailVerified: true,
     twoFactorEnabled: false,
+    disabledAt: null,
   }
   const user = await prisma.user.upsert({
     where: { email: account.email },
@@ -90,7 +91,10 @@ export async function seedDemo(prisma, { now = new Date(), startsInMinutes = 15 
   const users = {}
   for (const account of DEMO_ACCOUNTS) users[account.role] = await upsertAccount(prisma, account)
   await prisma.doctor.updateMany({ where: { clinicianUserId: { not: null } }, data: { clinicianUserId: null } })
-  const doctor = await prisma.doctor.update({ where: { id: DEMO_DOCTOR_ID }, data: { clinicianUserId: users.clinician.id } })
+  const doctor = await prisma.doctor.update({
+    where: { id: DEMO_DOCTOR_ID },
+    data: { clinicianUserId: users.clinician.id, active: true, pausedAt: null, pausedUntil: null, closedDownAt: null },
+  })
 
   await topUpSlots(now, prisma)
 

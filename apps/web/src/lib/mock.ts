@@ -504,6 +504,22 @@ on('GET', '/api/clinician/agenda', (_, __, q) => {
   const { groupIndex: _g, serviceId: _s, availabilityIndex: _a, ...doctor } = d
   return ok({ doctor, appointments: list })
 })
+on('POST', '/api/clinician/appointments/([^/]+)/cancel', (m) => {
+  const u = needRole('clinician'); if (isRes(u)) return u
+  const a = ownAppt(u, m[1]); if (isRes(a)) return a
+  if (a.status !== 'confirmed' || a.outcome) return err(409, 'CANNOT_CANCEL', 'This visit can no longer be cancelled.')
+  if (Date.now() >= Date.parse(a.startsAt)) return err(409, 'TOO_LATE_TO_CANCEL', 'This visit has already started, so it can no longer be cancelled.')
+  a.status = 'cancelled'
+  return ok({ appointment: view(a) })
+})
+on('POST', '/api/clinician/time-off', () => {
+  const u = needRole('clinician'); if (isRes(u)) return u
+  return ok({ closed: 0 })
+})
+on('POST', '/api/clinician/practice-request', () => {
+  const u = needRole('clinician'); if (isRes(u)) return u
+  return ok({ id: 'request-demo' }, 201)
+})
 on('POST', '/api/clinician/appointments/([^/]+)/outcome', (m, b) => {
   const u = needRole('clinician'); if (isRes(u)) return u
   const a = ownAppt(u, m[1]); if (isRes(a)) return a

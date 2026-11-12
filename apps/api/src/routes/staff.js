@@ -48,7 +48,14 @@ async function practiceGate(doctor, reply) {
     sendError(reply, 403, 'ACCOUNT_DISABLED', 'This login has been closed. Contact the Carevia team. There is no agenda here.')
     return true
   }
-  if (doctor.pausedAt && (!doctor.pausedUntil || doctor.pausedUntil > new Date())) {
+  if (doctor.pausedAt && doctor.pausedUntil && doctor.pausedUntil <= new Date()) {
+    await prisma.doctor.update({ where: { id: doctor.id }, data: { pausedAt: null, pausedUntil: null, active: true } })
+    doctor.pausedAt = null
+    doctor.pausedUntil = null
+    doctor.active = true
+    return false
+  }
+  if (doctor.pausedAt) {
     const until = doctor.pausedUntil
       ? ` It lifts on ${new Intl.DateTimeFormat('en-GB', { timeZone: 'Europe/Lisbon', day: 'numeric', month: 'long', year: 'numeric' }).format(doctor.pausedUntil)}.`
       : ''
@@ -79,16 +86,19 @@ async function actOnDoctor(request, reply, kind) {
     return sendError(reply, 409, 'VISITS_REMAIN', `Refused while confirmed future visits exist. ${visitLines(booked, false)} Deal with each visit first.`)
   }
   if (kind === 'pause') {
-    const until = request.body?.until && parseDate(request.body.until) ? lisbonDayRange(request.body.until).to : null
-    await prisma.doctor.update({ where: { id }, data: { active: false, pausedAt: new Date(), pausedUntil: until, closedDownAt: null } })
+    if (doctor.closedDownAt) return sendError(reply, 409, 'CLOSED_DOWN', 'This doctor is closed down. Pausing does not turn the login back on.')
+    if (request.body?.until && !parseDate(request.body.until)) return sendError(reply, 400, 'VALIDATION', 'Until must be a date, like 2026-12-20.')
+    const until = request.body?.until ? lisbonDayRange(request.body.until).to : null
+    // Hide the profile only. Open times stay, so the same hours are bookable again when the pause lifts.
+    await prisma.doctor.update({ where: { id }, data: { active: false, pausedAt: new Date(), pausedUntil: until } })
   } else {
     await prisma.doctor.update({ where: { id }, data: { active: false, closedDownAt: new Date(), pausedAt: null, pausedUntil: null } })
     if (doctor.clinicianUserId) {
       await prisma.user.update({ where: { id: doctor.clinicianUserId }, data: { disabledAt: new Date() } })
       await prisma.session.deleteMany({ where: { userId: doctor.clinicianUserId } })
     }
+    await closeUnbooked(id)
   }
-  await closeUnbooked(id)
   const fresh = await prisma.doctor.findUnique({ where: { id }, include: { clinician: true, invite: true } })
   return { login: loginState(fresh) }
 }
@@ -174,6 +184,7 @@ export async function staffRoutes(app) {
     if (!user) return
     const doctor = await prisma.doctor.findUnique({ where: { clinicianUserId: user.id } })
     if (!doctor) return sendError(reply, 403, 'NO_DOCTOR_PROFILE', 'This login is not linked to a doctor profile.')
+    if (await practiceGate(doctor, reply)) return
     const rows = await prisma.appointment.findMany({
       where: { doctorId: doctor.id, startsAt: { lt: new Date() }, status: { in: ['confirmed', 'completed', 'cancelled'] } },
       include: APPOINTMENT_INCLUDE,
@@ -206,12 +217,17 @@ export async function staffRoutes(app) {
     if (booked.length) {
       return sendError(reply, 409, 'VISITS_IN_RANGE', `A booked visit is in this range, so nothing was closed. ${visitLines(booked, true)}`)
     }
+    const now = new Date()
     const slots = await prisma.slot.findMany({
-      where: { doctorId: doctor.id, closedAt: null, startsAt: range },
+      where: { doctorId: doctor.id, closedAt: null, startsAt: { gt: now, gte: range.gte, lt: range.lt } },
       select: { id: true },
     })
-    for (const slot of slots) await closeSlot(doctor.id, slot.id)
-    return { closed: slots.length }
+    let closed = 0
+    for (const slot of slots) {
+      const result = await closeSlot(doctor.id, slot.id)
+      if (!result.error) closed += 1
+    }
+    return { closed }
   })
 
   app.post('/api/clinician/practice-request', {
@@ -232,14 +248,12 @@ export async function staffRoutes(app) {
     const doctor = await ownDoctor(request, reply)
     if (!doctor) return
     const message = String(request.body.message || '').trim()
+    const fromDate = request.body.from || ''
+    const untilDate = request.body.until || ''
+    if (fromDate && !parseDate(fromDate)) return sendError(reply, 400, 'VALIDATION', 'From must be a date, like 2026-12-20.')
+    if (untilDate && !parseDate(untilDate)) return sendError(reply, 400, 'VALIDATION', 'Until must be a date, like 2027-01-02.')
     const row = await prisma.practiceRequest.create({
-      data: {
-        doctorId: doctor.id,
-        kind: request.body.kind,
-        fromDate: request.body.from || '',
-        untilDate: request.body.until || '',
-        message,
-      },
+      data: { doctorId: doctor.id, kind: request.body.kind, fromDate, untilDate, message },
     })
     await sendMail({
       template: 'practice-request',
@@ -263,8 +277,12 @@ export async function staffRoutes(app) {
       include: APPOINTMENT_INCLUDE,
     })
     if (!appointment) return sendError(reply, 404, 'NOT_FOUND', 'Visit not found.')
+    if (await practiceGate(doctor, reply)) return
     if (appointment.status !== 'confirmed' || appointment.outcome) {
       return sendError(reply, 409, 'CANNOT_CANCEL', 'This visit can no longer be cancelled. It stays on the record.')
+    }
+    if (new Date() >= appointment.startsAt) {
+      return sendError(reply, 409, 'TOO_LATE_TO_CANCEL', 'This visit has already started, so it can no longer be cancelled.')
     }
     await prisma.appointment.update({ where: { id: appointment.id }, data: { status: 'cancelled', cancelledAt: new Date() } })
     if (appointment.patientId) {
@@ -304,6 +322,7 @@ export async function staffRoutes(app) {
     if (!user) return null
     const doctor = await prisma.doctor.findUnique({ where: { clinicianUserId: user.id }, include: { group: true, service: true } })
     if (!doctor) sendError(reply, 403, 'NO_DOCTOR_PROFILE', 'This login is not linked to a doctor profile.')
+    if (doctor && await practiceGate(doctor, reply)) return null
     return doctor
   }
 

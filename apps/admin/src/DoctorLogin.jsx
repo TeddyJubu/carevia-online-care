@@ -8,6 +8,7 @@ export default function DoctorLogin({ id }) {
   const [login, setLogin] = useState(null)
   const [email, setEmail] = useState('')
   const [until, setUntil] = useState('')
+  const [confirmClose, setConfirmClose] = useState(false)
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
 
@@ -69,8 +70,16 @@ export default function DoctorLogin({ id }) {
         </label>
         <div className="actions">
           <button type="button" className="button button-quiet" disabled={busy} onClick={() => run(() => pauseDoctor(id, until))}>Pause this doctor</button>
-          <button type="button" className="button" disabled={busy} onClick={() => run(() => closeDownDoctor(id))}>Close down</button>
+          {confirmClose ? (
+            <>
+              <button type="button" className="button" disabled={busy} onClick={() => run(() => closeDownDoctor(id))}>{busy ? 'Closing…' : 'Close down this doctor'}</button>
+              <button type="button" className="button button-quiet" disabled={busy} onClick={() => setConfirmClose(false)}>Keep the doctor</button>
+            </>
+          ) : (
+            <button type="button" className="button" disabled={busy} onClick={() => setConfirmClose(true)}>Close down</button>
+          )}
         </div>
+        {confirmClose ? <p className="help">This disables the login and closes future open times. It cannot be undone from this screen. Booked visits still block it.</p> : null}
       </div>
     </section>
   )

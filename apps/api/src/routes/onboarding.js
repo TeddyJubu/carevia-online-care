@@ -207,6 +207,9 @@ export async function onboardingRoutes(app) {
     if (!ctx.row.hoursOpenedAt || !ctx.row.deviceCheckedAt) {
       return sendError(reply, 409, 'SETUP_INCOMPLETE', 'Open your hours and test the camera before patients can book you.')
     }
+    if (ctx.doctor.closedDownAt || (ctx.doctor.pausedAt && (!ctx.doctor.pausedUntil || ctx.doctor.pausedUntil > new Date()))) {
+      return sendError(reply, 409, 'PAUSED', 'This profile is paused or closed. Setup cannot show it to patients.')
+    }
     await prisma.doctor.update({ where: { id: ctx.doctor.id }, data: { active: true } })
     await prisma.clinicianOnboarding.update({ where: { userId: ctx.user.id }, data: { wentLiveAt: new Date() } })
     return { ok: true }

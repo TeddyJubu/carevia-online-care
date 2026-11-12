@@ -113,6 +113,15 @@ export const auth = betterAuth({
     log: (level, message) => console.error(`[auth] ${level}: ${message}`),
   },
   databaseHooks: {
+    session: {
+      create: {
+        before: async (session) => {
+          const row = await prisma.user.findUnique({ where: { id: session.userId }, select: { disabledAt: true } })
+          if (row?.disabledAt) reject('ACCOUNT_DISABLED', 'This login has been closed. Contact the Carevia team.')
+          return { data: session }
+        },
+      },
+    },
     user: {
       create: {
         before: async (user) => {

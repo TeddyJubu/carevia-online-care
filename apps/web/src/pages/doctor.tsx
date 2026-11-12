@@ -291,7 +291,7 @@ export function DoctorVisit() {
             </dl>
             <div className="flex items-center gap-3 border-t border-line pt-3"><DoctorAvatar doctor={a.doctor} size={36} /><span className="fine">{a.doctor.name} · {a.doctor.cedula}</span></div>
           </div>
-          {a.status === 'confirmed' && !a.outcome && (
+          {a.status === 'confirmed' && !a.outcome && Date.parse(a.startsAt) > now && (
             confirmCancel ? (
               <div className="card card-tight grid gap-3">
                 <p>Cancel the {hhmm(a.startsAt)} visit with {a.patient?.displayName ?? 'this patient'}?</p>
@@ -317,8 +317,10 @@ export function DoctorVisit() {
 export function DoctorProfile() {
   const gate = useLoad(() => api.onboarding(), [])
   const load = useLoad(() => api.schedule(), [])
-  const [busy, setBusy] = useState<number | 'add' | null>(null)
+  const [busy, setBusy] = useState<number | 'add' | 'timeoff' | 'request' | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [timeOffError, setTimeOffError] = useState<string | null>(null)
+  const [requestError, setRequestError] = useState<string | null>(null)
   const [date, setDate] = useState(() => addDays(lisbonDay(), 1))
   const [time, setTime] = useState('09:00')
   const [note, setNote] = useState<string | null>(null)
@@ -384,11 +386,13 @@ export function DoctorProfile() {
           <form className="card card-tight mt-6 grid gap-4" onSubmit={(e) => {
             e.preventDefault()
             const form = new FormData(e.currentTarget)
-            run('add', async () => {
-              const closed = await api.timeOff(String(form.get('offFrom')), String(form.get('offTo')))
-              setNote(`Closed ${closed.closed} open times. Booked visits were left as they were.`)
-              load.reload()
-            })
+            setNote(null)
+            setTimeOffError(null)
+            setBusy('timeoff')
+            api.timeOff(String(form.get('offFrom')), String(form.get('offTo')))
+              .then((closed) => { setNote(`Closed ${closed.closed} open times. Booked visits were left as they were.`); load.reload() })
+              .catch((err) => setTimeOffError(err instanceof ApiError ? err.message : 'Something went wrong.'))
+              .finally(() => setBusy(null))
           }}>
             <h2>Time off</h2>
             <p className="fine">Closes every open time in the range. If a visit is booked in it, we name the visits and close nothing.</p>
@@ -396,20 +400,24 @@ export function DoctorProfile() {
               <Field label="From" name="offFrom" type="date" required className="w-48" />
               <Field label="To" name="offTo" type="date" required className="w-48" />
             </div>
-            <button className="btn btn-secondary" type="submit" disabled={busy === 'add'}>Close these days</button>
+            <FormError error={timeOffError} />
+            <button className="btn btn-secondary" type="submit" disabled={busy === 'timeoff'}>Close these days</button>
           </form>
           <form className="card card-tight mt-4 grid gap-4" onSubmit={(e) => {
             e.preventDefault()
             const form = new FormData(e.currentTarget)
-            run('add', async () => {
-              await api.practiceRequest({
-                kind: String(form.get('kind')) === 'leave' ? 'leave' : 'pause',
-                from: String(form.get('pauseFrom') || ''),
-                until: String(form.get('pauseUntil') || ''),
-                message: String(form.get('note') || ''),
-              })
-              setNote('Request sent. Booked visits stay until the team deals with each one.')
+            setNote(null)
+            setRequestError(null)
+            setBusy('request')
+            api.practiceRequest({
+              kind: String(form.get('kind')) === 'leave' ? 'leave' : 'pause',
+              from: String(form.get('pauseFrom') || ''),
+              until: String(form.get('pauseUntil') || ''),
+              message: String(form.get('note') || ''),
             })
+              .then(() => setNote('Request sent. Booked visits stay until the team deals with each one.'))
+              .catch((err) => setRequestError(err instanceof ApiError ? err.message : 'Something went wrong.'))
+              .finally(() => setBusy(null))
           }}>
             <h2>Pause, or leave Carevia</h2>
             <p className="fine">This tells the Carevia team. It does not hide your profile or cancel a visit.</p>
@@ -420,7 +428,8 @@ export function DoctorProfile() {
               <Field label="Until" name="pauseUntil" type="date" className="w-48" />
             </div>
             <Field as="textarea" label="Message to the Carevia team (optional)" name="note" rows={3} hint="Operational only. Nothing clinical." />
-            <button className="btn btn-secondary" type="submit">Send request</button>
+            <FormError error={requestError} />
+            <button className="btn btn-secondary" type="submit" disabled={busy === 'request'}>{busy === 'request' ? 'Sending…' : 'Send request'}</button>
           </form>
           {note && <Notice className="mt-4" tone="ok">{note}</Notice>}
         </section>
