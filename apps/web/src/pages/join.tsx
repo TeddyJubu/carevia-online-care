@@ -61,7 +61,7 @@ export function JoinPage() {
   const [errors, setErrors] = useState<Errors>({})
   const [error, setError] = useState<string | null>(null)
   const [pending, setPending] = useState(false)
-  const [sent, setSent] = useState<string | null>(null)
+  const [sent, setSent] = useState<{ email: string; reference: string } | null>(null)
 
   function onSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault()
@@ -74,16 +74,32 @@ export function JoinPage() {
     }
     setPending(true)
     api.applyAsDoctor(body)
-      .then(() => { setSent(body.email); window.scrollTo({ top: 0 }) })
+      .then((res) => { setSent({ email: body.email, reference: res.reference }); window.scrollTo({ top: 0 }) })
       .catch((err) => setError(err instanceof ApiError ? err.message : 'Something went wrong. Please try again.'))
       .finally(() => setPending(false))
   }
 
   if (sent) {
+    const next = [
+      ['We verify', 'Cédula, identity, specialty'],
+      ['We invite you', 'An email sets up your login'],
+      ['You open your hours', 'Then patients can book you'],
+    ]
     return (
       <div className="page-narrow" role="status">
         <PageTitle eyebrow="For doctors" lede="We’ll check your cédula with your Ordem and call you within a few working days.">Application received</PageTitle>
-        <Notice tone="ok" className="mt-8"><span>We’ll write to <strong className="font-medium">{sent}</strong> if we need anything else.</span></Notice>
+        <ol className="mt-8 grid gap-5">
+          {next.map(([title, text], i) => (
+            <li key={title} className="flex gap-4">
+              <span className="eyebrow w-8 flex-none pt-[3px]">{String(i + 1).padStart(2, '0')}</span>
+              <span><strong className="font-medium">{title}</strong><span className="muted block mt-1">{text}</span></span>
+            </li>
+          ))}
+        </ol>
+        <Notice tone="ok" className="mt-8">
+          <span>We’ll write to <strong className="font-medium">{sent.email}</strong> if we need anything else. Your reference: <strong className="font-medium">{sent.reference}</strong></span>
+        </Notice>
+        <p className="fine mt-4">Quote that reference in any email. There is no status page and no login yet.</p>
         <div className="mt-8 flex flex-wrap gap-3">
           <a href="/?site" className="btn btn-secondary">Carevia homepage</a>
         </div>

@@ -366,6 +366,8 @@ model DoctorApplication {
   message         String   @default("")
   // new, contacted, approved or declined.
   status          String   @default("new")
+  // Public reference CV-APP-0001. Sequential, so an applicant can quote it. Not a login.
+  ref             Int      @unique @default(autoincrement())
   createdAt       DateTime @default(now())
 
   @@index([status, createdAt])

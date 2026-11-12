@@ -1,6 +1,14 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
-import { makeLimiter } from '../src/routes/doctor-applications.js'
+import { formatApplicationReference, makeLimiter } from '../src/routes/doctor-applications.js'
+
+test('application references are CV-APP- and at least four digits', () => {
+  assert.equal(formatApplicationReference(1), 'CV-APP-0001')
+  assert.equal(formatApplicationReference(42), 'CV-APP-0042')
+  assert.equal(formatApplicationReference(10000), 'CV-APP-10000')
+  assert.equal(formatApplicationReference(0), '')
+  assert.equal(formatApplicationReference('7'), '')
+})
 
 test('limiter allows max calls per key per window, then frees up', () => {
   let t = 0

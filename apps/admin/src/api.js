@@ -247,6 +247,10 @@ export function listDoctorApplications(status = '') {
   return request(`/api/admin/doctor-applications${status ? `?status=${encodeURIComponent(status)}` : ''}`)
 }
 
+export function getDoctorApplication(id) {
+  return request(`/api/admin/doctor-applications/${encodeURIComponent(id)}`)
+}
+
 export function setDoctorApplicationStatus(id, status) {
   return request(`/api/admin/doctor-applications/${encodeURIComponent(id)}`, { method: 'PATCH', body: { status } })
 }

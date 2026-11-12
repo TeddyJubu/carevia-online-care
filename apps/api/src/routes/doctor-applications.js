@@ -3,7 +3,28 @@ import { prisma } from '../prisma.js'
 import { sendError } from '../views.js'
 
 export const BODIES = ['medicos', 'psicologos', 'nutricionistas']
+export const BODY_LABELS = {
+  medicos: 'Ordem dos Médicos',
+  psicologos: 'Ordem dos Psicólogos',
+  nutricionistas: 'Ordem dos Nutricionistas',
+}
 export const APPLICATION_STATUSES = ['new', 'contacted', 'approved', 'declined']
+
+/** The reference an applicant quotes. CV-APP-0001, four digits, growing past 9999 without truncating. */
+export function formatApplicationReference(ref) {
+  if (typeof ref !== 'number' || !Number.isInteger(ref) || ref < 1) return ''
+  return `CV-APP-${String(ref).padStart(4, '0')}`
+}
+
+export function toApplication(row, groupName = '') {
+  const { ref, ...rest } = row
+  return {
+    ...rest,
+    reference: formatApplicationReference(ref),
+    bodyLabel: BODY_LABELS[row.body] || row.body,
+    groupName,
+  }
+}
 const text = (max) => ({ type: 'string', minLength: 1, maxLength: max })
 
 /** At most `max` calls per key in `windowMs`. Returns false once the key is over. */
@@ -51,14 +72,27 @@ export async function doctorApplicationRoutes(app) {
     if (!allow(request.ip)) return sendError(reply, 429, 'TOO_MANY_REQUESTS', 'Too many applications from this connection. Try again in an hour.')
     const { consent: _consent, ...data } = request.body
     const row = await prisma.doctorApplication.create({ data: { ...data, email: data.email.toLowerCase() } })
-    return reply.code(201).send({ id: row.id })
+    return reply.code(201).send({ id: row.id, reference: formatApplicationReference(row.ref) })
   })
 
   app.get('/api/admin/doctor-applications', async (request, reply) => {
     if (!(await requireRole(request, reply, ['admin']))) return
     const status = APPLICATION_STATUSES.includes(request.query.status) ? request.query.status : undefined
     const applications = await prisma.doctorApplication.findMany({ where: { status }, orderBy: { createdAt: 'desc' }, take: 200 })
-    return { applications }
+    const names = await groupNames(applications)
+    return { applications: applications.map((row) => toApplication(row, names.get(row.groupSlug) || '')) }
+  })
+
+  app.get('/api/admin/doctor-applications/:id', {
+    schema: {
+      params: { type: 'object', required: ['id'], properties: { id: { type: 'string', minLength: 1, maxLength: 64 } } },
+    },
+  }, async (request, reply) => {
+    if (!(await requireRole(request, reply, ['admin']))) return
+    const found = await prisma.doctorApplication.findUnique({ where: { id: request.params.id } })
+    if (!found) return sendError(reply, 404, 'NOT_FOUND', 'Application not found.')
+    const names = await groupNames([found])
+    return { application: toApplication(found, names.get(found.groupSlug) || '') }
   })
 
   app.patch('/api/admin/doctor-applications/:id', {
@@ -71,6 +105,14 @@ export async function doctorApplicationRoutes(app) {
     const found = await prisma.doctorApplication.findUnique({ where: { id: request.params.id } })
     if (!found) return sendError(reply, 404, 'NOT_FOUND', 'Application not found.')
     const application = await prisma.doctorApplication.update({ where: { id: found.id }, data: { status: request.body.status } })
-    return { application }
+    const names = await groupNames([application])
+    return { application: toApplication(application, names.get(application.groupSlug) || '') }
   })
+}
+
+async function groupNames(rows) {
+  const slugs = [...new Set(rows.map((row) => row.groupSlug).filter(Boolean))]
+  if (!slugs.length) return new Map()
+  const groups = await prisma.serviceGroup.findMany({ where: { slug: { in: slugs } }, select: { slug: true, name: true } })
+  return new Map(groups.map((group) => [group.slug, group.name]))
 }

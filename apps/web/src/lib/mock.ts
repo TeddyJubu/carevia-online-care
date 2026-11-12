@@ -267,6 +267,7 @@ const PLATE: Record<string, [string[], string]> = {
   treatments: [["Skin, hair loss or ongoing pain", "Reviewing a treatment you’ve started", "Prescription is often the outcome"], "Specialist care: when you still need a diagnosis."],
   renewals: [["You already know what you need", "Lab tests or a repeat prescription", "Results arrive in your account"], "Certificates & assessments: for written statements."],
 }
+on('POST', '/api/doctor-applications', () => ok({ id: 'app-demo', reference: 'CV-APP-0007' }, 201))
 on('GET', '/api/services', () => {
   const today = lisbonDay()
   const days = Array.from({ length: 7 }, (_, i) => addDays(today, i))

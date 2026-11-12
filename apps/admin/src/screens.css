@@ -1,1 +1,4 @@
 /* Patients, Services, Appointments and Daily screen states (owned by the screens pass). */
+.application-facts { display: grid; gap: 22px; }
+.application-facts h2, .page .card .application-facts + div h2 { font-size: 18px; letter-spacing: 0; }
+.application-facts p { margin: 0; }

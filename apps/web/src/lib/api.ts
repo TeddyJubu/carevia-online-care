@@ -91,7 +91,7 @@ export const api = {
   },
   services: () => get<{ today: string; groups: ServiceGroup[] }>('/api/services'),
   /** The public doctor registration form (/app/join). Creates an application for admin review, not a login. */
-  applyAsDoctor: (b: Record<string, unknown>) => post<{ id: string }>('/api/doctor-applications', b),
+  applyAsDoctor: (b: Record<string, unknown>) => post<{ id: string; reference: string }>('/api/doctor-applications', b),
   doctors: (f: { groupSlug?: GroupSlug; service?: string; language?: string; sort?: 'first-available' }) =>
     get<{ doctors: Doctor[] }>(`/api/doctors${qs(f)}`),
   doctor: (id: number) => get<{ doctor: Doctor }>(`/api/doctors/${id}`),
