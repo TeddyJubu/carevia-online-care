@@ -27,6 +27,7 @@ jobs:
       DATABASE_URL: postgresql://carevia:carevia@127.0.0.1:5432/carevia
       BETTER_AUTH_SECRET: ci-only-not-a-real-secret-0123456789abcdef
       DAILY_API_URL: http://127.0.0.1:4090/v1 # the smoke script's fake Daily
+      HOLD_LIMIT: 1000 # the smoke makes ~17 holds from one IP; production keeps the default 10
       LOG_LEVEL: warn
     steps:
       - uses: actions/checkout@v5
