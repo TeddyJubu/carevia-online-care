@@ -176,7 +176,7 @@ td.k{font:10px ui-monospace,Menlo,monospace;text-transform:uppercase;color:var(-
  <div class="ph"><div><div class="kick">Section 1</div><h2>The journey in four parts</h2><p class="lead">A doctor touches Carevia in four parts. Onboarding (part 2) happens once; the working day (part 3) is where the product must stay out of the way.</p></div></div>
  <div class="stagebar">
   <div class="stg"><span class="big">1</span><b>Apply and be verified</b><span class="p">Join Carevia, apply in five minutes. Carevia checks the c&eacute;dula with the Ordem, identity, specialty and insurance, then decides.</span><span class="spacer"></span><span class="kick">D01&ndash;A02</span><span style="font-size:10px"><i class="dot lo" style="width:9px;height:9px;border:2px solid var(--ink);border-radius:50%;display:inline-block;margin-right:5px"></i>Careful, human-paced</span></div>
-  <div class="stg"><span class="big">2</span><b>Get a login and set up</b><span class="p">An admin creates the profile and sends an invite. The doctor sets a password, secures the account, checks the public profile, accepts how Carevia work works, opens hours, tests the camera.</span><span class="spacer"></span><span class="kick">A03&ndash;D10</span><span style="font-size:10px"><i class="dot" style="width:10px;height:10px;border-radius:50%;background:var(--ink);display:inline-block;margin-right:5px"></i>Guided, resumable</span></div>
+  <div class="stg"><span class="big">2</span><b>Get a login and set up</b><span class="p">An admin creates the profile and sends an invite. The doctor sets a password, secures the account, checks the public profile, accepts how Carevia works, opens hours, tests the camera.</span><span class="spacer"></span><span class="kick">A03&ndash;D10</span><span style="font-size:10px"><i class="dot" style="width:10px;height:10px;border-radius:50%;background:var(--ink);display:inline-block;margin-right:5px"></i>Guided, resumable</span></div>
   <div class="stg"><span class="big">3</span><b>The working day</b><span class="p">Agenda, prepare, call as room owner, one of four outcomes, write it up in iMED. Repeated daily.</span><span class="spacer"></span><span class="kick">D11&ndash;D15</span><span style="font-size:10px"><i class="dot" style="width:10px;height:10px;border-radius:50%;background:var(--ink);display:inline-block;margin-right:5px"></i>Fast, quiet</span></div>
   <div class="stg"><span class="big">4</span><b>Run the practice, then leave well</b><span class="p">Hours, time off, history, account. Pausing or leaving never strands a booked patient.</span><span class="spacer"></span><span class="kick">D16&ndash;A04</span><span style="font-size:10px"><i class="dot lo" style="width:9px;height:9px;border:2px solid var(--ink);border-radius:50%;display:inline-block;margin-right:5px"></i>Self-serve, reversible</span></div>
  </div>
@@ -204,16 +204,19 @@ td.k{font:10px ui-monospace,Menlo,monospace;text-transform:uppercase;color:var(-
       <div><div class="t s">Consult from where you work</div><div class="p">Secure video in the browser. Nothing to install.</div></div>
       <div><div class="t s">Your notes stay in iMED</div><div class="p">Carevia handles booking, payment and the call.</div></div>
       <div><div class="t s">You choose your hours</div><div class="p">Patients pay before a visit is confirmed.</div></div>
-      <div class="box dash" style="position:relative"><div class="t s">Before you apply<span class="mk abs" style="top:-9px;right:-9px">1</span></div><div class="p">A current c&eacute;dula with your Ordem. A private, quiet space for calls. A computer or tablet with camera and microphone.</div></div>
+      <div><div class="t s">Not an emergency service</div><div class="p">Patients are told to call 112 in an emergency. You decide what, if anything, to issue.</div></div>
+      <div class="box dash" style="position:relative"><div class="t s">Before you apply<span class="mk abs" style="top:-9px;right:-9px">1</span></div><div class="p">A current c&eacute;dula with your Ordem. You practise within your competence. A private, quiet space for calls. A computer or tablet with camera and microphone.</div></div>
       <div class="p">Already work with Carevia? <u>Sign in to your agenda</u></div>
      </div>
      <div class="box dark col" style="gap:7px;align-self:start">
       <div class="t m">Doctor registration</div>
-      <div><div class="lbl">First name</div><div class="field">&nbsp;</div></div>
-      <div><div class="lbl">Email</div><div class="field">&nbsp;</div></div>
+      <div class="row" style="gap:6px"><div style="flex:1"><div class="lbl">First name</div><div class="field">&nbsp;</div></div><div style="flex:1"><div class="lbl">Last name</div><div class="field">&nbsp;</div></div></div>
+      <div class="row" style="gap:6px"><div style="flex:1"><div class="lbl">Email</div><div class="field">&nbsp;</div></div><div style="flex:1"><div class="lbl">Mobile number</div><div class="field">&nbsp;</div></div></div>
       <div><div class="lbl">Professional body</div><div class="field">Choose one</div></div>
       <div><div class="lbl">C&eacute;dula profissional</div><div class="field">&nbsp;</div></div>
-      <div><div class="lbl">Area of care</div><div class="field">Not sure yet</div></div>
+      <div><div class="lbl">Specialty</div><div class="field">&nbsp;</div></div>
+      <div class="row" style="gap:6px"><div style="flex:1"><div class="lbl">Area of care</div><div class="field">Not sure yet</div></div><div style="flex:1"><div class="lbl">Years in practice</div><div class="field">&nbsp;</div></div></div>
+      <div><div class="lbl">Languages &middot; Anything else (optional)</div><div class="field">&nbsp;</div></div>
       <div class="chk"><i></i><span>Carevia may store these details and check my c&eacute;dula with my Ordem.</span></div>
       <span class="btn d" style="align-self:stretch;position:relative">Send application<span class="mk abs" style="top:-9px;right:-9px">2</span></span>
       <div class="p" style="position:relative">What happens next: we verify, we invite you by email, you set up your login.<span class="mk abs" style="top:-9px;right:-9px">2</span></div>
@@ -252,7 +255,7 @@ td.k{font:10px ui-monospace,Menlo,monospace;text-transform:uppercase;color:var(-
    <div class="vp">
     <div class="mono">Doctor applications &middot; New</div>
     <div class="t l">Dr Firstname Lastname</div>
-    <div class="p">Received 3 Nov 2026 &middot; Ordem dos M&eacute;dicos &middot; C&eacute;dula 00000</div>
+    <div class="p">Received 3 Nov 2026 &middot; Ordem dos M&eacute;dicos &middot; C&eacute;dula DEMO-CEDULA-00000</div>
     <div class="g2">
      <div class="box"><div class="lbl">Contact</div><div class="p" style="color:var(--ink)">doctor@example.com<br>+351 900 000 000</div></div>
      <div class="box"><div class="lbl">Practice</div><div class="p" style="color:var(--ink)">General and family medicine<br>8 years &middot; Portuguese, English<br>Area: General &amp; urgent care</div></div>
@@ -280,13 +283,14 @@ td.k{font:10px ui-monospace,Menlo,monospace;text-transform:uppercase;color:var(-
   <div class="browser new"><div class="chrome"><i></i><i></i><i></i><span class="url">Admin &middot; Application &middot; Verification</span></div>
    <div class="vp">
     <div class="t m">Verification</div>
-    <div class="p">Each tick records who checked it, and when. These are launch gates, not paperwork: ERS registration, a verified c&eacute;dula, insurance.</div>
+    <div class="p">Each tick records who checked it, and when. These are launch gates, not paperwork: a verified c&eacute;dula, insurance, ERS registration.</div>
     <div class="col" style="gap:6px;margin-top:4px">
      <div class="task done"><i class="n" style="font-style:normal">&#10003;</i><div><b class="t s">C&eacute;dula checked with the Ordem</b><div class="p">Number and body match the application. Admin name &middot; 4 Nov</div></div></div>
      <div class="task done"><i class="n" style="font-style:normal">&#10003;</i><div><b class="t s">Identity matches the c&eacute;dula holder</b><div class="p">Checked on the introductory call.</div></div></div>
      <div class="task"><i class="n" style="font-style:normal">3</i><div style="flex:1"><b class="t s">Specialty and area within competence</b><div class="p">General and family medicine in General &amp; urgent care.</div></div><span class="btn o" style="padding:4px 10px">Tick</span></div>
      <div class="task"><i class="n" style="font-style:normal">4</i><div style="flex:1"><b class="t s">Liability insurance confirmed</b><div class="p">Record &ldquo;confirmed&rdquo; and the date. Do not store policy files.</div></div><span class="btn o" style="padding:4px 10px">Tick</span></div>
-     <div class="task"><i class="n" style="font-style:normal">5</i><div style="flex:1"><b class="t s">Introductory call done</b><div class="p">Hours, services, how Carevia work works.</div></div><span class="btn o" style="padding:4px 10px">Tick</span></div>
+     <div class="task"><i class="n" style="font-style:normal">5</i><div style="flex:1"><b class="t s">ERS registration in place</b><div class="p">Carevia&rsquo;s registration with the ERS covers this doctor&rsquo;s activity. Record &ldquo;confirmed&rdquo; and the date.</div></div><span class="btn o" style="padding:4px 10px">Tick</span></div>
+     <div class="task"><i class="n" style="font-style:normal">6</i><div style="flex:1"><b class="t s">Introductory call done</b><div class="p">Hours, services, how Carevia works.</div></div><span class="btn o" style="padding:4px 10px">Tick</span></div>
     </div>
     <div class="spacer"></div>
     <div class="row"><span class="btn dis">Approve</span><span class="p">Approve opens the invite (A03).</span><span class="mk">1</span></div>
@@ -295,11 +299,11 @@ td.k{font:10px ui-monospace,Menlo,monospace;text-transform:uppercase;color:var(-
   <div class="browser new"><div class="chrome"><i></i><i></i><i></i><span class="url">Admin &middot; Doctors &middot; Doctor &middot; Login</span></div>
    <div class="vp">
     <div class="t m">Doctor login</div>
-    <div class="box"><div class="li"><b>Profile</b><span>Dr Firstname Lastname &middot; Hidden</span></div><div class="li" style="border:none"><b>Shown to patients</b><span>Not yet. Goes live at the end of onboarding.</span></div></div>
-    <div class="box dash" style="position:relative"><div class="t s">Login<span class="mk abs" style="top:-9px;right:-9px">2</span></div>
+    <div class="box"><div class="t s">1 &middot; Doctor profile</div><div class="p" style="margin-top:2px">Pre-filled from the application. Add fee, service, experience, training.</div><div class="row" style="gap:6px;margin-top:5px"><div style="flex:1"><div class="lbl">Name &middot; specialty</div><div class="field"><b>Dr Firstname Lastname</b></div></div><div style="flex:1"><div class="lbl">Fee</div><div class="field"><b>&euro;45</b></div></div></div><div class="row" style="gap:6px;margin-top:5px"><div style="flex:1"><div class="lbl">Date of birth (checked on the call)</div><div class="field">DD/MM/YYYY</div></div><span class="btn d" style="padding:4px 10px;align-self:flex-end">Save profile (hidden)</span></div><div class="p" style="margin-top:4px">Saved once per application. Reopening it opens this doctor, never a copy. Not shown to patients until onboarding ends.</div></div>
+    <div class="box dash" style="position:relative"><div class="t s">2 &middot; Login<span class="mk abs" style="top:-9px;right:-9px">2</span></div>
      <div class="chk"><i class="x"></i><span><b>No login yet</b><br><span>Send an invite to set up the doctor&rsquo;s login.</span></span></div>
      <div><div class="lbl">Invite email</div><div class="field"><b>doctor@example.com</b></div></div>
-     <div class="row" style="margin-top:6px"><span class="btn d">Send invite</span><span class="p">Creates the clinician login, linked to this profile. The link expires and works once.</span></div>
+     <div class="row" style="margin-top:6px"><span class="btn d">Send invite</span><span class="p">Enabled once the profile is saved. Creates the clinician login, linked to this profile. The link expires and works once.</span></div>
     </div>
     <div class="box"><div class="t s">After the invite</div><div class="p" style="margin-top:3px">Invite sent 4 Nov &middot; Email verified: no &middot; Two-factor: off</div><div class="row" style="margin-top:6px"><span class="btn o" style="padding:4px 10px">Resend</span><span class="btn q" style="padding:4px 10px">Revoke</span></div></div>
     <div class="warn">One login per doctor. A patient account cannot become a clinician account here.<span class="mk" style="margin-left:6px">3</span></div>
@@ -342,7 +346,7 @@ td.k{font:10px ui-monospace,Menlo,monospace;text-transform:uppercase;color:var(-
      <div class="task done"><i class="n" style="font-style:normal">&#10003;</i><div style="flex:1"><b class="t s">Set your password</b><div class="p">Done.</div></div></div>
      <div class="task"><i class="n" style="font-style:normal">2</i><div style="flex:1"><b class="t s">Secure your account</b><div class="p">Verify your email and turn on two-factor login.</div></div><span class="btn d" style="padding:5px 12px">Start</span></div>
      <div class="task todo"><i class="n" style="font-style:normal">3</i><div style="flex:1"><b class="t s">Check your public profile</b><div class="p">See exactly what patients see.</div></div><span class="btn o" style="padding:5px 12px">Open</span></div>
-     <div class="task todo"><i class="n" style="font-style:normal">4</i><div style="flex:1"><b class="t s">How Carevia work works</b><div class="p">Six short statements to read and accept.</div></div></div>
+     <div class="task todo"><i class="n" style="font-style:normal">4</i><div style="flex:1"><b class="t s">How Carevia works</b><div class="p">Six short statements to read and accept.</div></div></div>
      <div class="task todo"><i class="n" style="font-style:normal">5</i><div style="flex:1"><b class="t s">Open your hours and test your camera</b><div class="p">Then your profile goes live.</div></div></div>
     </div>
     <div class="spacer"></div>
@@ -366,7 +370,7 @@ td.k{font:10px ui-monospace,Menlo,monospace;text-transform:uppercase;color:var(-
    <div class="vp">
     <div class="mono">Step 2 of 5 &middot; Secure your account</div>
     <div class="t l">Two checks before your first visit</div>
-    <div class="task done"><i class="n" style="font-style:normal">&#10003;</i><div style="flex:1"><b class="t s">Email verified</b><div class="p">doctor@example.com. Booking and cancellation emails come here.</div></div></div>
+    <div class="task"><i class="n" style="font-style:normal">1</i><div style="flex:1"><b class="t s">Verify your email</b><div class="p">We sent a link to doctor@example.com. Booking and cancellation emails come here.</div><div class="row" style="margin-top:6px"><span class="btn o" style="padding:4px 10px">Resend the link</span><span class="p">Not verified yet</span></div></div></div>
     <div class="task"><i class="n" style="font-style:normal">2</i><div style="flex:1"><b class="t s">Two-factor login</b><div class="p">After your password, a code from an authenticator app on your phone. Required for clinician accounts.</div>
     <div class="row" style="margin-top:6px"><span class="btn d" style="padding:5px 12px">Turn on two-factor</span></div></div></div>
     <div class="box"><div class="lbl">Authenticator code</div><div class="field" style="width:150px">6-digit code</div><div class="p" style="margin-top:5px">Then we show backup codes to keep somewhere safe.</div></div>
@@ -379,11 +383,11 @@ td.k{font:10px ui-monospace,Menlo,monospace;text-transform:uppercase;color:var(-
     <div class="mono">Step 3 of 5 &middot; Your public profile</div>
     <div class="t l">This is what patients see</div>
     <div class="box dark col" style="gap:7px;position:relative">
-     <div class="row"><i class="av" style="width:46px;height:46px"></i><div><b class="t m">Dr Firstname Lastname</b><div class="p">General practitioner &middot; C&eacute;dula 00000</div></div><span class="chip" style="margin-left:auto">From &euro;45</span></div>
+     <div class="row"><i class="av" style="width:46px;height:46px"></i><div><b class="t m">Dr Firstname Lastname</b><div class="p">General practitioner &middot; C&eacute;dula DEMO-CEDULA-00000</div></div><span class="chip" style="margin-left:auto">From &euro;45</span></div>
      <div class="li"><b>Languages</b><span>Portuguese &middot; English</span></div>
      <div class="li"><b>Experience</b><span>8 years</span></div>
      <div class="li" style="border:none"><b>Training</b><span>Illustrative text, from your application.</span></div>
-     <div class="p">Your name, c&eacute;dula, specialty and fee are the verified ones. They are not editable here.</div>
+     <div class="p">Your name, c&eacute;dula and specialty are the verified ones. The fee is set by Carevia. None of these are editable here.</div>
      <span class="mk abs" style="top:-9px;right:-9px">2</span>
     </div>
     <div><div class="lbl">Languages, experience, about your practice</div><div class="field" style="min-height:48px">You can edit these three. They go live when you save.</div></div>
@@ -394,7 +398,7 @@ td.k{font:10px ui-monospace,Menlo,monospace;text-transform:uppercase;color:var(-
  </div>
  <div class="g3" style="margin-top:5mm;font-size:11px;line-height:1.45">
   <div class="note"><span class="mk">1</span><p><b>Two-factor without a dead end</b><br><span style="color:var(--mid)">Outside demo mode the agenda already refuses clinicians without it. Here it is a guided step, not a 403.</span></p></div>
-  <div class="note"><span class="mk">2</span><p><b>Verified fields stay locked</b><br><span style="color:var(--mid)">Name, c&eacute;dula, specialty, area and fee are what the Ordem check confirmed. Patients must be able to trust them.</span></p></div>
+  <div class="note"><span class="mk">2</span><p><b>Verified fields stay locked</b><br><span style="color:var(--mid)">Name, c&eacute;dula and specialty are what the Ordem check confirmed; area and fee are set by Carevia. Patients must be able to trust them.</span></p></div>
   <div class="note"><span class="mk">3</span><p><b>Flag, don&rsquo;t chat</b><br><span style="color:var(--mid)">One button, a short message to the team, nothing clinical. The same flag lives on D16 after onboarding.</span></p></div>
  </div>
  <div class="foot"><span>Carevia &middot; Doctors journey and wireframes</span><span>D05 &middot; D06</span></div>
@@ -402,7 +406,7 @@ td.k{font:10px ui-monospace,Menlo,monospace;text-transform:uppercase;color:var(-
 
 <!-- ================= 8 D07 D08 ================= -->
 <section class="page">
- <div class="ph"><div><div class="kick">Section 3 &middot; Onboarding</div><h2>D07 &middot; How Carevia work works &nbsp;&amp;&nbsp; D08 &middot; Open your first hours</h2></div><span class="tag new">New screens</span></div>
+ <div class="ph"><div><div class="kick">Section 3 &middot; Onboarding</div><h2>D07 &middot; How Carevia works &nbsp;&amp;&nbsp; D08 &middot; Open your first hours</h2></div><span class="tag new">New screens</span></div>
  <div class="g2" style="flex:1">
   <div class="browser new"><div class="chrome"><i></i><i></i><i></i><span class="url">carevia&hellip;/app/doctor/welcome/agreement</span></div>
    <div class="vp">
@@ -416,7 +420,8 @@ td.k{font:10px ui-monospace,Menlo,monospace;text-transform:uppercase;color:var(-
      <div class="chk"><i></i><span><b>Poor quality ends the visit.</b> <span>If sound or picture is too poor for a safe opinion, end it, record the Carevia outcome, and write the reason in iMED.</span></span></div>
      <div class="chk"><i></i><span><b>Not an emergency service.</b> <span>Patients are told to call 112 in an emergency. You see patients who are in mainland Portugal.</span></span></div>
     </div>
-    <span class="btn d" style="align-self:flex-start;position:relative">I have read and accept these<span class="mk abs" style="top:-9px;right:-9px">1</span></span>
+    <span class="btn dis" style="align-self:flex-start;position:relative">I have read and accept these<span class="mk abs" style="top:-9px;right:-9px">1</span></span>
+    <div class="p">Turns on when all six are ticked.</div>
     <div class="p">Version and time are stored, as with patient consent. The text is a draft for Carevia&rsquo;s lawyer.</div>
    </div>
   </div>
@@ -429,8 +434,8 @@ td.k{font:10px ui-monospace,Menlo,monospace;text-transform:uppercase;color:var(-
      <div class="row" style="margin-top:6px;flex-wrap:wrap"><span class="chip on">Mon</span><span class="chip on">Tue</span><span class="chip">Wed</span><span class="chip on">Thu</span><span class="chip">Fri</span><span class="chip">Sat</span><span class="chip">Sun</span></div>
      <div class="row" style="margin-top:7px"><div style="flex:1"><div class="lbl">From</div><div class="field"><b>09:00</b></div></div><div style="flex:1"><div class="lbl">To</div><div class="field"><b>13:00</b></div></div><span class="btn o" style="padding:5px 12px">Apply to next 3 weeks</span></div>
     </div>
-    <div class="box"><div class="li"><b>Mon 10 Nov</b><span><span class="chip on">09:00</span> <span class="chip on">09:30</span> <span class="chip">10:00</span> <span class="chip on">10:30</span></span></div>
-    <div class="li" style="border:none"><b>Tue 11 Nov</b><span><span class="chip on">09:00</span> <span class="chip on">09:30</span> <span class="chip on">10:00</span></span></div>
+    <div class="box"><div class="li"><b>Mon 9 Nov</b><span><span class="chip on">09:00</span> <span class="chip on">09:30</span> <span class="chip">10:00</span> <span class="chip on">10:30</span></span></div>
+    <div class="li" style="border:none"><b>Tue 10 Nov</b><span><span class="chip on">09:00</span> <span class="chip on">09:30</span> <span class="chip on">10:00</span></span></div>
     <div class="p" style="margin-top:5px">Dark times are open. Tap one to close it. Visits last 30 minutes.</div></div>
     <div class="spacer"></div>
     <div class="row"><span class="btn d">Save hours</span><span class="p">At least one future open time is needed to finish.<span class="mk" style="margin-left:5px">3</span></span></div>
@@ -459,10 +464,12 @@ td.k{font:10px ui-monospace,Menlo,monospace;text-transform:uppercase;color:var(-
      <div class="chk"><i class="x"></i><span><b>Camera</b> <span>Patients need usable light on your face.</span></span></div>
      <div class="chk"><i class="x"></i><span><b>Microphone</b> <span>Say a sentence. We show the level here.</span></span></div>
      <div class="chk"><i></i><span><b>Speaker</b> <span>Play the test sound.</span></span></div>
+     <div class="chk"><i class="x"></i><span><b>Browser</b> <span>Supported, with camera and microphone allowed.</span></span></div>
     </div>
     <div class="box"><div class="t s">One more sign-in</div><div class="p" style="margin-top:3px">Your clinical record opens in iMED, with iMED&rsquo;s own login. Carevia never asks for that password.<span class="mk" style="margin-left:5px">1</span></div><span class="btn o" style="padding:4px 10px;margin-top:6px">Open iMED</span></div>
     <div class="spacer"></div>
-    <span class="btn d" style="align-self:flex-start">Everything works</span>
+    <span class="btn dis" style="align-self:flex-start">Everything works</span>
+    <div class="p">Turns on when all four checks pass. Speaker is still to do.</div>
    </div>
   </div>
   <div class="browser new"><div class="chrome"><i></i><i></i><i></i><span class="url">carevia&hellip;/app/doctor/welcome/ready</span></div>
@@ -471,10 +478,10 @@ td.k{font:10px ui-monospace,Menlo,monospace;text-transform:uppercase;color:var(-
     <div class="t xl">You&rsquo;re ready to see patients</div>
     <div class="box dark col" style="gap:6px">
      <div class="chk"><i class="x"></i><span>Account secured <span>(email verified, two-factor on)</span></span></div>
-     <div class="chk"><i class="x"></i><span>Public profile checked <span>(Dr Firstname Lastname, C&eacute;dula 00000)</span></span></div>
+     <div class="chk"><i class="x"></i><span>Public profile checked <span>(Dr Firstname Lastname, C&eacute;dula DEMO-CEDULA-00000)</span></span></div>
      <div class="chk"><i class="x"></i><span>Clinician agreement accepted <span>(version, date)</span></span></div>
      <div class="chk"><i class="x"></i><span>Hours open <span>(12 times in the next 3 weeks)</span></span></div>
-     <div class="chk"><i class="x"></i><span>Camera and microphone tested</span></div>
+     <div class="chk"><i class="x"></i><span>Device check passed <span>(camera, microphone, speaker, browser)</span></span></div>
     </div>
     <span class="btn d" style="align-self:flex-start;position:relative">Start seeing patients<span class="mk abs" style="top:-9px;right:-9px">2</span></span>
     <div class="p">This turns your profile on. Patients can now book your open times. Turn it off any time from Your profile.</div>
@@ -498,8 +505,8 @@ td.k{font:10px ui-monospace,Menlo,monospace;text-transform:uppercase;color:var(-
  <div class="sp">
   <div class="browser ext"><div class="chrome"><i></i><i></i><i></i><span class="url">carevia&hellip;/app/doctor</span></div>
    <div class="vp">
-    <div class="row"><div><div class="mono">General practitioner &middot; C&eacute;dula 00000</div><div class="t l">Dr Firstname Lastname</div></div><span style="margin-left:auto" class="row"><span class="btn o" style="padding:5px 12px">Profile and open times</span><span class="btn o" style="padding:5px 12px">Open iMED</span></span></div>
-    <div class="row" style="gap:5px;position:relative"><span class="chip">Mon 10</span><span class="chip">Tue 11</span><span class="chip on">Today &middot; 3</span><span class="chip">Thu 13 &middot; 2</span><span class="chip">Fri 14</span><span class="chip">Sat 15</span><span class="chip">Sun 16 &middot; 1</span><span class="field" style="padding:3px 8px;margin-left:auto">12/11/2026</span><span class="mk abs" style="top:-9px;right:-9px">1</span></div>
+    <div class="row"><div><div class="mono">General practitioner &middot; C&eacute;dula DEMO-CEDULA-00000</div><div class="t l">Dr Firstname Lastname</div></div><span style="margin-left:auto" class="row"><span class="btn o" style="padding:5px 12px">Profile and open times</span><span class="btn o" style="padding:5px 12px">Open iMED</span></span></div>
+    <div class="row" style="gap:5px;position:relative"><span class="chip">Mon 9</span><span class="chip">Tue 10</span><span class="chip">Wed 11</span><span class="chip on">Today &middot; 3</span><span class="chip">Fri 13 &middot; 2</span><span class="chip">Sat 14</span><span class="chip">Sun 15 &middot; 1</span><span class="field" style="padding:3px 8px;margin-left:auto">12/11/2026</span><span class="mk abs" style="top:-9px;right:-9px">1</span></div>
     <div class="t m">Today, 12 November</div>
     <div class="p">3 visits &middot; next at 10:10 &middot; <b style="color:var(--ink)">1 outcome to record</b><span class="mk" style="margin-left:5px">2</span></div>
     <div class="col" style="gap:7px">
@@ -565,7 +572,7 @@ td.k{font:10px ui-monospace,Menlo,monospace;text-transform:uppercase;color:var(-
   <div class="browser ext"><div class="chrome"><i></i><i></i><i></i><span class="url">carevia&hellip;/app/doctor/profile</span></div>
    <div class="vp">
     <div class="p"><u>Back to your agenda</u></div>
-    <div class="mono">General practitioner &middot; C&eacute;dula 00000</div>
+    <div class="mono">General practitioner &middot; C&eacute;dula DEMO-CEDULA-00000</div>
     <div class="t l">Your profile</div>
     <div class="box dark col" style="gap:6px;position:relative">
      <div class="row"><i class="av" style="width:44px;height:44px"></i><div><b class="t s">Dr Firstname Lastname</b><div class="p">General &amp; urgent care</div></div><span class="chip on" style="margin-left:auto">Shown to patients</span></div>
@@ -610,11 +617,11 @@ td.k{font:10px ui-monospace,Menlo,monospace;text-transform:uppercase;color:var(-
     <div class="t m">Visit history</div>
     <div class="p">What Carevia handled. The clinical record is in iMED.</div>
     <div class="col" style="gap:0">
-     <div class="li"><span><b>11 Nov &middot; 09:00</b><br><span class="p">Patient Name &middot; General</span></span><span class="chip">Completed</span></div>
-     <div class="li"><span><b>11 Nov &middot; 09:30</b><br><span class="p">Patient Name &middot; Follow-up</span></span><span class="chip">Needs in-person</span></div>
-     <div class="li"><span><b>10 Nov &middot; 14:00</b><br><span class="p">Patient Name &middot; General</span></span><span class="chip">Didn&rsquo;t join</span></div>
-     <div class="li"><span><b>10 Nov &middot; 15:00</b><br><span class="p">Patient Name &middot; General</span></span><span class="chip">Cancelled</span></div>
-     <div class="li" style="border:none"><span><b>09 Nov &middot; 10:00</b><br><span class="p">Patient Name &middot; General</span></span><span class="chip">Completed</span></div>
+     <div class="li"><span><b>11 Nov &middot; 09:00</b><br><span class="p">Patient Name &middot; General &middot; &euro;45</span></span><span class="chip">Completed</span></div>
+     <div class="li"><span><b>11 Nov &middot; 09:30</b><br><span class="p">Patient Name &middot; Follow-up &middot; &euro;45</span></span><span class="chip">Needs in-person</span></div>
+     <div class="li"><span><b>10 Nov &middot; 14:00</b><br><span class="p">Patient Name &middot; General &middot; &euro;45</span></span><span class="chip">Didn&rsquo;t join</span></div>
+     <div class="li"><span><b>10 Nov &middot; 15:00</b><br><span class="p">Patient Name &middot; General &middot; &euro;0, refunded</span></span><span class="chip">Cancelled</span></div>
+     <div class="li" style="border:none"><span><b>09 Nov &middot; 10:00</b><br><span class="p">Patient Name &middot; General &middot; &euro;45</span></span><span class="chip">Completed</span></div>
     </div>
     <div class="spacer"></div>
     <div class="p">Rows open the visit read-only. No notes, no documents here.<span class="mk" style="margin-left:5px">1</span></div>
@@ -624,10 +631,11 @@ td.k{font:10px ui-monospace,Menlo,monospace;text-transform:uppercase;color:var(-
    <div class="vp">
     <div class="t m">Account and security</div>
     <div class="p">Your Carevia login. Your public profile is under Your profile.</div>
-    <div><div class="lbl">Sign-in email</div><div class="field"><b>doctor@example.com</b></div></div>
+    <div><div class="lbl">Sign-in email</div><div class="row" style="gap:6px"><div class="field" style="flex:1"><b>doctor@example.com</b></div><span class="btn o" style="padding:4px 10px">Change</span></div></div>
     <div><div class="lbl">Mobile (booking emails and sign-in codes)</div><div class="field"><b>+351 900 000 000</b></div></div>
     <div class="box"><div class="t s">Password</div><div class="p" style="margin-top:3px">Last changed 5 Nov.</div><span class="btn o" style="padding:4px 10px;margin-top:5px">Change password</span></div>
     <div class="box"><div class="t s">Two-factor login</div><div class="p" style="margin-top:3px">On. Backup codes kept.</div><span class="btn o" style="padding:4px 10px;margin-top:5px">Manage</span></div>
+    <div class="box"><div class="t s">Signed-in devices</div><div class="p" style="margin-top:3px">This browser &middot; 1 other device</div><span class="btn o" style="padding:4px 10px;margin-top:5px">Sign out other devices</span></div>
     <div class="spacer"></div>
     <div class="p">The patient profile screens, opened to the clinician role. Nothing here touches iMED.<span class="mk" style="margin-left:5px">2</span></div>
    </div>
@@ -659,7 +667,7 @@ td.k{font:10px ui-monospace,Menlo,monospace;text-transform:uppercase;color:var(-
  <div class="ph"><div><div class="kick">Section 5 &middot; Mobile</div><h2>The doctor&rsquo;s day, on a phone</h2></div><div class="legend" style="font-size:10px"><span><i class="sw" style="width:20px;height:14px"></i>Exists</span><span><i class="sw d" style="width:20px;height:14px"></i>New</span></div></div>
  <div class="phones">
   <div class="scr"><div class="phone new">
-   <div class="mono">Set up &middot; 2 of 5 done</div>
+   <div class="mono">Set up &middot; 1 of 5 done</div>
    <div class="t l">Set up your practice</div>
    <div class="task done" style="padding:7px"><i class="n" style="font-style:normal">&#10003;</i><div><b class="t s">Password</b></div></div>
    <div class="task" style="padding:7px"><i class="n" style="font-style:normal">2</i><div style="flex:1"><b class="t s">Secure your account</b><div class="p">Email and two-factor.</div></div><span class="btn d" style="padding:4px 10px">Start</span></div>

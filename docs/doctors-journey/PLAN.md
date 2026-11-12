@@ -52,7 +52,7 @@ Verified against the code on `main` on 12 November 2026:
 | 1. Discover and apply | "Is this for me, and can I join in five minutes?" | D01 Join, D02 Received | Exists |
 | 2. Verification (admin) | Carevia checks cédula, identity, specialty, insurance, then decides | A01 Application detail, A02 Verification checklist | New, in admin |
 | 3. Provisioning (admin) | A doctor profile and a clinician login exist and are linked | A03 Invite and link login | New, in admin |
-| 4. First login and onboarding | Set password, secure the account, check the public profile, agree how Carevia work works, open first hours, test the camera | D03 Accept invite, D04 Checklist, D05 Security, D06 Profile preview, D07 Agreement, D08 First hours, D09 Device check, D10 Ready | New, in `/app/doctor/welcome` |
+| 4. First login and onboarding | Set password, secure the account, check the public profile, agree how Carevia works, open first hours, test the camera | D03 Accept invite, D04 Checklist, D05 Security, D06 Profile preview, D07 Agreement, D08 First hours, D09 Device check, D10 Ready | New, in `/app/doctor/welcome` |
 | 5. Daily practice | See today's patients, run each call, close each visit properly | D11 Agenda, D12 Prepare, D13 Call, D14 Outcome, D15 iMED hand-off | Exists |
 | 6. Practice admin | Keep hours and account in shape without calling Carevia | D16 Profile and times, D17 Visit history, D18 Earnings (later), D19 Account and security, D20 Time off | Extend and new |
 | 7. Exceptions | Something went wrong and the patient is still looked after | E01 Patient did not join, E02 Poor connection, E03 Doctor cancels a visit, E04 Account paused or not linked | Partly exists |
@@ -65,7 +65,10 @@ Rules that shape every stage:
 - **One person, one login, one doctor profile.** `Doctor.clinicianUserId` is unique. A login with role
   `clinician` but no linked profile sees the "not linked" state (E04), never an empty agenda.
 - **The profile is not live until onboarding is finished.** `active` (shown to patients) stays off through
-  verification and setup, and turns on only at D10 (doctor confirms) or by an admin afterwards.
+  verification and setup, and turns on only at D10 (doctor confirms) or by an admin afterwards. The server
+  enforces this: today's admin doctor update accepts `active` at any time, so it gains a guard that refuses
+  `active: true` (`409 ONBOARDING_INCOMPLETE`) while onboarding is unfinished or a D06 profile flag is
+  unresolved. Seeded and demo doctors are marked onboarded by the seed.
 - **Carevia never holds clinical data, for doctors either.** No notes field, no reason field, no document
   upload anywhere in this journey. The outcome list stays the existing four, with no free text. Anything
   clinical is written in iMED, under iMED's own login, which Carevia never collects or stores.
@@ -76,7 +79,8 @@ Rules that shape every stage:
 - **Two-factor is part of onboarding, not a surprise later.** Outside demo mode a clinician cannot reach the
   agenda until two-factor is on. The agenda is also blocked until email is verified.
 - **Every operational email the doctor gets has no clinical content and no patient identifiers beyond what
-  the doctor already sees in their own agenda** (first name and service, as in the agenda). Booking alerts
+  the doctor already sees in their own agenda** (the patient's display name and the service, as the agenda
+  shows them today). Booking alerts
   follow the same rule as patient messages in the API contract.
 - **No arrow glyphs on buttons or links. Recording is never offered. The 112 limit and "doctor decides what
   to issue" copy appear wherever a patient-facing claim is made (D01).** Demo accounts and `DEMO-CEDULA-*`
@@ -122,13 +126,21 @@ at). This is operational data about the application, not clinical data, so it ma
 One screen, reached from an approved application or from the Doctors editor, that does three things in order:
 
 1. **Doctor profile**: pre-filled from the application (name, specialty, languages, cédula, area of care),
-   plus fee, service, experience, training, approach. Saved hidden (`active: false`).
+   plus fee, service, experience, training, approach. Saved hidden (`active: false`). Provisioning is
+   idempotent: `DoctorApplication` gains a unique `doctorId`, set on the first save, so reopening an approved
+   application opens its existing doctor instead of creating a second one. Professional body plus cédula
+   becomes unique on `Doctor`, so the same doctor cannot be created twice by another route.
 2. **Login link**: shows one of three states — no login yet, invite pending (email, sent date), linked
-   (account email, two-factor on or off). 
-3. **Send invite**: creates the `User` with `role: clinician`, `clinicianUserId` set, email unverified, and
-   sends a set-password invite (Better Auth password-reset style token, expiring, single use). Resend and
-   revoke sit beside it. Creating a second login for an email that already has one is refused with a plain
-   message; a patient account can never be converted into a clinician account from this screen.
+   (account email, two-factor on or off).
+3. **Send invite**: enabled once the profile is saved. Creates the `User` with `role: clinician`,
+   `clinicianUserId` set, email unverified, and sends a set-password invite (Better Auth password-reset
+   style token, expiring, single use). This is a server-only path, not the public sign-up: today's sign-up
+   hook (`apps/api/src/auth.js`) rewrites every new user to `role: patient` and requires an adult
+   `dateOfBirth`, which applications do not collect. So A03 asks the admin for the doctor's date of birth
+   (checked against the identity call, validated as adult, same `YYYY-MM-DD` text), and the user is created
+   directly with the role kept as `clinician`. Resend and revoke sit beside it. Creating a second login for
+   an email that already has one is refused with a plain message; a patient account can never be converted
+   into a clinician account from this screen.
 
 The Doctors editor gains the same login-link panel, so an admin can fix a link without an application (the
 seeded and imported doctors need this). API sketch (admin role, access-logged where it touches appointments):
@@ -137,6 +149,9 @@ seeded and imported doctors need this). API sketch (admin role, access-logged wh
   `409 ALREADY_LINKED`.
 - `POST /api/admin/doctors/:id/invite/resend`, `POST /api/admin/doctors/:id/invite/revoke` (revoke disables
   the login, keeps the profile).
+- Disabling is a stored state, not a label: `User` gains `disabledAt`. Revoke (and A04 close-down) set it and
+  delete that user's sessions; sign-in and `requireRole` refuse a disabled user with `403 ACCOUNT_DISABLED`,
+  which the web app shows as E04. Without this check a revoked login would keep working.
 - `GET /api/admin/doctors/:id` starts returning `login: { linked, email, invitedAt, emailVerified,
   twoFactorEnabled }`.
 
@@ -150,10 +165,10 @@ the clinician shell shows only the checklist, sign out, and help. The agenda is 
 |---|---|---|
 | Secure your account | D05 | Email verified and two-factor on (skippable only in demo mode, and the checklist says so) |
 | Check your public profile | D06 | Doctor has seen the patient view and either confirmed it or flagged an error. Flagging does not block; it notifies admin and the profile stays hidden until resolved |
-| How Carevia work works | D07 | Doctor ticks each statement and accepts the clinician agreement, version and time stored (same pattern as patient consent). Statements: private and quiet space for every call; your name and cédula are shown to patients; the clinical record, prescriptions and certificates are written in iMED only; nothing is recorded; if connection quality is too poor for a safe opinion, end the visit and record why in iMED; Carevia is not an emergency service and patients are told to call 112; you only see patients in mainland Portugal. |
+| How Carevia works | D07 | Doctor ticks each statement and accepts the clinician agreement, version and time stored (same pattern as patient consent). Statements: private and quiet space for every call; your name and cédula are shown to patients; the clinical record, prescriptions and certificates are written in iMED only; nothing is recorded; if connection quality is too poor for a safe opinion, end the visit and record why in iMED; Carevia is not an emergency service and patients are told to call 112; you only see patients in mainland Portugal. |
 | Open your hours | D08 | At least one future open time exists, set with the weekly pattern editor (see D20) or single times, as today |
 | Test your camera and microphone | D09 | Device check passes (camera, mic, speaker, browser), in a test room with no patient. Reuses the patient device-check pattern, clinician wording. Also a reminder to sign in to iMED separately; Carevia never asks for the iMED password |
-| Ready | D10 | Summary of the above; "Start seeing patients" turns the profile shown (`active: true`) and lands on the agenda |
+| Ready | D10 | Summary of every step above, including each device check; "Start seeing patients" turns the profile shown (`active: true`) and lands on the agenda. If a D06 flag is still open, onboarding completes but the profile stays hidden, and D10 says "Your profile goes live when Carevia has fixed it" |
 
 Data: a `ClinicianOnboarding` record (user, step states, agreement version and acceptance time), or the
 equivalent fields on the linked doctor row. One row per clinician, no clinical content. API sketch
@@ -212,7 +227,10 @@ The agenda and four-step visit room stay as built. Extensions, in priority order
 ### 8. Leaving (A04) — new, admin only
 
 From the Doctors editor: **Pause this doctor** (hidden from patients, existing visits untouched, login still
-works, agenda read-only with a banner) and **Close this doctor down**. Close-down is refused while confirmed
+works, agenda read-only with a banner) and **Close this doctor down**. Pause is its own stored state, not
+`active: false`: `Doctor` gains `pausedAt`. While it is set, clinician slot and hours writes are refused
+(`409 DOCTOR_PAUSED`) and `active` cannot be turned on; agenda reads, and the visit room and outcome for
+visits already booked, keep working, because those visits are untouched. Close-down is refused while confirmed
 future visits exist, and lists them; the admin first cancels them one by one (each patient gets the E03
 message and the cancellation terms) or waits for them to pass. Only then: profile hidden, open future times
 closed, login disabled (not deleted — access logs and past appointment rows keep their actor). iMED is
@@ -233,7 +251,7 @@ Admin screens are in the admin app, everything else under `/app/`. Tags: Exists,
 | D04 | Onboarding checklist (shell) | `/app/doctor/welcome` | New |
 | D05 | Security: verify email, two-factor | `/app/doctor/welcome/security` | New |
 | D06 | Check your public profile | `/app/doctor/welcome/profile` | New |
-| D07 | How Carevia work works (agreement) | `/app/doctor/welcome/agreement` | New |
+| D07 | How Carevia works (agreement) | `/app/doctor/welcome/agreement` | New |
 | D08 | Open your first hours | `/app/doctor/welcome/hours` | New |
 | D09 | Camera and microphone check | `/app/doctor/welcome/device-check` | New |
 | D10 | Ready to see patients | `/app/doctor/welcome/ready` | New |
