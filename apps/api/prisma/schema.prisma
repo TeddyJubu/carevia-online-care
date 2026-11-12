@@ -191,6 +191,8 @@ model Doctor {
   languages         String
   fee               Int
   availabilityIndex Int
+  // "0" Sunday … "6" Saturday, each a list of Lisbon "HH:MM" starts. {} until a doctor sets hours.
+  weeklyHours       Json          @default("{}")
   experience        String
   education         String
   approach          String

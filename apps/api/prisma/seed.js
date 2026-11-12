@@ -2,6 +2,7 @@ import { PrismaClient } from '@prisma/client'
 import { GROUPS, buildDoctors } from '../src/catalog.js'
 import { CURATED_DOCTORS } from '../src/curated-doctors.js'
 import { seedDemo } from '../src/demo-seed.js'
+import { WEEKDAY_HOURS } from '../src/rules.js'
 
 const prisma = new PrismaClient()
 
@@ -44,7 +45,8 @@ async function main() {
     data: doctors.map(({ service, ...doctor }) => {
       const serviceId = serviceIds.get(`${doctor.groupId}:${service}`)
       if (!serviceId) throw new Error(`Missing service for doctor ${doctor.id}`)
-      return { ...doctor, serviceId }
+      // The column default is {}. Demo doctors keep the old Monday-to-Friday hours so a reseed looks the same.
+      return { ...doctor, serviceId, weeklyHours: WEEKDAY_HOURS }
     }),
   })
 

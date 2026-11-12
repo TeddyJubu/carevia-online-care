@@ -4,9 +4,9 @@ import { SLOT_MINUTES, lisbonTimeToUtc, lisbonToday, parseDate, scheduleFor } fr
 /** Adds any missing slots for the next 21 days. Existing slots (and their appointments) are left alone. */
 export async function topUpSlots(now = new Date(), db = prisma) {
   const today = lisbonToday(now)
-  const doctors = await db.doctor.findMany({ select: { id: true, availabilityIndex: true } })
+  const doctors = await db.doctor.findMany({ select: { id: true, weeklyHours: true, availabilityIndex: true } })
   const data = doctors.flatMap((doctor) =>
-    scheduleFor(doctor.availabilityIndex, today).map((slot) => ({ doctorId: doctor.id, ...slot })))
+    scheduleFor(doctor.weeklyHours, today, doctor.availabilityIndex).map((slot) => ({ doctorId: doctor.id, ...slot })))
   const { count } = await db.slot.createMany({ data, skipDuplicates: true })
   return count
 }
