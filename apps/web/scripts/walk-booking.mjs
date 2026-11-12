@@ -15,7 +15,7 @@ const check = (ok, what, got = '') => { console.log(ok ? 'ok  ' : 'FAIL', what, 
 const b = await launch()
 if (/^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(base) || process.env.RESET === '1') {
   const admin = await b.newContext({ extraHTTPHeaders: { Origin: base } })
-  await admin.request.post(`${base}/api/auth/sign-in/email`, { data: { email: 'admin@carevia.test', password: 'admin-demo-password' } })
+  await admin.request.post(`${base}/api/auth/sign-in/email`, { data: { email: 'admin@carevia.test', password: process.env.DEMO_ADMIN_PASSWORD } })
   check((await admin.request.post(`${base}/api/demo/reset`, { data: {} })).ok(), 'Demo reset before the walk')
   await admin.close()
 }

@@ -23,7 +23,7 @@ const json = (path, method = 'GET', body) => p.evaluate(async ([path, method, bo
 }, [path, method, body])
 if (!process.env.MOCK) {
   await p.goto(base + '/app/signin')
-  await json('/api/auth/sign-in/email', 'POST', { email: 'admin@carevia.test', password: 'admin-demo-password' })
+  await json('/api/auth/sign-in/email', 'POST', { email: 'admin@carevia.test', password: process.env.DEMO_ADMIN_PASSWORD })
   console.log('reset', JSON.stringify(await json('/api/demo/reset', 'POST', { startsInMinutes: 5 })))
   await json('/api/auth/sign-out', 'POST', {})
 }

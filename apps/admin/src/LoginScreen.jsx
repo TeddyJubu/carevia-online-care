@@ -1,12 +1,8 @@
-import { useEffect, useState } from 'react'
-import { getDemoAdmin, login } from './api.js'
+import { useState } from 'react'
+import { login } from './api.js'
 import mark from './assets/carevia-mark.png'
 
 export default function LoginScreen({ unreachable, onSignedIn, onTwoFactor }) {
-  const [demo, setDemo] = useState(null)
-  useEffect(() => {
-    getDemoAdmin().then(setDemo)
-  }, [])
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
@@ -86,21 +82,6 @@ export default function LoginScreen({ unreachable, onSignedIn, onTwoFactor }) {
           <button className="button" type="submit" disabled={pending}>
             {pending ? 'Signing in…' : 'Sign in'}
           </button>
-          {demo ? (
-            <div className="demo">
-              <p>Demo account (demo mode only)</p>
-              <dl>
-                <div>
-                  <dt>Email</dt>
-                  <dd>{demo.email}</dd>
-                </div>
-                <div>
-                  <dt>Password</dt>
-                  <dd>{demo.password}</dd>
-                </div>
-              </dl>
-            </div>
-          ) : null}
         </form>
       </main>
     </div>

@@ -32,7 +32,9 @@ export const DEMO_ACCOUNTS = [
     role: 'admin',
     label: 'Demo admin',
     email: 'admin@carevia.test',
-    password: 'admin-demo-password',
+    // Never in source or in GET /api/demo: set DEMO_ADMIN_PASSWORD on the server and share it privately.
+    // ponytail: unset means a random password, so the demo admin simply cannot sign in.
+    password: process.env.DEMO_ADMIN_PASSWORD || randomUUID(),
     firstName: 'Carevia',
     lastName: 'Admin',
     phone: '+351900000002',

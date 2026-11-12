@@ -283,12 +283,6 @@ strong { font-weight: 500; }
 .pane .card { box-shadow: 0 30px 60px -40px #102d5040; }
 .pane .card h2, .gate-card h1 { font-size: clamp(40px, 4.6vw, 56px); line-height: 1; letter-spacing: -0.02em; }
 
-.demo { display: grid; gap: 10px; padding: 18px 20px; border-radius: 6px; background: var(--paper); }
-.demo > p:first-child { font-family: var(--serif); font-size: 15px; color: var(--accent); }
-.demo dl { display: grid; gap: 6px; margin: 0; }
-.demo dl div { display: grid; grid-template-columns: 88px 1fr; gap: 12px; align-items: baseline; }
-.demo dt { font-size: 13px; color: var(--muted); }
-.demo dd, .demo p + p { margin: 0; font-family: var(--mono); font-size: 14px; overflow-wrap: anywhere; }
 
 /* Two-factor, denied and checking: a white card over the same night still. */
 .gate { min-height: 100svh; display: grid; place-items: center; padding: 32px 16px; }

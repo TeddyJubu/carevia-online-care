@@ -156,7 +156,7 @@ for (const width of widths.length ? widths.map(Number) : [390, 1280]) {
   if (process.env.ADMIN !== '0') {
     await go('/admin/', 'admin-login')
     await wait(Math.max(0, lastSignIn + 4000 - Date.now())); lastSignIn = Date.now()
-    await p.fill('input[name=email]', 'admin@carevia.test'); await p.fill('input[name=password]', 'admin-demo-password')
+    await p.fill('input[name=email]', 'admin@carevia.test'); await p.fill('input[name=password]', process.env.DEMO_ADMIN_PASSWORD)
     await p.getByRole('button', { name: /^Sign in/ }).click(); await p.waitForTimeout(2000)
     rows.push(await audit(p, 'admin-appointments', width))
     await p.getByRole('button', { name: /video|daily/i }).first().click().catch(() => {}); await p.waitForTimeout(500)

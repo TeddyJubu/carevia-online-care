@@ -24,7 +24,7 @@ for (const [i, width] of widths.entries()) {
   }, [path, method, body])
   await p.goto(base + '/app/signin')
   if (i === 0) { // A fresh demo: today's visit about 15 minutes away (scheduled), the child's in 3 days, three past visits.
-    await api('/api/auth/sign-in/email', 'POST', { email: 'admin@carevia.test', password: 'admin-demo-password' })
+    await api('/api/auth/sign-in/email', 'POST', { email: 'admin@carevia.test', password: process.env.DEMO_ADMIN_PASSWORD })
     console.log('reset', JSON.stringify(await api('/api/demo/reset', 'POST', {})))
     await api('/api/auth/sign-out', 'POST', {})
     await p.waitForTimeout(4000) // sign-in is limited to 3 per 10 s per IP

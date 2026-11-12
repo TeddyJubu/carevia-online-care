@@ -106,7 +106,7 @@ check(/signin/.test(p.url()), 'A visit URL after sign-out asks to sign in', path
 if (process.env.ADMIN !== '0') {
 await sleep(6)
 await p.goto(base + '/admin/'); await p.waitForLoadState('networkidle'); await shot('admin-login')
-await p.fill('input[name=email]', 'admin@carevia.test'); await p.fill('input[name=password]', 'admin-demo-password')
+await p.fill('input[name=email]', 'admin@carevia.test'); await p.fill('input[name=password]', process.env.DEMO_ADMIN_PASSWORD)
 await p.getByRole('button', { name: /^Sign in/ }).click(); await p.waitForTimeout(2500); await shot('admin-appointments')
 const desk = (await p.locator('body').textContent()) ?? ''
 check(!/example\.com|\+351|1990-01-01|Demo Patient/.test(desk), 'Admin list shows no patient name, email, phone or birth date')

@@ -48,7 +48,7 @@ Seeded by `npm run db:setup`. All fictional.
 |---|---|---|---|
 | Patient | `patient@example.com` | `demo-password` | Demo Patient, born 1990-01-01, `+351900000000`. Child: Leo Patient (2018-03-14). |
 | Clinician | `doctor@carevia.test` | `doctor-demo-password` | Linked to doctor 0, Dr Emma Laurent. |
-| Admin | `admin@carevia.test` | `admin-demo-password` | |
+| Admin | `admin@carevia.test` | `DEMO_ADMIN_PASSWORD` env var | Never in source or in `GET /api/demo`; shared privately. Unset means the admin cannot sign in. |
 
 Demo visits, all with Dr Emma Laurent: today (about 15 minutes after seeding or reset), the child's visit in 3 days, and past completed, `needs_in_person` and cancelled visits.
 

@@ -201,7 +201,9 @@ export async function staffRoutes(app) {
     if (!DEMO_MODE) return sendError(reply, 404, 'NOT_FOUND', 'Not found.')
     return {
       enabled: true,
-      accounts: DEMO_ACCOUNTS.map(({ role, email, password, label }) => ({ role, email, password, label })),
+      // The admin login is never published here; its password comes from DEMO_ADMIN_PASSWORD.
+      accounts: DEMO_ACCOUNTS.filter((account) => account.role !== 'admin')
+        .map(({ role, email, password, label }) => ({ role, email, password, label })),
     }
   })
 

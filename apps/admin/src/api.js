@@ -114,18 +114,6 @@ export function enableTwoFactor(password) {
   return request('/api/auth/two-factor/enable', { method: 'POST', body: { password } })
 }
 
-/** Demo logins are shown only when this build has demo mode on AND the API says demo mode is on. */
-export async function getDemoAdmin() {
-  // Either flag turns the demo logins on: VITE_DEMO_MODE=true (this app's own) or VITE_DEMO=1 (the patient app's).
-  if (import.meta.env.VITE_DEMO_MODE !== 'true' && import.meta.env.VITE_DEMO !== '1') return null
-  try {
-    const data = await request('/api/demo')
-    return data?.accounts?.find((account) => account.role === 'admin') || null
-  } catch {
-    return null
-  }
-}
-
 export function getAppointments({ date, status, needsAttention }) {
   const query = new URLSearchParams()
   if (date) query.set('date', date)

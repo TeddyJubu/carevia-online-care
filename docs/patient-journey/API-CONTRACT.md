@@ -145,7 +145,7 @@ The join window opens 10 minutes before `startsAt` and closes 60 minutes after `
 
 ## Demo mode (`DEMO_MODE=true` only)
 
-- `GET /api/demo` returns `{ enabled: true, accounts: [{ role, email, password, label }] }`. Without demo mode, it's `404`.
+- `GET /api/demo` returns `{ enabled: true, accounts: [{ role, email, password, label }] }` for the patient and clinician only; the admin login is never listed. Without demo mode, it's `404`.
 - `POST /api/demo/reset` (admin, demo mode only): reseeds everything.
 - `GET /api/dev/outbox` (demo mode or `NODE_ENV=development`): emails that would have been sent, newest first: `{ messages: [{ id, channel, to, subject, text, links, sentAt }] }`, where `channel` is `email` or `sms` (SMS rows were never delivered).
 
@@ -157,7 +157,7 @@ All fictional. It keeps the existing catalog (7 groups, 55 services, 220 doctors
 |---|---|---|---|
 | Patient | `patient@example.com` | `demo-password` | Demo Patient, born 1990-01-01, phone `+351 900 000 000` (a non-working demo number). Has a child, "Leo Patient" (born 2018-03-14). |
 | Clinician | `doctor@carevia.test` | `doctor-demo-password` | Linked to doctor id 0 (Dr Emma Laurent, General practitioner). In the web app her portrait is the illustrative demo-doctor image; everywhere else, initials. |
-| Admin | `admin@carevia.test` | `admin-demo-password` | |
+| Admin | `admin@carevia.test` | `DEMO_ADMIN_PASSWORD` env var | Never in source or in `GET /api/demo`; shared privately. Unset means the admin cannot sign in. |
 
 The demo patient's appointments, all with Dr Emma Laurent so the clinician demo sees them:
 

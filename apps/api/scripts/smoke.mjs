@@ -108,7 +108,7 @@ function expectError(name, result, status, code) {
   record(name, is(result, status, code), show(result))
 }
 
-const DEMO = { patient: ['patient@example.com', 'demo-password'], doctor: ['doctor@carevia.test', 'doctor-demo-password'], admin: ['admin@carevia.test', 'admin-demo-password'] }
+const DEMO = { patient: ['patient@example.com', 'demo-password'], doctor: ['doctor@carevia.test', 'doctor-demo-password'], admin: ['admin@carevia.test', process.env.DEMO_ADMIN_PASSWORD] }
 
 async function freeSlot(browser, { doctorId = 3, skip = 0 } = {}) {
   const slots = await browser.get(`/api/doctors/${doctorId}/slots?days=21`)
@@ -760,8 +760,9 @@ try {
 
   if (demoMode) {
     console.log('\nDemo mode is on.\n')
-    record('GET /api/demo lists the three demo accounts', demo.json?.enabled === true
-      && demo.json.accounts.map((account) => account.role).join() === 'patient,clinician,admin', demo.json?.accounts?.map((a) => a.email).join())
+    record('GET /api/demo lists the patient and doctor, never the admin', demo.json?.enabled === true
+      && demo.json.accounts.map((account) => account.role).join() === 'patient,clinician', demo.json?.accounts?.map((a) => a.email).join())
+    if (!DEMO.admin[1]) throw new Error('Set DEMO_ADMIN_PASSWORD (the API\'s demo admin password) to run the smoke.')
     const admin = new Browser()
     const patient = new Browser()
     const doctor = new Browser()

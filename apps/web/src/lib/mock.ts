@@ -525,7 +525,6 @@ on('GET', '/api/demo', () => ok({
   accounts: [
     { role: 'patient', email: 'patient@example.com', password: 'demo-password', label: 'Demo patient' },
     { role: 'clinician', email: 'doctor@carevia.test', password: 'doctor-demo-password', label: 'Dr Emma Laurent (doctor)' },
-    { role: 'admin', email: 'admin@carevia.test', password: 'admin-demo-password', label: 'Admin' },
   ],
 }))
 on('POST', '/api/demo/reset', () => { const s = db().sessionUser; resetMock(); db().sessionUser = s; return ok() })
