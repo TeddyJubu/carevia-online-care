@@ -146,6 +146,9 @@ export const api = {
   checkProfile: (b: { languages: string; experience: string; education: string; decision: 'confirm' | 'flag'; message?: string }) =>
     post<{ ok: boolean }>('/api/clinician/onboarding/profile', b),
   acceptAgreement: (version: string) => post<{ ok: boolean }>('/api/clinician/onboarding/agreement', { version }),
+  openFirstHours: (b: { from: string; to: string; days: number[] }) => post<{ opened: number; future: number }>('/api/clinician/onboarding/hours', b),
+  deviceChecked: () => post<{ ok: boolean }>('/api/clinician/onboarding/device'),
+  goLive: () => post<{ ok: boolean }>('/api/clinician/onboarding/live'),
   recordOutcome: (id: string, outcome: Outcome) => post<A>(`/api/clinician/appointments/${id}/outcome`, { outcome }),
   schedule: () => get<{ doctor: Doctor; days: number; slots: OwnSlot[] }>('/api/clinician/schedule'),
   openSlot: (date: string, time: string) => post<{ slot: OwnSlot }>('/api/clinician/slots', { date, time }),

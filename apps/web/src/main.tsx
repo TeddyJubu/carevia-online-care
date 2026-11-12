@@ -136,6 +136,9 @@ const router = createBrowserRouter(
         { path: 'doctor/welcome/security', ...page('welcome', 'SecurityStep', clinician) },
         { path: 'doctor/welcome/profile', ...page('welcome', 'ProfileStep', clinician) },
         { path: 'doctor/welcome/agreement', ...page('welcome', 'AgreementStep', clinician) },
+        { path: 'doctor/welcome/hours', ...page('welcome', 'HoursStep', clinician) },
+        { path: 'doctor/welcome/device-check', ...page('welcome', 'DeviceStep', clinician) },
+        { path: 'doctor/welcome/ready', ...page('welcome', 'ReadyStep', clinician) },
         { path: 'doctor/profile', ...page('doctor', 'DoctorProfile', clinician) },
         { path: 'doctor/visits/:id', ...page('doctor', 'DoctorVisit', clinician) },
         // Demo or development only: the page itself checks both locks.

@@ -1,4 +1,4 @@
-import { useState, type FormEvent, type ReactNode } from 'react'
+import { useRef, useState, type FormEvent, type ReactNode } from 'react'
 import { Link, useNavigate } from 'react-router'
 import { api, ApiError } from '../lib/api'
 import { useLoad } from '../lib/load'
@@ -30,6 +30,7 @@ export function Welcome() {
     security: '/doctor/welcome/security',
     profile: '/doctor/welcome/profile',
     agreement: '/doctor/welcome/agreement',
+    hours: '/doctor/welcome/hours',
   }
   return (
     <Shell>
@@ -159,6 +160,114 @@ export function AgreementStep() {
         <button className="btn btn-primary" disabled={!ready}>I have read and accept these</button>
       </form>
       <Link className="link mt-6 inline-flex min-h-11 items-center" to="/doctor/welcome">Back to checklist</Link>
+    </Shell>
+  )
+}
+
+const WEEK = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
+
+export function HoursStep() {
+  const navigate = useNavigate()
+  const [days, setDays] = useState([1, 2, 3, 4, 5])
+  const [error, setError] = useState<string | null>(null)
+  const [pending, setPending] = useState(false)
+  return (
+    <Shell>
+      <PageTitle eyebrow="Step 5 of 5 · Your hours" lede="Patients book into open times. At least one future open time is needed to finish.">Open your first times</PageTitle>
+      <form className="mt-8 grid gap-5" onSubmit={(event) => {
+        event.preventDefault()
+        const form = new FormData(event.currentTarget)
+        setPending(true)
+        api.openFirstHours({ from: String(form.get('from')), to: String(form.get('to')), days })
+          .then(() => navigate('/doctor/welcome/device-check'))
+          .catch((err) => setError(err instanceof ApiError ? err.message : 'Something went wrong.'))
+          .finally(() => setPending(false))
+      }}>
+        <div className="flex flex-wrap gap-2">
+          {WEEK.map((label, index) => (
+            <label key={label} className="check">
+              <input type="checkbox" checked={days.includes(index)} onChange={(event) => setDays((current) => event.target.checked ? [...current, index] : current.filter((day) => day !== index))} />
+              <span>{label}</span>
+            </label>
+          ))}
+        </div>
+        <div className="grid gap-5 sm:grid-cols-2">
+          <Field label="From" name="from" type="time" defaultValue="09:00" required />
+          <Field label="To" name="to" type="time" defaultValue="11:00" required />
+        </div>
+        <p className="fine">Visits last 30 minutes. This opens those times for the next 3 weeks.</p>
+        <FormError error={error} />
+        <button className="btn btn-primary" disabled={pending || !days.length}>{pending ? 'Saving…' : 'Save hours'}</button>
+      </form>
+      <Link className="link mt-6 inline-flex min-h-11 items-center" to="/doctor/welcome">Back to checklist</Link>
+    </Shell>
+  )
+}
+
+export function DeviceStep() {
+  const navigate = useNavigate()
+  const videoRef = useRef<HTMLVideoElement>(null)
+  const [level, setLevel] = useState(0)
+  const [error, setError] = useState<string | null>(null)
+  const [ready, setReady] = useState({ camera: false, mic: false, speaker: false })
+  const all = ready.camera && ready.mic && ready.speaker
+  return (
+    <Shell>
+      <PageTitle eyebrow="Step 5 of 5 · Your camera and microphone" lede="You, in a test. No patient can join it, and nothing is recorded.">Test them once, here</PageTitle>
+      <div className="mt-8 grid gap-4">
+        <video ref={videoRef} className="w-full max-h-64 rounded-[12px] bg-black" autoPlay muted playsInline />
+        <button type="button" className="btn btn-secondary" onClick={async () => {
+          try {
+            const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true })
+            if (videoRef.current) videoRef.current.srcObject = stream
+            setReady((current) => ({ ...current, camera: true, mic: true }))
+            const ctx = new AudioContext()
+            const source = ctx.createMediaStreamSource(stream)
+            const analyser = ctx.createAnalyser()
+            source.connect(analyser)
+            const data = new Uint8Array(analyser.fftSize)
+            analyser.getByteTimeDomainData(data)
+            setLevel(Math.max(...data) - Math.min(...data))
+          } catch {
+            setError('Allow the camera and microphone in the browser, then try again.')
+          }
+        }}>Test camera and microphone</button>
+        <p className="fine" role="status">{ready.mic ? `Microphone level ${level}.` : 'Microphone: not tested yet.'}</p>
+        <button type="button" className="btn btn-secondary" onClick={() => {
+          const ctx = new AudioContext()
+          const osc = ctx.createOscillator()
+          osc.frequency.value = 440
+          osc.connect(ctx.destination)
+          osc.start()
+          osc.stop(ctx.currentTime + 0.4)
+          setReady((current) => ({ ...current, speaker: true }))
+        }}>Play the test sound</button>
+      </div>
+      <FormError error={error} />
+      <button type="button" className="btn btn-primary mt-6" disabled={!all} onClick={() => {
+        api.deviceChecked().then(() => navigate('/doctor/welcome/ready')).catch((err) => setError(err instanceof ApiError ? err.message : 'Something went wrong.'))
+      }}>Everything works</button>
+      <p className="fine mt-4">Your clinical record opens in iMED, with iMED’s own login. Carevia never asks for that password.</p>
+      <Link className="link mt-4 inline-flex min-h-11 items-center" to="/doctor/welcome">Back to checklist</Link>
+    </Shell>
+  )
+}
+
+export function ReadyStep() {
+  const load = useSetup()
+  const navigate = useNavigate()
+  const [error, setError] = useState<string | null>(null)
+  if (load.error?.code === 'NO_DOCTOR_PROFILE') return <Unlinked />
+  return (
+    <Shell>
+      <PageTitle eyebrow="Setup complete" lede="This turns your profile on. Patients can then book your open times. Turn it off any time from your profile.">You’re ready to see patients</PageTitle>
+      <ul className="mt-8 grid gap-2">
+        {(load.data?.steps ?? []).map((step) => <li key={step.key}>{step.done ? 'Done' : 'Still to do'}: {step.title}</li>)}
+      </ul>
+      <FormError error={error} />
+      <button type="button" className="btn btn-primary mt-6" onClick={() => {
+        api.goLive().then(() => navigate('/doctor')).catch((err) => setError(err instanceof ApiError ? err.message : 'Something went wrong.'))
+      }}>Start seeing patients</button>
     </Shell>
   )
 }

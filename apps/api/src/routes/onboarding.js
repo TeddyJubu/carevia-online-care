@@ -1,6 +1,8 @@
 import { DEMO_MODE } from '../config.js'
 import { prisma } from '../prisma.js'
 import { requireRole } from '../auth.js'
+import { addDays, lisbonToday, SLOT_MINUTES } from '../rules.js'
+import { openSlot } from '../schedule.js'
 import { sendError } from '../views.js'
 
 // Draft for Carevia's lawyer. The version is what the doctor accepted.
@@ -154,4 +156,75 @@ export async function onboardingRoutes(app) {
     })
     return { ok: true }
   })
+
+  app.post('/api/clinician/onboarding/hours', {
+    schema: {
+      body: {
+        type: 'object',
+        additionalProperties: false,
+        required: ['from', 'to', 'days'],
+        properties: {
+          from: { type: 'string', pattern: '^([01]\\d|2[0-3]):[0-5]\\d$' },
+          to: { type: 'string', pattern: '^([01]\\d|2[0-3]):[0-5]\\d$' },
+          days: { type: 'array', minItems: 1, maxItems: 7, items: { type: 'integer', minimum: 0, maximum: 6 } },
+        },
+      },
+    },
+  }, async (request, reply) => {
+    const ctx = await loadContext(request, reply)
+    if (!ctx?.row) return
+    const { from, to, days } = request.body
+    if (to <= from) return sendError(reply, 400, 'VALIDATION', 'The end of the day needs to be after the start.')
+    const wanted = new Set(days)
+    const today = lisbonToday()
+    let opened = 0
+    for (let offset = 0; offset < 21; offset += 1) {
+      const date = addDays(today, offset)
+      const [year, month, day] = date.split('-').map(Number)
+      if (!wanted.has(new Date(Date.UTC(year, month - 1, day)).getUTCDay())) continue
+      for (const time of timesBetween(from, to)) {
+        const result = await openSlot(ctx.doctor.id, date, time)
+        if (result.slot) opened += 1
+      }
+    }
+    const future = await prisma.slot.count({ where: { doctorId: ctx.doctor.id, closedAt: null, startsAt: { gt: new Date() } } })
+    if (!future) return sendError(reply, 400, 'NO_OPEN_TIME', 'At least one future open time is needed to finish.')
+    await prisma.clinicianOnboarding.update({ where: { userId: ctx.user.id }, data: { hoursOpenedAt: new Date() } })
+    return { opened, future }
+  })
+
+  app.post('/api/clinician/onboarding/device', async (request, reply) => {
+    const ctx = await loadContext(request, reply)
+    if (!ctx?.row) return
+    if (!ctx.row.hoursOpenedAt) return sendError(reply, 409, 'HOURS_FIRST', 'Open at least one time before the camera check.')
+    await prisma.clinicianOnboarding.update({ where: { userId: ctx.user.id }, data: { deviceCheckedAt: new Date() } })
+    return { ok: true }
+  })
+
+  app.post('/api/clinician/onboarding/live', async (request, reply) => {
+    const ctx = await loadContext(request, reply)
+    if (!ctx?.row) return
+    if (!ctx.row.hoursOpenedAt || !ctx.row.deviceCheckedAt) {
+      return sendError(reply, 409, 'SETUP_INCOMPLETE', 'Open your hours and test the camera before patients can book you.')
+    }
+    await prisma.doctor.update({ where: { id: ctx.doctor.id }, data: { active: true } })
+    await prisma.clinicianOnboarding.update({ where: { userId: ctx.user.id }, data: { wentLiveAt: new Date() } })
+    return { ok: true }
+  })
+}
+
+function timesBetween(from, to) {
+  const toMin = (value) => {
+    const [h, m] = value.split(':').map(Number)
+    return h * 60 + m
+  }
+  const start = toMin(from)
+  const end = toMin(to)
+  const times = []
+  for (let minute = start; minute + SLOT_MINUTES <= end; minute += SLOT_MINUTES) {
+    const h = String(Math.floor(minute / 60)).padStart(2, '0')
+    const m = String(minute % 60).padStart(2, '0')
+    times.push(`${h}:${m}`)
+  }
+  return times
 }
