@@ -227,9 +227,11 @@ The agenda and four-step visit room stay as built. Extensions, in priority order
 ### 8. Leaving (A04) — new, admin only
 
 From the Doctors editor: **Pause this doctor** (hidden from patients, existing visits untouched, login still
-works, agenda read-only with a banner) and **Close this doctor down**. Pause is its own stored state, not
-`active: false`: `Doctor` gains `pausedAt`. While it is set, clinician slot and hours writes are refused
-(`409 DOCTOR_PAUSED`) and `active` cannot be turned on; agenda reads, and the visit room and outcome for
+works, agenda read-only with a banner) and **Close this doctor down**. Pause is its own stored state on top of
+`active`: `Doctor` gains `pausedAt`, and pausing also sets `active: false`, so every patient-facing path
+(catalog, slots, booking, reschedule) keeps its one existing `active` filter and needs no second predicate.
+While `pausedAt` is set, clinician slot and hours writes are refused (`409 DOCTOR_PAUSED`) and `active`
+cannot be turned back on; unpausing clears `pausedAt` and restores `active`; agenda reads, and the visit room and outcome for
 visits already booked, keep working, because those visits are untouched. Close-down is refused while confirmed
 future visits exist, and lists them; the admin first cancels them one by one (each patient gets the E03
 message and the cancellation terms) or waits for them to pass. Only then: profile hidden, open future times
