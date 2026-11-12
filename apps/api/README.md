@@ -81,7 +81,7 @@ Errors are `{ "error": "CODE", "message": "…" }`. Better Auth's own endpoints 
 
 **Clinician:** `GET /api/clinician/agenda?date=`, `POST /api/clinician/appointments/:id/outcome`, `GET /api/clinician/imed-link`.
 
-**Admin:** `GET /api/admin/appointments?date=&status=`, `GET /api/admin/access-log?appointmentId=`, `GET`/`PUT /api/admin/daily`. Admin and clinician reads of appointments write access-log rows. Those are the only writes made by `GET` requests.
+**Admin:** `GET /api/admin/appointments?date=&status=`, `GET /api/admin/access-log?appointmentId=`, `GET`/`PUT /api/admin/daily`. Admin and clinician reads of appointments write access-log rows. Those are the only writes made by `GET` requests. Every successful admin write (a non-`GET` under `/api/admin/` with status below 400) writes an `AdminAction` row: actor, method, route pattern and the most specific path id, never the changed values (`onResponse` hook in `src/app.js`).
 
 **Demo and development:** `GET /api/demo`, `POST /api/demo/reset` (admin; optional `{ startsInMinutes: 0–120 }`, default 15; keeps the catalog and Daily key), `GET /api/dev/outbox` (each message has `channel`: `email` or `sms`).
 

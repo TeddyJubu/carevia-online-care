@@ -132,11 +132,12 @@ The join window opens 10 minutes before `startsAt` and closes 60 minutes after `
 - `POST /api/admin/appointments/:id/cancel`: the patient cancel without the time limit. Confirmed only (`409 NOT_CONFIRMED`). Sets `cancelledBy: admin`, frees the slot and emails the patient that Carevia cancelled and refunds in full.
 - `POST /api/admin/appointments/:id/reschedule` `{ slotId }`: the patient reschedule without the time limit. Confirmed only; the slot rules (same doctor or group, future, free, no clash) still apply. Emails the patient the new time.
 - `GET` and `PUT /api/admin/daily`: unchanged.
-- Patients: `GET /api/admin/patients?q=`, `GET /api/admin/patients/:id` (with their appointments, access-logged), `PATCH /api/admin/patients/:id` (name, email, phone; `409 EMAIL_IN_USE`).
+- Patients: `GET /api/admin/patients?q=`, `GET /api/admin/patients/:id` (with their appointments, access-logged), `PATCH /api/admin/patients/:id` (name, email, phone; `409 EMAIL_IN_USE`). A changed email also signs the patient out on every device and sends a notice to the old address.
 - Services: `GET /api/admin/service-groups`, `POST /api/admin/service-groups`, `PATCH /api/admin/service-groups/:id`, `POST /api/admin/services`, `PATCH /api/admin/services/:id`. `active: false` takes a group or service off the patient menu and blocks booking it (`404 SERVICE_NOT_FOUND`).
 - Doctors: `GET /api/admin/doctors?q=`, `GET`, `POST` and `PATCH /api/admin/doctors/:id`. `active: false` hides the doctor from patients, and their times can't be held (`409 SLOT_TAKEN`).
 - Schedule: `GET /api/admin/doctors/:id/slots` lists open future times. `POST` with `{ date, time }` (Lisbon) adds a time, or reopens one removed earlier (`400 SLOT_PAST`, `409 SLOT_EXISTS` if it overlaps). `DELETE /api/admin/doctors/:id/slots/:slotId` closes the time (`409 SLOT_BOOKED` while a live hold or visit is on it). Closed times keep their row, so the hourly top-up doesn't add them back.
 - Every admin or clinician read of an appointment writes an access-log row (who, which appointment, when, which endpoint).
+- Every successful admin write (non-`GET` under `/api/admin/`, status below 400) writes an `AdminAction` row (who, method, route pattern, target id, when). The changed values are never stored.
 - Doctor applications: `GET /api/admin/doctor-applications?status=` (newest first, at most 200) and `PATCH /api/admin/doctor-applications/:id` with `{ status: new | contacted | approved | declined }`. Approving creates nothing: add the doctor and its clinician login under Doctors.
 
 ## Doctor registration (public)

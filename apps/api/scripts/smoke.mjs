@@ -667,6 +667,31 @@ async function catalogAdminChecks(patient, admin) {
   await admin.patch('/api/admin/services/1', { active: true })
 }
 
+async function adminAuditChecks(admin) {
+  const patient = new Browser()
+  const oldEmail = `audit-${stamp}@example.com`
+  await patient.signUp({ email: oldEmail, firstName: 'Audit', lastName: 'Smoke' })
+  const id = (await admin.get(`/api/admin/patients?q=${oldEmail}`)).json?.patients?.[0]?.id
+  const rows = () => prisma.adminAction.findMany({ where: { targetId: id } })
+  record('admin reads are not audited', (await rows()).length === 0)
+  await admin.patch(`/api/admin/patients/${id}`, { firstName: '' })
+  record('a refused admin write (400) is not audited', (await rows()).length === 0)
+
+  const newEmail = `audit-new-${stamp}@example.com`
+  const changed = await admin.patch(`/api/admin/patients/${id}`, { email: newEmail })
+  const [row] = await rows()
+  const adminId = (await admin.get('/api/auth/get-session')).json?.user?.id
+  record('an admin write is audited: actor, method, route pattern and id, no values',
+    changed.status === 200 && row?.actorUserId === adminId && row.method === 'PATCH' && row.route === '/api/admin/patients/:id'
+      && !JSON.stringify(row).includes('audit-new'), show(changed))
+  const session = await patient.get('/api/auth/get-session')
+  record('an admin email change signs the patient out everywhere', !session.json?.user && (await prisma.session.count({ where: { userId: id } })) === 0)
+  const notice = (await admin.get('/api/dev/outbox')).json?.messages?.find((m) => m.to === oldEmail && /email address was changed/.test(m.subject))
+  record('the old address gets a notice that does not name the new one', notice && !notice.text.includes(newEmail))
+  await admin.patch(`/api/admin/patients/${id}`, { phone: '+351 912 000 001' })
+  record('a change that keeps the email does not send a notice', (await admin.get('/api/dev/outbox')).json.messages.filter((m) => m.to === oldEmail && /changed/.test(m.subject)).length === 1)
+}
+
 async function staffChecks(patient, doctor, admin, { today, childVisit }) {
   const agenda = await doctor.get('/api/clinician/agenda')
   const entry = agenda.json?.appointments?.find((item) => item.id === today.id)
@@ -786,6 +811,7 @@ try {
     const visits = await visitChecks(patient, doctor, admin)
     await staffChecks(patient, doctor, admin, visits)
     await catalogAdminChecks(patient, admin)
+    await adminAuditChecks(admin)
     await originChecks(patient, false)
     const outbox = await anon.get('/api/dev/outbox')
     record('dev outbox lists messages newest first', outbox.status === 200 && outbox.json.messages.every((m, i, all) => i === 0 || all[i - 1].sentAt >= m.sentAt))

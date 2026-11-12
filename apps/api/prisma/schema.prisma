@@ -330,6 +330,18 @@ model CallEvent {
 }
 
 // Every admin or clinician read of an appointment.
+// One row per successful admin write (non-GET under /api/admin/). Route pattern and id only, never the changed values.
+model AdminAction {
+  id          String   @id @default(cuid())
+  actorUserId String
+  method      String
+  route       String
+  targetId    String?
+  createdAt   DateTime @default(now())
+
+  @@index([createdAt])
+}
+
 model AccessLog {
   id            String      @id @default(cuid())
   actorUserId   String

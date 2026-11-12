@@ -1,5 +1,6 @@
 // Admin management of patients, doctors, services and doctors' schedules.
 import { requireRole } from '../auth.js'
+import { sendMail } from '../mail.js'
 import { prisma } from '../prisma.js'
 import { lisbonDateTime } from '../rules.js'
 import { LIVE, closeSlot, openSlot } from '../schedule.js'
@@ -248,12 +249,28 @@ export async function adminCatalogRoutes(app) {
 
     // Better Auth shows `name`; a changed email must be confirmed again.
     data.name = `${data.firstName ?? existing.firstName} ${data.lastName ?? existing.lastName}`
-    if (data.email && data.email !== existing.email) data.emailVerified = false
-    const patient = await prisma.user.update({
-      where: { id: existing.id },
-      data,
-      include: { _count: { select: { appointments: { where: { status: { not: 'expired' } } } } } },
-    })
+    const emailChanged = Boolean(data.email && data.email !== existing.email)
+    if (emailChanged) data.emailVerified = false
+    // A changed email also signs the patient out everywhere, in the same transaction.
+    const [patient] = await prisma.$transaction([
+      prisma.user.update({
+        where: { id: existing.id },
+        data,
+        include: { _count: { select: { appointments: { where: { status: { not: 'expired' } } } } } },
+      }),
+      ...(emailChanged ? [prisma.session.deleteMany({ where: { userId: existing.id } })] : []),
+    ])
+    if (emailChanged) {
+      // Tell the old address, without naming the new one.
+      await sendMail({
+        template: 'email-changed',
+        to: existing.email,
+        subject: 'Your Carevia email address was changed',
+        text: 'The Carevia team changed the email address on your account and signed you out on all devices. '
+          + 'If you did not ask for this, reply to this email or contact Carevia support straight away.',
+        links: [],
+      })
+    }
     return { patient: toPatient(patient, patient._count.appointments) }
   })
 

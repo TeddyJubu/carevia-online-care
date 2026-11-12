@@ -2,6 +2,7 @@ import Fastify from 'fastify'
 import fastifyCookie from '@fastify/cookie'
 import { TRUSTED_ORIGINS, authRoutes } from './auth.js'
 import { OUTBOX_ENABLED } from './config.js'
+import { adminActionFor } from './admin-audit.js'
 import { originProblem } from './origin.js'
 import { adminCatalogRoutes } from './routes/admin-catalog.js'
 import { prisma } from './prisma.js'
@@ -82,6 +83,14 @@ export async function buildApp({ timers = true } = {}) {
       request.log.warn({ problem }, 'request refused by the origin check')
       return reply.code(403).send({ error: 'FORBIDDEN_ORIGIN', message: 'This request did not come from Carevia.' })
     }
+  })
+
+  // Audit: every successful admin write, current and future, gets an AdminAction row (see src/admin-audit.js).
+  app.addHook('onResponse', async (request, reply) => {
+    const row = adminActionFor(request, reply.statusCode)
+    if (!row) return
+    await prisma.adminAction.create({ data: row })
+      .catch((error) => request.log.error({ errCode: error?.code, route: row.route }, 'admin audit write failed'))
   })
 
   app.setNotFoundHandler((_request, reply) => reply.code(404).send({ error: 'NOT_FOUND', message: 'Not found.' }))

@@ -141,6 +141,7 @@ const STAFF = new Set(['clinician', 'admin'])
 
 /**
  * The signed-in user if their role is allowed, else sends 401 AUTH_REQUIRED or 403 FORBIDDEN and returns null.
+ * Sets `request.actor` (read by the admin audit hook in app.js).
  * Outside demo mode, clinician and admin accounts must have two-factor login turned on (403 TWO_FACTOR_REQUIRED).
  */
 export async function requireRole(request, reply, roles) {
@@ -157,6 +158,7 @@ export async function requireRole(request, reply, roles) {
     reply.code(403).send({ error: 'TWO_FACTOR_REQUIRED', message: 'Turn on two-factor login for this account first.' })
     return null
   }
+  request.actor = user
   return user
 }
 
