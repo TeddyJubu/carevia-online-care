@@ -79,10 +79,21 @@ export function Agenda() {
         <PageTitle eyebrow={d ? `${d.specialty} · Cédula ${d.cedula}` : 'Your agenda'} title="Your agenda">{d ? d.name : 'Your agenda'}</PageTitle>
         <div className="flex flex-wrap gap-3">
           <Link to="/doctor/profile" className="btn btn-secondary">Profile and open times</Link>
+          <Link to="/doctor/history" className="btn btn-secondary">Visit history</Link>
           <OpenImed />
         </div>
       </div>
-      <div className="mt-8 flex flex-wrap items-end gap-3">
+      {agenda.data?.week ? (
+        <div className="mt-8 flex gap-2 overflow-x-auto" role="group" aria-label="This week">
+          {agenda.data.week.map((day) => (
+            <button key={day.date} type="button" className={`btn btn-sm ${day.date === date ? 'btn-primary' : 'btn-secondary'}`} onClick={() => go(day.date)}>
+              {new Date(`${day.date}T12:00:00Z`).toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', timeZone: 'UTC' })}
+              {day.count ? ` · ${day.count}` : ''}
+            </button>
+          ))}
+        </div>
+      ) : null}
+      <div className="mt-4 flex flex-wrap items-end gap-3">
         <button type="button" className="btn btn-secondary btn-sm" onClick={() => go(addDays(date, -1))}>Previous day</button>
         <button type="button" className="btn btn-secondary btn-sm" onClick={() => go(lisbonDay())} disabled={date === lisbonDay()}>Today</button>
         <button type="button" className="btn btn-secondary btn-sm" onClick={() => go(addDays(date, 1))}>Next day</button>
@@ -359,6 +370,34 @@ export function DoctorProfile() {
           <p className="fine">To change these details, contact the Carevia team. Your clinical records stay in iMED.</p>
         </aside>
       </div>
+    </div>
+  )
+}
+
+export function DoctorHistory() {
+  const gate = useLoad(() => api.onboarding(), [])
+  const load = useLoad(() => api.history(), [])
+  if (gate.data?.required && !gate.data.complete) return <Navigate to="/doctor/welcome" replace />
+  if (load.error?.code === 'NO_DOCTOR_PROFILE') return <Unlinked />
+  if (load.error) return <div className="page-narrow"><ErrorState error={load.error} onRetry={load.reload} /></div>
+  if (!load.data) return <div className="page"><Loading label="Loading visit history" /></div>
+  const rows = load.data.appointments
+  return (
+    <div className="page">
+      <Link to="/doctor" className="link">Back to your agenda</Link>
+      <PageTitle lede="What Carevia handled. The clinical record is in iMED. Rows open the visit. No notes and no documents here.">Visit history</PageTitle>
+      {rows.length ? (
+        <ul className="mt-8 grid gap-3">
+          {rows.map((a) => (
+            <li key={a.id}>
+              <Link to={`/doctor/visits/${a.id}`} className="card card-tight flex flex-wrap items-baseline justify-between gap-3">
+                <span>{when(a.startsAt)} · {a.patient?.displayName ?? 'Patient'} · {a.service.name}</span>
+                <span className="fine">{a.status === 'cancelled' ? 'Cancelled' : a.outcome ? OUTCOME[a.outcome] : 'No outcome yet'} · {euro(a.fee)}</span>
+              </Link>
+            </li>
+          ))}
+        </ul>
+      ) : <div className="mt-8"><Empty title="No past visits" art="caught-up">Visits you have already had show up here.</Empty></div>}
     </div>
   )
 }

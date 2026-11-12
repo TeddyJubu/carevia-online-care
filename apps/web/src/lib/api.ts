@@ -140,7 +140,8 @@ export const api = {
   removeFamily: (id: string) => request<unknown>('DELETE', `/api/family/${id}`),
   updateMe: (b: { firstName?: string; lastName?: string; phone?: string }) => request<{ user: User }>('PATCH', '/api/me', b),
 
-  agenda: (date: string) => get<{ doctor: Doctor; appointments: Appointment[] }>(`/api/clinician/agenda?date=${date}`),
+  agenda: (date: string) => get<{ doctor: Doctor; appointments: Appointment[]; week?: { date: string; count: number }[] }>(`/api/clinician/agenda?date=${date}`),
+  history: () => get<{ appointments: Appointment[] }>('/api/clinician/history'),
   onboarding: () => get<Onboarding>('/api/clinician/onboarding'),
   skipTwoFactor: () => post<{ ok: boolean }>('/api/clinician/onboarding/skip-two-factor'),
   checkProfile: (b: { languages: string; experience: string; education: string; decision: 'confirm' | 'flag'; message?: string }) =>

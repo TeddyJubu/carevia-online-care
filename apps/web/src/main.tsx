@@ -140,6 +140,7 @@ const router = createBrowserRouter(
         { path: 'doctor/welcome/device-check', ...page('welcome', 'DeviceStep', clinician) },
         { path: 'doctor/welcome/ready', ...page('welcome', 'ReadyStep', clinician) },
         { path: 'doctor/profile', ...page('doctor', 'DoctorProfile', clinician) },
+        { path: 'doctor/history', ...page('doctor', 'DoctorHistory', clinician) },
         { path: 'doctor/visits/:id', ...page('doctor', 'DoctorVisit', clinician) },
         // Demo or development only: the page itself checks both locks.
         { path: 'dev/outbox', ...page('dev', 'Outbox') },

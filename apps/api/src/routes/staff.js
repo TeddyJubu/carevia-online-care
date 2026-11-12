@@ -10,6 +10,12 @@ import { logAccess } from './appointments.js'
 import { onboardingBlock } from './onboarding.js'
 
 const STATUSES = ['held', 'confirmed', 'completed', 'cancelled', 'expired']
+
+function weekStart(date) {
+  const [year, month, day] = date.split('-').map(Number)
+  const weekday = new Date(Date.UTC(year, month - 1, day)).getUTCDay()
+  return addDays(date, weekday === 0 ? -6 : 1 - weekday)
+}
 const OUTCOMES = ['completed', 'ended_poor_quality', 'needs_in_person', 'no_show']
 const idParams = { type: 'object', required: ['id'], properties: { id: { type: 'string', minLength: 1, maxLength: 64 } } }
 
@@ -31,8 +37,18 @@ export async function staffRoutes(app) {
       orderBy: { startsAt: 'asc' },
     })
     await logAccess(user, rows.map((row) => row.id), 'GET /api/clinician/agenda')
+    const week = []
+    for (let offset = 0; offset < 7; offset += 1) {
+      const day = addDays(weekStart(date), offset)
+      const range = lisbonDayRange(day)
+      const count = await prisma.appointment.count({
+        where: { doctorId: doctor.id, startsAt: { gte: range.from, lt: range.to }, status: { in: ['confirmed', 'completed', 'cancelled'] } },
+      })
+      week.push({ date: day, count })
+    }
     return {
       date,
+      week,
       doctor: {
         id: doctor.id,
         name: doctor.name,
@@ -73,6 +89,21 @@ export async function staffRoutes(app) {
     })
     const updated = await prisma.appointment.findUnique({ where: { id: appointment.id }, include: APPOINTMENT_INCLUDE })
     return { appointment: toAppointment(updated, 'clinician') }
+  })
+
+  app.get('/api/clinician/history', async (request, reply) => {
+    const user = await requireRole(request, reply, ['clinician'])
+    if (!user) return
+    const doctor = await prisma.doctor.findUnique({ where: { clinicianUserId: user.id } })
+    if (!doctor) return sendError(reply, 403, 'NO_DOCTOR_PROFILE', 'This login is not linked to a doctor profile.')
+    const rows = await prisma.appointment.findMany({
+      where: { doctorId: doctor.id, startsAt: { lt: new Date() }, status: { in: ['confirmed', 'completed', 'cancelled'] } },
+      include: APPOINTMENT_INCLUDE,
+      orderBy: { startsAt: 'desc' },
+      take: 100,
+    })
+    await logAccess(user, rows.map((row) => row.id), 'GET /api/clinician/history')
+    return { appointments: rows.map((row) => toAppointment(row, 'clinician')) }
   })
 
   // ---- The doctor's own profile and open times (web /app/doctor/profile) ----
