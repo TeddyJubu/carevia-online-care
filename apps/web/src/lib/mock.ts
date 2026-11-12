@@ -138,6 +138,13 @@ const blocks = (a: Rec) => a.status === 'confirmed' || a.status === 'completed' 
 const windowOf = (a: Rec) => ({ opens: Date.parse(a.startsAt) - 10 * 60000, closes: Date.parse(a.endsAt) + 60 * 60000 })
 const mail = (to: string, subject: string, text: string, links: string[] = []) =>
   db().outbox.unshift({ id: rid(), to, subject, text, links, sentAt: new Date().toISOString() })
+const calendarDate = (value: unknown) => {
+  if (typeof value !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return null
+  const [year, month, day] = value.split('-').map(Number)
+  const check = new Date(Date.UTC(year, month - 1, day))
+  if (check.getUTCFullYear() !== year || check.getUTCMonth() !== month - 1 || check.getUTCDate() !== day) return null
+  return value
+}
 
 function view(a: Rec): Appointment {
   const svc = services.find((s) => s.id === a.serviceId)!
@@ -518,8 +525,13 @@ on('POST', '/api/clinician/time-off', () => {
   const u = needRole('clinician'); if (isRes(u)) return u
   return ok({ closed: 0 })
 })
-on('POST', '/api/clinician/practice-request', () => {
+on('POST', '/api/clinician/practice-request', (_, b) => {
   const u = needRole('clinician'); if (isRes(u)) return u
+  const from = b.from ? calendarDate(b.from) : ''
+  const until = b.until ? calendarDate(b.until) : ''
+  if (b.from && !from) return err(400, 'VALIDATION', 'From must be a date, like 2026-12-20.')
+  if (b.until && !until) return err(400, 'VALIDATION', 'Until must be a date, like 2027-01-02.')
+  if (from && until && until < from) return err(400, 'VALIDATION', 'Until must be on or after from.')
   return ok({ id: 'request-demo' }, 201)
 })
 on('POST', '/api/clinician/appointments/([^/]+)/outcome', (m, b) => {
