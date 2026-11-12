@@ -36,6 +36,7 @@ Every setting is in [`.env.example`](.env.example). The ones that matter most:
 | `DEMO_MODE` | off | Exactly `true` turns on demo logins, demo payment, `POST /api/demo/reset` and waives two-factor login for staff. |
 | `NODE_ENV` | | `development` shows the outbox without demo mode; `production` refuses changing requests that carry neither `Origin` nor `Sec-Fetch-Site`. |
 | `TRUST_PROXY` | `false` | `true` behind nginx, so the rate limiter sees the real client IP. |
+| `HOLD_LIMIT` | `10` | Held times (`POST /api/bookings`) allowed per IP per 10 minutes. The smoke run sets it higher. |
 
 Ports per thread are in `docs/patient-journey/PLAN.md` (API thread: Postgres 5432, API 4000).
 
@@ -96,9 +97,9 @@ The smoke script drives the running API, starts a fake Daily on `127.0.0.1:4090`
 
 ```sh
 # Demo mode (the full journey, 158 checks)
-DEMO_MODE=true NODE_ENV=development DAILY_API_URL=http://127.0.0.1:4090/v1 npm run start --prefix apps/api
+HOLD_LIMIT=1000 DEMO_MODE=true NODE_ENV=development DAILY_API_URL=http://127.0.0.1:4090/v1 npm run start --prefix apps/api
 # Demo mode off (locks: 404 demo routes, 501 payment, two-factor required, CSRF in production; 27 checks)
-NODE_ENV=production DAILY_API_URL=http://127.0.0.1:4090/v1 npm run start --prefix apps/api
+HOLD_LIMIT=1000 NODE_ENV=production DAILY_API_URL=http://127.0.0.1:4090/v1 npm run start --prefix apps/api
 ```
 
 The demo run ends with a demo reset, so the database is left in its seeded state.

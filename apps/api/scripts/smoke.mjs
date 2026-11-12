@@ -1,6 +1,6 @@
 // Smoke test for the running API. See README "Smoke and unit tests" for how to start the API for it.
-//   Demo mode:   DEMO_MODE=true NODE_ENV=development DAILY_API_URL=http://127.0.0.1:4090/v1 npm run start
-//   Normal mode: NODE_ENV=production DAILY_API_URL=http://127.0.0.1:4090/v1 npm run start
+//   Demo mode:   HOLD_LIMIT=1000 DEMO_MODE=true NODE_ENV=development DAILY_API_URL=http://127.0.0.1:4090/v1 npm run start
+//   Normal mode: HOLD_LIMIT=1000 NODE_ENV=production DAILY_API_URL=http://127.0.0.1:4090/v1 npm run start
 // The script starts a fake Daily on 127.0.0.1:4090, so no real Daily key or network call is needed for video.
 // It uses Prisma directly once, to backdate a hold for the HOLD_EXPIRED check, and runs the reminder job itself
 // with a simulated clock (same database) to check one reminder per visit.

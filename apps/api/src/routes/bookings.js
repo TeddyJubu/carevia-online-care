@@ -4,6 +4,7 @@ import { DEMO_MODE } from '../config.js'
 import { currentConsent } from '../content.js'
 import { sendMail } from '../mail.js'
 import { prisma } from '../prisma.js'
+import { makeLimiter } from './doctor-applications.js'
 import { effectiveStatus, holdExpiry, isAdult, isMinor, lisbonDateTime } from '../rules.js'
 import { APPOINTMENT_INCLUDE, sendError, toAppointment } from '../views.js'
 
@@ -90,6 +91,9 @@ async function ownedHold(reply, id, user) {
 const idParams = { type: 'object', required: ['id'], properties: { id: { type: 'string', minLength: 1, maxLength: 64 } } }
 
 export async function bookingRoutes(app) {
+  // ponytail: per IP, so a botnet beats it; the upgrade is to require sign-in before a hold. Needs TRUST_PROXY=true behind nginx.
+  const allowHold = makeLimiter({ max: Number(process.env.HOLD_LIMIT) || 10, windowMs: 10 * 60_000 })
+
   app.post('/api/bookings', {
     schema: {
       body: {
@@ -106,6 +110,7 @@ export async function bookingRoutes(app) {
       },
     },
   }, async (request, reply) => {
+    if (!allowHold(request.ip)) return sendError(reply, 429, 'TOO_MANY_REQUESTS', 'Too many held times. Try again in a few minutes.')
     const body = request.body
     if (body.inMainlandPortugal !== true) {
       return sendError(reply, 400, 'NOT_ELIGIBLE', 'Carevia can only see patients who are in mainland Portugal during the visit.')
