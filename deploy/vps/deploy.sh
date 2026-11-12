@@ -20,7 +20,15 @@ VITE_DEMO_MODE=true npm run build --prefix apps/admin
 rel=$(mktemp -d); trap 'rm -rf "$rel"' EXIT
 mkdir -p "$rel/src" && git archive HEAD package.json package-lock.json apps/api content deploy $(git ls-files 'apps/*/package.json') | tar -x -C "$rel/src"
 cp -R dist "$rel/site" && cp -R apps/web/dist "$rel/app" && cp -R apps/admin/dist "$rel/admin"
-COPYFILE_DISABLE=1 tar -c -C "$rel" site app admin src | ssh "$HOST" carevia/bin/receive-deploy
+# dist/assets is a verbatim copy of src/assets (65 MB of images), so its git tree hash says whether the server
+# already has it; if so it stays out of the upload (a slow runner-to-VPS link once took 15+ minutes for it).
+tree=$(git rev-parse HEAD:src/assets)
+if [ "$(ssh "$HOST" carevia/bin/receive-deploy has-assets "$tree")" = yes ]; then
+  rm -rf "$rel/site/assets" && echo "Homepage assets unchanged ($tree), not uploading them."
+else
+  echo "$tree" > "$rel/assets-tree"
+fi
+COPYFILE_DISABLE=1 tar -c -C "$rel" . | ssh "$HOST" carevia/bin/receive-deploy
 if [ "${1:-}" = "--seed" ]; then
   ssh "$HOST" 'cd ~/carevia/src/deploy/vps && docker compose --env-file ~/carevia/api.env exec -T api npx prisma db seed'
 fi
