@@ -1,4 +1,4 @@
-# Every push to main (a merge, or a direct push) deploys to https://carevia.triplelabs.dev and then
+# Every push to main (a merge, or a direct push) runs the test job and, only if it passes, deploys to https://carevia.triplelabs.dev and then
 # fast-forwards patient-journey to match. The SSH key can only run ~/carevia/bin/receive-deploy on the VPS.
 name: Deploy
 on:
@@ -11,7 +11,51 @@ concurrency:
 permissions:
   contents: write
 jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: carevia
+          POSTGRES_PASSWORD: carevia
+          POSTGRES_DB: carevia
+        ports: ['5432:5432']
+        options: --health-cmd pg_isready --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      DATABASE_URL: postgresql://carevia:carevia@127.0.0.1:5432/carevia
+      BETTER_AUTH_SECRET: ci-only-not-a-real-secret-0123456789abcdef
+      DAILY_API_URL: http://127.0.0.1:4090/v1 # the smoke script's fake Daily
+      LOG_LEVEL: warn
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci # scripts on, so apps/api's postinstall runs prisma generate
+      - run: npm run db:setup
+      - run: npm run test:api
+      - run: npm run typecheck --prefix apps/web
+      # Both modes from the header of apps/api/scripts/smoke.mjs: the demo journey, then the production locks.
+      - name: Smoke (demo mode)
+        run: |
+          DEMO_MODE=true NODE_ENV=development npm run start --prefix apps/api > api-demo.log 2>&1 &
+          curl -fsS --retry 30 --retry-delay 1 --retry-all-errors -o /dev/null http://127.0.0.1:4000/api/health
+          npm run smoke:api
+          kill %1
+      - name: Smoke (demo mode off)
+        run: |
+          NODE_ENV=production npm run start --prefix apps/api > api-prod.log 2>&1 &
+          curl -fsS --retry 30 --retry-delay 1 --retry-all-errors -o /dev/null http://127.0.0.1:4000/api/health
+          npm run smoke:api
+          kill %1
+      - name: API logs
+        if: failure()
+        run: tail -n 100 api-*.log
   deploy:
+    needs: test
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
