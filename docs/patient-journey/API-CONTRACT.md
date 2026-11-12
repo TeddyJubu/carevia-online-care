@@ -43,7 +43,7 @@ The admin app signs in with the same endpoint, then checks `role === "admin"`.
 - **`GET /api/doctors/:id/slots?from=YYYY-MM-DD&days=7`:** `{ doctorId, slots: [{ id, startsAt, endsAt }] }`. Returns only free slots: not booked, not under an unexpired hold, and not in the past. A signed-in patient can add `for=self` (new booking for themself) or `visit=<appointmentId>` (moving that visit) to also leave out times that person already has a confirmed visit at. Both work on first-available too.
 - **`GET /api/slots/first-available?groupSlug=&serviceId=&language=&limit=6`:** `{ slots: [{ id, startsAt, endsAt, doctor: { id, name, initials, specialty, languages, fee, cedula } }] }`, earliest first, across doctors.
 
-The schedule is rolling: every doctor has slots on working days over the next 21 days, generated relative to today in `Europe/Lisbon` time, and kept topped up (on start-up and daily). Keep the existing per-doctor availability variety (`availabilityIndex`) so some doctors are free today and others later.
+The schedule is rolling: each doctor has slots over the next 21 days from their `weeklyHours` template (weekday `"0"` Sunday … `"6"` Saturday to Lisbon start times), generated relative to today in `Europe/Lisbon` time, and kept topped up (on start-up and daily). An empty template opens nothing. Existing demo doctors keep the Monday-to-Friday pattern. Keep the existing per-doctor availability variety (`availabilityIndex`) so some doctors are free today and others later. A closed slot stays closed, because the top-up skips rows that already exist.
 
 ## Booking
 

@@ -124,24 +124,45 @@ export function lisbonDayRange(date) {
 
 export const SCHEDULE_DAYS = 21
 export const SLOT_MINUTES = 30
-// Lisbon wall-clock start times on each working day (Monday to Friday).
+// Lisbon wall-clock starts of the old Monday-to-Friday pattern. Demo doctors are backfilled with these.
 export const SLOT_TIMES = ['09:00', '10:30', '12:00', '14:30', '16:00', '17:30', '19:00']
+
+/** Weekday ("1" Monday … "5" Friday) to a copy of `SLOT_TIMES`. Sunday is "0". */
+export const WEEKDAY_HOURS = Object.fromEntries(['1', '2', '3', '4', '5'].map((day) => [day, [...SLOT_TIMES]]))
+
+const CLOCK_TIME = /^([01]\d|2[0-3]):[0-5]\d$/
+
+/** Lisbon "HH:MM" starts listed for one weekday. Duplicates and anything that is not a clock time are dropped. */
+function timesOn(weeklyHours, day) {
+  const listed = weeklyHours?.[String(day)]
+  if (!Array.isArray(listed)) return []
+  const seen = new Set()
+  const times = []
+  for (const time of listed) {
+    if (typeof time !== 'string' || !CLOCK_TIME.test(time) || seen.has(time)) continue
+    seen.add(time)
+    times.push(time)
+  }
+  return times
+}
 
 /**
  * Slots for one doctor over the 21 calendar days starting `today` (Lisbon date).
- * `availabilityIndex` keeps the demo's variety: the doctor's first working days are skipped,
- * so 0 is free from today, 1 from the next working day, 2 from the one after.
+ * `weeklyHours` maps a weekday ("0" Sunday … "6" Saturday) to Lisbon start times,
+ * for example `{"1":["09:00","10:30"],"2":["09:00"]}`. An empty template produces no slots.
+ * `availabilityIndex` keeps the demo's variety: the first days the template lists are skipped,
+ * so 0 is free from the first listed day, 1 from the next, 2 from the one after.
  */
-export function scheduleFor(availabilityIndex, today) {
+export function scheduleFor(weeklyHours, today, availabilityIndex = 0) {
   const slots = []
-  let workingDay = 0
+  let listedDay = 0
   for (let i = 0; i < SCHEDULE_DAYS; i += 1) {
     const date = addDays(today, i)
-    const day = weekday(date)
-    if (day === 0 || day === 6) continue
-    workingDay += 1
-    if (workingDay <= availabilityIndex) continue
-    for (const time of SLOT_TIMES) {
+    const times = timesOn(weeklyHours, weekday(date))
+    if (times.length === 0) continue
+    listedDay += 1
+    if (listedDay <= availabilityIndex) continue
+    for (const time of times) {
       const startsAt = lisbonTimeToUtc(date, time)
       slots.push({ startsAt, endsAt: new Date(startsAt.getTime() + SLOT_MINUTES * 60_000) })
     }
