@@ -510,6 +510,8 @@ on('POST', '/api/clinician/appointments/([^/]+)/cancel', (m) => {
   if (a.status !== 'confirmed' || a.outcome) return err(409, 'CANNOT_CANCEL', 'This visit can no longer be cancelled.')
   if (Date.now() >= Date.parse(a.startsAt)) return err(409, 'TOO_LATE_TO_CANCEL', 'This visit has already started, so it can no longer be cancelled.')
   a.status = 'cancelled'
+  const patient = db().users.find((user) => user.id === a.userId)
+  if (patient) mail(patient.email, 'Your Carevia visit was cancelled', `Your visit on ${a.startsAt} was cancelled. You can book a new time. Nothing clinical is in this email.`)
   return ok({ appointment: view(a) })
 })
 on('POST', '/api/clinician/time-off', () => {

@@ -252,6 +252,7 @@ export async function staffRoutes(app) {
     const untilDate = request.body.until || ''
     if (fromDate && !parseDate(fromDate)) return sendError(reply, 400, 'VALIDATION', 'From must be a date, like 2026-12-20.')
     if (untilDate && !parseDate(untilDate)) return sendError(reply, 400, 'VALIDATION', 'Until must be a date, like 2027-01-02.')
+    if (fromDate && untilDate && untilDate < fromDate) return sendError(reply, 400, 'VALIDATION', 'Until must be on or after from.')
     const row = await prisma.practiceRequest.create({
       data: { doctorId: doctor.id, kind: request.body.kind, fromDate, untilDate, message },
     })

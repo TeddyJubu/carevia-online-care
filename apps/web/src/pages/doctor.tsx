@@ -339,7 +339,9 @@ export function DoctorProfile() {
   const booked = slots.filter((s) => s.booked).length
   const today = lisbonDay(), last = addDays(today, span - 1)
 
+  const locked = busy !== null
   async function run(key: number | 'add', fn: () => Promise<void>) {
+    if (locked) return
     setBusy(key)
     setError(null)
     try { await fn() } catch (e) { setError((e as ApiError).message) } finally { setBusy(null) }
@@ -361,7 +363,7 @@ export function DoctorProfile() {
           <form className="card card-tight mt-4 flex flex-wrap items-end gap-3" onSubmit={(e) => { e.preventDefault(); add() }}>
             <Field label="Day" type="date" value={date} min={today} max={last} required onChange={(e) => setDate(e.target.value)} className="w-48" />
             <Field label="Start time" type="time" step={300} value={time} required onChange={(e) => setTime(e.target.value)} className="w-36" />
-            <button type="submit" className="btn btn-primary" disabled={busy === 'add'}>{busy === 'add' ? 'Adding…' : 'Add a time'}</button>
+            <button type="submit" className="btn btn-primary" disabled={locked}>{busy === 'add' ? 'Adding…' : 'Add a time'}</button>
             <p className="fine basis-full">Visits last 30 minutes, so a new time can’t overlap an open one.</p>
           </form>
           {!days.length ? <div className="mt-4"><Empty title="No times on your schedule" art="caught-up">Add a time above and patients can book it.</Empty></div> : (
@@ -371,7 +373,7 @@ export function DoctorProfile() {
                   <p className="font-medium">{relDay(list[0].startsAt)}<span className="fine block font-normal">{shortDate(list[0].startsAt)}</span></p>
                   <div className="flex flex-wrap gap-2" role="group" aria-label={`Times on ${shortDate(list[0].startsAt)}`}>
                     {list.map((s) => (
-                      <button key={s.id} type="button" className={`chip tabular-nums ${s.booked ? 'chip-booked' : ''}`} aria-pressed={s.booked ? undefined : s.open} disabled={s.booked || busy === s.id}
+                      <button key={s.id} type="button" className={`chip tabular-nums ${s.booked ? 'chip-booked' : ''}`} aria-pressed={s.booked ? undefined : s.open} disabled={s.booked || locked}
                         title={s.booked ? 'Booked: it stays on your schedule' : s.open ? 'Open: tap to remove' : 'Removed: tap to open'}
                         onClick={() => toggle(s)}>
                         {hhmm(s.startsAt)}{s.booked ? <span className="ml-1.5 text-[13px] opacity-80">Booked</span> : <span className="sr-only">{s.open ? ', open' : ', removed'}</span>}
@@ -401,7 +403,7 @@ export function DoctorProfile() {
               <Field label="To" name="offTo" type="date" required className="w-48" />
             </div>
             <FormError error={timeOffError} />
-            <button className="btn btn-secondary" type="submit" disabled={busy === 'timeoff'}>Close these days</button>
+            <button className="btn btn-secondary" type="submit" disabled={locked}>{busy === 'timeoff' ? 'Closing…' : 'Close these days'}</button>
           </form>
           <form className="card card-tight mt-4 grid gap-4" onSubmit={(e) => {
             e.preventDefault()
@@ -429,7 +431,7 @@ export function DoctorProfile() {
             </div>
             <Field as="textarea" label="Message to the Carevia team (optional)" name="note" rows={3} hint="Operational only. Nothing clinical." />
             <FormError error={requestError} />
-            <button className="btn btn-secondary" type="submit" disabled={busy === 'request'}>{busy === 'request' ? 'Sending…' : 'Send request'}</button>
+            <button className="btn btn-secondary" type="submit" disabled={locked}>{busy === 'request' ? 'Sending…' : 'Send request'}</button>
           </form>
           {note && <Notice className="mt-4" tone="ok">{note}</Notice>}
         </section>
