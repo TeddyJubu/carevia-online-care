@@ -23,9 +23,15 @@ const WHY = [
 ]
 
 const STEPS = [
-  ['Apply', 'Tell us about your practice. It takes about five minutes.'],
-  ['We verify and call you', 'We check your cédula with your Ordem, then call to talk through your hours and services.'],
-  ['Open your agenda', 'We set up your doctor login. Once your hours are in, patients can book you.'],
+  ['Apply', 'Tell us about your practice. It takes about five minutes.', 'We invite you by email.'],
+  ['We verify and call you', 'We check your cédula with your Ordem, then call to talk through your hours and services.', 'You set up your login.'],
+  ['Open your agenda', 'We set up your doctor login. Once your hours are in, patients can book you.', 'You open your hours.'],
+]
+
+const ELIGIBILITY = [
+  'A current cédula with your Ordem.',
+  'A private, quiet space for calls.',
+  'A computer or tablet with camera and microphone.',
 ]
 
 function validate(f: FormData) {
@@ -55,7 +61,7 @@ export function JoinPage() {
   const [errors, setErrors] = useState<Errors>({})
   const [error, setError] = useState<string | null>(null)
   const [pending, setPending] = useState(false)
-  const [sent, setSent] = useState<string | null>(null)
+  const [sent, setSent] = useState<{ email: string; reference: string } | null>(null)
 
   function onSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault()
@@ -68,16 +74,32 @@ export function JoinPage() {
     }
     setPending(true)
     api.applyAsDoctor(body)
-      .then(() => { setSent(body.email); window.scrollTo({ top: 0 }) })
+      .then((res) => { setSent({ email: body.email, reference: res.reference }); window.scrollTo({ top: 0 }) })
       .catch((err) => setError(err instanceof ApiError ? err.message : 'Something went wrong. Please try again.'))
       .finally(() => setPending(false))
   }
 
   if (sent) {
+    const next = [
+      ['We verify', 'Cédula, identity, specialty'],
+      ['We invite you', 'An email sets up your login'],
+      ['You open your hours', 'Then patients can book you'],
+    ]
     return (
       <div className="page-narrow" role="status">
         <PageTitle eyebrow="For doctors" lede="We’ll check your cédula with your Ordem and call you within a few working days.">Application received</PageTitle>
-        <Notice tone="ok" className="mt-8"><span>We’ll write to <strong className="font-medium">{sent}</strong> if we need anything else.</span></Notice>
+        <ol className="mt-8 grid gap-5">
+          {next.map(([title, text], i) => (
+            <li key={title} className="flex gap-4">
+              <span className="eyebrow w-8 flex-none pt-[3px]">{String(i + 1).padStart(2, '0')}</span>
+              <span><strong className="font-medium">{title}</strong><span className="muted block mt-1">{text}</span></span>
+            </li>
+          ))}
+        </ol>
+        <Notice tone="ok" className="mt-8">
+          <span>We’ll write to <strong className="font-medium">{sent.email}</strong> if we need anything else. Your reference: <strong className="font-medium">{sent.reference}</strong></span>
+        </Notice>
+        <p className="fine mt-4">Quote that reference in any email. There is no status page and no login yet.</p>
         <div className="mt-8 flex flex-wrap gap-3">
           <a href="/?site" className="btn btn-secondary">Carevia homepage</a>
         </div>
@@ -104,10 +126,14 @@ export function JoinPage() {
           <section className="mt-10 grid gap-6" aria-labelledby="steps-h">
             <h2 id="steps-h" className="font-sans text-[20px] font-medium">Three steps to your first visit</h2>
             <ol className="grid gap-5">
-              {STEPS.map(([title, text], i) => (
+              {STEPS.map(([title, text, next], i) => (
                 <li key={title} className="flex gap-4">
                   <span className="eyebrow w-8 flex-none pt-[3px]">{String(i + 1).padStart(2, '0')}</span>
-                  <span><strong className="font-medium">{title}</strong><span className="muted block mt-1">{text}</span></span>
+                  <span>
+                    <strong className="font-medium">{title}</strong>
+                    <span className="muted block mt-1">{text}</span>
+                    <span className="fine block mt-1">{next}</span>
+                  </span>
                 </li>
               ))}
             </ol>
@@ -118,6 +144,14 @@ export function JoinPage() {
         <section className="card p-6 sm:p-8 self-start" aria-labelledby="form-h">
           <h2 id="form-h" className="font-sans text-[22px] font-medium">Doctor registration</h2>
           <p className="fine mt-1">We review every application before a doctor sees patients.</p>
+          <aside className="notice mt-5" aria-labelledby="before-h">
+            <div>
+              <h3 id="before-h" className="font-sans text-[15px] font-medium">Before you apply</h3>
+              <ul className="mt-2 grid gap-1">
+                {ELIGIBILITY.map((line) => <li key={line}>{line}</li>)}
+              </ul>
+            </div>
+          </aside>
           <form noValidate className="mt-6 grid gap-5" onSubmit={onSubmit}>
             <div className="grid gap-5 sm:grid-cols-2">
               <Field label="First name" name="firstName" autoComplete="given-name" required error={errors.firstName} />
@@ -149,6 +183,7 @@ export function JoinPage() {
             </div>
             <FormError error={error} />
             <button className="btn btn-primary btn-block" disabled={pending}>{pending ? 'Sending…' : 'Send application'}</button>
+            <p className="fine">What happens next: we verify, we invite you by email, you set up your login.</p>
           </form>
         </section>
       </div>

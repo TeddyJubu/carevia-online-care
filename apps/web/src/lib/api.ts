@@ -71,6 +71,14 @@ const qs = (o: Record<string, string | number | undefined | null>) => {
 }
 
 type SignUp = { email: string; password: string; firstName: string; lastName: string; phone: string; dateOfBirth: string }
+export type Onboarding = {
+  required: boolean
+  complete: boolean
+  demo?: boolean
+  steps: { key: string; title: string; done: boolean; detail: string; state: 'done' | 'current' | 'later' }[]
+  profile?: { name: string; specialty: string; cedula: string; fee: number; languages: string; experience: string; education: string; shown: boolean; flagged: boolean }
+  agreement?: { version: string; statements: string[]; draft: boolean }
+}
 type A = { appointment: Appointment }
 
 export const api = {
@@ -84,6 +92,8 @@ export const api = {
     requestReset: (email: string) =>
       post<unknown>('/api/auth/request-password-reset', { email, redirectTo: `${location.origin}/app/reset-password` }),
     resetPassword: (token: string, newPassword: string) => post<unknown>('/api/auth/reset-password', { token, newPassword }),
+    previewInvite: (token: string) => post<{ email: string }>('/api/doctor-invites/preview', { token }),
+    acceptInvite: (token: string, password: string) => post<{ email: string }>('/api/doctor-invites/accept', { token, password }),
     changePassword: (currentPassword: string, newPassword: string) =>
       post<unknown>('/api/auth/change-password', { currentPassword, newPassword, revokeOtherSessions: true }),
     enableTwoFactor: (password: string) => post<{ totpURI: string; backupCodes: string[] }>('/api/auth/two-factor/enable', { password }),
@@ -91,7 +101,7 @@ export const api = {
   },
   services: () => get<{ today: string; groups: ServiceGroup[] }>('/api/services'),
   /** The public doctor registration form (/app/join). Creates an application for admin review, not a login. */
-  applyAsDoctor: (b: Record<string, unknown>) => post<{ id: string }>('/api/doctor-applications', b),
+  applyAsDoctor: (b: Record<string, unknown>) => post<{ id: string; reference: string }>('/api/doctor-applications', b),
   doctors: (f: { groupSlug?: GroupSlug; service?: string; language?: string; sort?: 'first-available' }) =>
     get<{ doctors: Doctor[] }>(`/api/doctors${qs(f)}`),
   doctor: (id: number) => get<{ doctor: Doctor }>(`/api/doctors/${id}`),
@@ -130,7 +140,19 @@ export const api = {
   removeFamily: (id: string) => request<unknown>('DELETE', `/api/family/${id}`),
   updateMe: (b: { firstName?: string; lastName?: string; phone?: string }) => request<{ user: User }>('PATCH', '/api/me', b),
 
-  agenda: (date: string) => get<{ doctor: Doctor; appointments: Appointment[] }>(`/api/clinician/agenda?date=${date}`),
+  agenda: (date: string) => get<{ doctor: Doctor; appointments: Appointment[]; week?: { date: string; count: number }[] }>(`/api/clinician/agenda?date=${date}`),
+  history: () => get<{ appointments: Appointment[] }>('/api/clinician/history'),
+  timeOff: (from: string, to: string) => post<{ closed: number }>('/api/clinician/time-off', { from, to }),
+  practiceRequest: (b: { kind: 'pause' | 'leave'; from?: string; until?: string; message?: string }) => post<{ id: string }>('/api/clinician/practice-request', b),
+  cancelVisit: (id: string) => post<{ appointment: Appointment }>(`/api/clinician/appointments/${id}/cancel`),
+  onboarding: () => get<Onboarding>('/api/clinician/onboarding'),
+  skipTwoFactor: () => post<{ ok: boolean }>('/api/clinician/onboarding/skip-two-factor'),
+  checkProfile: (b: { languages: string; experience: string; education: string; decision: 'confirm' | 'flag'; message?: string }) =>
+    post<{ ok: boolean }>('/api/clinician/onboarding/profile', b),
+  acceptAgreement: (version: string) => post<{ ok: boolean }>('/api/clinician/onboarding/agreement', { version }),
+  openFirstHours: (b: { from: string; to: string; days: number[] }) => post<{ opened: number; future: number }>('/api/clinician/onboarding/hours', b),
+  deviceChecked: () => post<{ ok: boolean }>('/api/clinician/onboarding/device'),
+  goLive: () => post<{ ok: boolean }>('/api/clinician/onboarding/live'),
   recordOutcome: (id: string, outcome: Outcome) => post<A>(`/api/clinician/appointments/${id}/outcome`, { outcome }),
   schedule: () => get<{ doctor: Doctor; days: number; slots: OwnSlot[] }>('/api/clinician/schedule'),
   openSlot: (date: string, time: string) => post<{ slot: OwnSlot }>('/api/clinician/slots', { date, time }),

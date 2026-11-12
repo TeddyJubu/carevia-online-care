@@ -138,6 +138,13 @@ const blocks = (a: Rec) => a.status === 'confirmed' || a.status === 'completed' 
 const windowOf = (a: Rec) => ({ opens: Date.parse(a.startsAt) - 10 * 60000, closes: Date.parse(a.endsAt) + 60 * 60000 })
 const mail = (to: string, subject: string, text: string, links: string[] = []) =>
   db().outbox.unshift({ id: rid(), to, subject, text, links, sentAt: new Date().toISOString() })
+const calendarDate = (value: unknown) => {
+  if (typeof value !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return null
+  const [year, month, day] = value.split('-').map(Number)
+  const check = new Date(Date.UTC(year, month - 1, day))
+  if (check.getUTCFullYear() !== year || check.getUTCMonth() !== month - 1 || check.getUTCDate() !== day) return null
+  return value
+}
 
 function view(a: Rec): Appointment {
   const svc = services.find((s) => s.id === a.serviceId)!
@@ -267,6 +274,7 @@ const PLATE: Record<string, [string[], string]> = {
   treatments: [["Skin, hair loss or ongoing pain", "Reviewing a treatment you’ve started", "Prescription is often the outcome"], "Specialist care: when you still need a diagnosis."],
   renewals: [["You already know what you need", "Lab tests or a repeat prescription", "Results arrive in your account"], "Certificates & assessments: for written statements."],
 }
+on('POST', '/api/doctor-applications', () => ok({ id: 'app-demo', reference: 'CV-APP-0007' }, 201))
 on('GET', '/api/services', () => {
   const today = lisbonDay()
   const days = Array.from({ length: 7 }, (_, i) => addDays(today, i))
@@ -502,6 +510,29 @@ on('GET', '/api/clinician/agenda', (_, __, q) => {
     .sort((a, b) => a.startsAt.localeCompare(b.startsAt)).map(view)
   const { groupIndex: _g, serviceId: _s, availabilityIndex: _a, ...doctor } = d
   return ok({ doctor, appointments: list })
+})
+on('POST', '/api/clinician/appointments/([^/]+)/cancel', (m) => {
+  const u = needRole('clinician'); if (isRes(u)) return u
+  const a = ownAppt(u, m[1]); if (isRes(a)) return a
+  if (a.status !== 'confirmed' || a.outcome) return err(409, 'CANNOT_CANCEL', 'This visit can no longer be cancelled.')
+  if (Date.now() >= Date.parse(a.startsAt)) return err(409, 'TOO_LATE_TO_CANCEL', 'This visit has already started, so it can no longer be cancelled.')
+  a.status = 'cancelled'
+  const patient = db().users.find((user) => user.id === a.userId)
+  if (patient) mail(patient.email, 'Your Carevia visit was cancelled', `Your visit on ${a.startsAt} was cancelled. You can book a new time. Nothing clinical is in this email.`)
+  return ok({ appointment: view(a) })
+})
+on('POST', '/api/clinician/time-off', () => {
+  const u = needRole('clinician'); if (isRes(u)) return u
+  return ok({ closed: 0 })
+})
+on('POST', '/api/clinician/practice-request', (_, b) => {
+  const u = needRole('clinician'); if (isRes(u)) return u
+  const from = b.from ? calendarDate(b.from) : ''
+  const until = b.until ? calendarDate(b.until) : ''
+  if (b.from && !from) return err(400, 'VALIDATION', 'From must be a date, like 2026-12-20.')
+  if (b.until && !until) return err(400, 'VALIDATION', 'Until must be a date, like 2027-01-02.')
+  if (from && until && until < from) return err(400, 'VALIDATION', 'Until must be on or after from.')
+  return ok({ id: 'request-demo' }, 201)
 })
 on('POST', '/api/clinician/appointments/([^/]+)/outcome', (m, b) => {
   const u = needRole('clinician'); if (isRes(u)) return u

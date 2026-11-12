@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
+import DoctorLogin from './DoctorLogin.jsx'
 import { EmptyArt } from './EmptyArt.jsx'
 import {
   addDoctorSlot,
@@ -356,6 +357,7 @@ function DoctorEditor({ id, onSignOut, onDenied }) {
               </p>
             </div>
           </header>
+          {!creating ? <DoctorLogin id={id} /> : null}
           <form className="panel" onSubmit={onSave}>
             <h2>Profile</h2>
             <div className="form-grid">

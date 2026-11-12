@@ -73,6 +73,7 @@ model User {
   dateOfBirth      String
   role             Role            @default(patient)
   twoFactorEnabled Boolean?        @default(false)
+  disabledAt       DateTime?
   twoFactors       TwoFactor[]
   sessions         Session[]
   accounts         Account[]
@@ -80,6 +81,7 @@ model User {
   doctor           Doctor?
   consentRecords   ConsentRecord[]
   familyMembers    FamilyMember[]
+  onboarding       ClinicianOnboarding?
 }
 
 model Session {
@@ -203,8 +205,14 @@ model Doctor {
   // The clinician login for this doctor profile, if any.
   clinicianUserId   String?       @unique
   clinician         User?         @relation(fields: [clinicianUserId], references: [id], onDelete: SetNull)
+  pausedAt          DateTime?
+  pausedUntil       DateTime?
+  closedDownAt      DateTime?
+  practiceRequests  PracticeRequest[]
   slots             Slot[]
   appointments      Appointment[]
+  invite            ClinicianInvite?
+  applications      DoctorApplication[]
 
   @@index([specialty])
   @@index([fee])
@@ -347,8 +355,8 @@ model DailySettings {
   updatedAt DateTime @updatedAt
 }
 
-// "Join Carevia" applications from the public doctor registration screen (/app/join). Not a login: an admin
-// checks the cédula with the professional body, then creates the Doctor and its clinician login by hand.
+// "Join Carevia" applications from the public doctor registration screen (/app/join). Not a login.
+// Approve records the decision only. The invite creates the hidden profile and the clinician login.
 model DoctorApplication {
   id              String   @id @default(cuid())
   firstName       String
@@ -366,7 +374,71 @@ model DoctorApplication {
   message         String   @default("")
   // new, contacted, approved or declined.
   status          String   @default("new")
+  // Public reference CV-APP-0001. Sequential, so an applicant can quote it. Not a login.
+  ref             Int      @unique @default(autoincrement())
+  // Set when the invite creates the profile. Approve does not set this.
+  doctorId        Int?     @unique
+  doctor          Doctor?  @relation(fields: [doctorId], references: [id])
   createdAt       DateTime @default(now())
+  checks          ApplicationCheck[]
 
   @@index([status, createdAt])
+}
+
+// One row per ticked launch gate. The tick is the record: who checked it, and when.
+// Insurance is "confirmed" plus this date. Policy files are never stored.
+model ApplicationCheck {
+  id              String            @id @default(cuid())
+  applicationId   String
+  application     DoctorApplication @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  key             String
+  checkedByUserId String
+  checkedByName   String
+  checkedAt       DateTime          @default(now())
+
+  @@unique([applicationId, key])
+}
+
+// One clinician login per doctor. The raw invite token is only in the email, never stored or logged.
+model ClinicianInvite {
+  id            String    @id @default(cuid())
+  doctorId      Int       @unique
+  doctor        Doctor    @relation(fields: [doctorId], references: [id], onDelete: Cascade)
+  email         String
+  tokenHash     String?
+  expiresAt     DateTime?
+  sentAt        DateTime  @default(now())
+  acceptedAt    DateTime?
+  revokedAt     DateTime?
+}
+
+// A doctor's request to pause or leave. It notifies the team and changes nothing else:
+// booked visits stay, and hiding or disabling the login is an admin step.
+model PracticeRequest {
+  id        String   @id @default(cuid())
+  doctorId  Int
+  doctor    Doctor   @relation(fields: [doctorId], references: [id], onDelete: Cascade)
+  kind      String
+  fromDate  String   @default("")
+  untilDate String   @default("")
+  message   String   @default("")
+  createdAt DateTime @default(now())
+
+  @@index([doctorId, createdAt])
+}
+
+// One row per clinician who came in through an invite. Seeded demo doctors have none, so their agenda stays open.
+// The agenda stays closed until every step is done. Going live is the doctor's act, in the last step.
+model ClinicianOnboarding {
+  userId               String    @id
+  user                 User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  profileCheckedAt     DateTime?
+  profileFlaggedAt     DateTime?
+  profileFlag          String    @default("")
+  agreementVersion     String?
+  agreementAcceptedAt  DateTime?
+  twoFactorSkippedAt   DateTime?
+  hoursOpenedAt        DateTime?
+  deviceCheckedAt      DateTime?
+  wentLiveAt           DateTime?
 }

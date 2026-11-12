@@ -247,6 +247,42 @@ export function listDoctorApplications(status = '') {
   return request(`/api/admin/doctor-applications${status ? `?status=${encodeURIComponent(status)}` : ''}`)
 }
 
+export function getDoctorApplication(id) {
+  return request(`/api/admin/doctor-applications/${encodeURIComponent(id)}`)
+}
+
 export function setDoctorApplicationStatus(id, status) {
   return request(`/api/admin/doctor-applications/${encodeURIComponent(id)}`, { method: 'PATCH', body: { status } })
+}
+
+export function setApplicationCheck(id, key, checked) {
+  return request(`/api/admin/doctor-applications/${encodeURIComponent(id)}/checks/${encodeURIComponent(key)}`, { method: 'PUT', body: { checked } })
+}
+
+export function inviteApplicant(id, body) {
+  return request(`/api/admin/doctor-applications/${encodeURIComponent(id)}/invite`, { method: 'POST', body })
+}
+
+export function getDoctorLogin(id) {
+  return request(`/api/admin/doctors/${id}/login`)
+}
+
+export function inviteDoctor(id, email) {
+  return request(`/api/admin/doctors/${id}/invite`, { method: 'POST', body: { email } })
+}
+
+export function resendDoctorInvite(id) {
+  return request(`/api/admin/doctors/${id}/invite/resend`, { method: 'POST', body: {} })
+}
+
+export function revokeDoctorInvite(id) {
+  return request(`/api/admin/doctors/${id}/invite/revoke`, { method: 'POST', body: {} })
+}
+
+export function pauseDoctor(id, until) {
+  return request(`/api/admin/doctors/${id}/pause`, { method: 'POST', body: until ? { until } : {} })
+}
+
+export function closeDownDoctor(id) {
+  return request(`/api/admin/doctors/${id}/close-down`, { method: 'POST', body: {} })
 }

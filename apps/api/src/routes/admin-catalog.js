@@ -273,6 +273,7 @@ export async function adminCatalogRoutes(app) {
     return {
       groups: groups.map((group) => ({
         id: group.id,
+        slug: group.slug,
         name: group.name,
         blurb: group.blurb,
         fieldMarks: group.fieldMarks,
@@ -567,9 +568,11 @@ export async function adminCatalogRoutes(app) {
       return reply.code(400).send({ error: 'SERVICE_MISMATCH', message: 'Choose a service from the selected group.' })
     }
     const now = new Date()
+    const paused = existing.pausedAt && (!existing.pausedUntil || existing.pausedUntil > now)
+    const data = (existing.closedDownAt || paused) ? { ...parsed.value, active: false } : parsed.value
     const doctor = await prisma.doctor.update({
       where: { id },
-      data: parsed.value,
+      data,
       include: {
         group: true,
         service: true,

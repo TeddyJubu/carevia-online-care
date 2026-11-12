@@ -1,10 +1,11 @@
 import { useState } from 'react'
-import { Link, useParams, useSearchParams } from 'react-router'
+import { Link, Navigate, useParams, useSearchParams } from 'react-router'
 import { api, ApiError } from '../lib/api'
 import { useLoad, useNow } from '../lib/load'
 import { addDays, dayLabel, hhmm, lisbonDay, relDay, shortDate, when } from '../lib/time'
 import type { Appointment, Outcome, OwnSlot } from '../lib/types'
 import { DoctorAvatar, Empty, ErrorState, euro, Field, FormError, Loading, Notice, PageTitle } from '../ui/kit'
+import { useSession } from '../lib/session'
 import { DailyRoom } from './call'
 import { phaseOf, type Phase } from './visit'
 
@@ -34,6 +35,26 @@ const SEES: Record<Outcome, string> = {
 }
 
 /** A confirmed visit whose call is over (or whose window closed) and still has no outcome. */
+export function Unlinked() {
+  const { signOut } = useSession()
+  return (
+    <div className="page-narrow">
+      <PageTitle lede="Ask the Carevia team to link this login to your doctor profile. Until then there is no agenda here.">Your login isn’t linked to a doctor profile yet</PageTitle>
+      <button type="button" className="btn btn-secondary mt-8" onClick={() => signOut().then(() => { window.location.assign('/app/signin') })}>Sign out</button>
+    </div>
+  )
+}
+
+function PracticeStopped({ message }: { message: string }) {
+  const { signOut } = useSession()
+  return (
+    <div className="page-narrow">
+      <PageTitle lede={message}>Your practice is not open</PageTitle>
+      <button type="button" className="btn btn-secondary mt-8" onClick={() => signOut().then(() => { window.location.assign('/app/signin') })}>Sign out</button>
+    </div>
+  )
+}
+
 const needsOutcome = (a: Appointment, now: number) =>
   a.status === 'confirmed' && !a.outcome && (phaseOf(a, now) === 'closed' || a.call.state === 'ended')
 
@@ -49,7 +70,8 @@ function StatusBadge({ a, now }: { a: Appointment; now: number }) {
 export function Agenda() {
   const [params, setParams] = useSearchParams()
   const date = /^\d{4}-\d{2}-\d{2}$/.test(params.get('date') ?? '') ? params.get('date')! : lisbonDay()
-  const agenda = useLoad(() => api.agenda(date), [date])
+  const gate = useLoad(() => api.onboarding(), [])
+  const agenda = useLoad(() => (gate.data && (!gate.data.required || gate.data.complete) ? api.agenda(date) : Promise.resolve(null)), [date, gate.data?.required, gate.data?.complete])
   const now = useNow(30000)
   const go = (d: string) => setParams(d === lisbonDay() ? {} : { date: d })
   const d = agenda.data?.doctor
@@ -57,6 +79,10 @@ export function Agenda() {
   const live = list.filter((a) => a.status !== 'cancelled')
   const toRecord = list.filter((a) => needsOutcome(a, now)).length
   const next = list.find((a) => a.status === 'confirmed' && !a.outcome && Date.parse(a.endsAt) > now)
+  if (gate.loading && !gate.data) return <div className="page"><Loading label="Loading your agenda" /></div>
+  if (gate.data?.required && !gate.data.complete) return <Navigate to="/doctor/welcome" replace />
+  if (agenda.error?.code === 'NO_DOCTOR_PROFILE' || gate.error?.code === 'NO_DOCTOR_PROFILE') return <Unlinked />
+  if (agenda.error?.code === 'PAUSED' || agenda.error?.code === 'ACCOUNT_DISABLED') return <PracticeStopped message={agenda.error.message} />
 
   return (
     <div className="page">
@@ -64,10 +90,21 @@ export function Agenda() {
         <PageTitle eyebrow={d ? `${d.specialty} · Cédula ${d.cedula}` : 'Your agenda'} title="Your agenda">{d ? d.name : 'Your agenda'}</PageTitle>
         <div className="flex flex-wrap gap-3">
           <Link to="/doctor/profile" className="btn btn-secondary">Profile and open times</Link>
+          <Link to="/doctor/history" className="btn btn-secondary">Visit history</Link>
           <OpenImed />
         </div>
       </div>
-      <div className="mt-8 flex flex-wrap items-end gap-3">
+      {agenda.data?.week ? (
+        <div className="mt-8 flex gap-2 overflow-x-auto" role="group" aria-label="This week">
+          {agenda.data.week.map((day) => (
+            <button key={day.date} type="button" className={`btn btn-sm ${day.date === date ? 'btn-primary' : 'btn-secondary'}`} onClick={() => go(day.date)}>
+              {new Date(`${day.date}T12:00:00Z`).toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', timeZone: 'UTC' })}
+              {day.count ? ` · ${day.count}` : ''}
+            </button>
+          ))}
+        </div>
+      ) : null}
+      <div className="mt-4 flex flex-wrap items-end gap-3">
         <button type="button" className="btn btn-secondary btn-sm" onClick={() => go(addDays(date, -1))}>Previous day</button>
         <button type="button" className="btn btn-secondary btn-sm" onClick={() => go(lisbonDay())} disabled={date === lisbonDay()}>Today</button>
         <button type="button" className="btn btn-secondary btn-sm" onClick={() => go(addDays(date, 1))}>Next day</button>
@@ -150,10 +187,12 @@ export function DoctorVisit() {
   const [inCall, setInCall] = useState(false)
   const [callDone, setCallDone] = useState(false)
   const [pick, setPick] = useState<Outcome | null>(null)
+  const [confirmCancel, setConfirmCancel] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [pending, setPending] = useState(false)
 
   const agendaHref = `/doctor${day && day !== lisbonDay() ? `?date=${day}` : ''}`
+  if (load.error?.code === 'NO_DOCTOR_PROFILE') return <Unlinked />
   if (load.error) return <div className="page-narrow"><ErrorState error={load.error} onRetry={load.reload} /><Link to="/doctor" className="link mt-4 inline-flex min-h-11 items-center">Back to your agenda</Link></div>
   if (!load.data) return <div className="page"><Loading label="Loading the visit" /></div>
   const a = load.data
@@ -252,6 +291,21 @@ export function DoctorVisit() {
             </dl>
             <div className="flex items-center gap-3 border-t border-line pt-3"><DoctorAvatar doctor={a.doctor} size={36} /><span className="fine">{a.doctor.name} · {a.doctor.cedula}</span></div>
           </div>
+          {a.status === 'confirmed' && !a.outcome && Date.parse(a.startsAt) > now && (
+            confirmCancel ? (
+              <div className="card card-tight grid gap-3">
+                <p>Cancel the {hhmm(a.startsAt)} visit with {a.patient?.displayName ?? 'this patient'}?</p>
+                <p className="fine">The patient is told the visit is cancelled and can book a new time in {a.service.groupName}. The visit is kept as cancelled.</p>
+                <FormError error={error} />
+                <button type="button" className="btn btn-primary" disabled={pending} onClick={async () => {
+                  setPending(true)
+                  setError(null)
+                  try { load.set((await api.cancelVisit(a.id)).appointment); setConfirmCancel(false) } catch (e) { setError((e as ApiError).message) } finally { setPending(false) }
+                }}>{pending ? 'Cancelling…' : 'Cancel this visit'}</button>
+                <button type="button" className="btn btn-secondary" onClick={() => setConfirmCancel(false)}>Keep the visit</button>
+              </div>
+            ) : <button type="button" className="btn btn-secondary" onClick={() => setConfirmCancel(true)}>I can’t do this visit</button>
+          )}
           {step !== 'imed' && step !== 'prepare' && <OpenImed className="btn btn-secondary btn-block" />}
         </aside>
       </div>
@@ -261,12 +315,18 @@ export function DoctorVisit() {
 
 // ---------- The doctor's profile, with the open times patients can book ----------
 export function DoctorProfile() {
+  const gate = useLoad(() => api.onboarding(), [])
   const load = useLoad(() => api.schedule(), [])
-  const [busy, setBusy] = useState<number | 'add' | null>(null)
+  const [busy, setBusy] = useState<number | 'add' | 'timeoff' | 'request' | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [timeOffError, setTimeOffError] = useState<string | null>(null)
+  const [requestError, setRequestError] = useState<string | null>(null)
   const [date, setDate] = useState(() => addDays(lisbonDay(), 1))
   const [time, setTime] = useState('09:00')
+  const [note, setNote] = useState<string | null>(null)
 
+  if (gate.data?.required && !gate.data.complete) return <Navigate to="/doctor/welcome" replace />
+  if (load.error?.code === 'NO_DOCTOR_PROFILE') return <Unlinked />
   if (load.error) return <div className="page-narrow"><ErrorState error={load.error} onRetry={load.reload} /></div>
   if (!load.data) return <div className="page"><Loading label="Loading your profile" /></div>
   const { doctor: d, slots, days: span } = load.data
@@ -279,7 +339,9 @@ export function DoctorProfile() {
   const booked = slots.filter((s) => s.booked).length
   const today = lisbonDay(), last = addDays(today, span - 1)
 
+  const locked = busy !== null
   async function run(key: number | 'add', fn: () => Promise<void>) {
+    if (locked) return
     setBusy(key)
     setError(null)
     try { await fn() } catch (e) { setError((e as ApiError).message) } finally { setBusy(null) }
@@ -301,7 +363,7 @@ export function DoctorProfile() {
           <form className="card card-tight mt-4 flex flex-wrap items-end gap-3" onSubmit={(e) => { e.preventDefault(); add() }}>
             <Field label="Day" type="date" value={date} min={today} max={last} required onChange={(e) => setDate(e.target.value)} className="w-48" />
             <Field label="Start time" type="time" step={300} value={time} required onChange={(e) => setTime(e.target.value)} className="w-36" />
-            <button type="submit" className="btn btn-primary" disabled={busy === 'add'}>{busy === 'add' ? 'Adding…' : 'Add a time'}</button>
+            <button type="submit" className="btn btn-primary" disabled={locked}>{busy === 'add' ? 'Adding…' : 'Add a time'}</button>
             <p className="fine basis-full">Visits last 30 minutes, so a new time can’t overlap an open one.</p>
           </form>
           {!days.length ? <div className="mt-4"><Empty title="No times on your schedule" art="caught-up">Add a time above and patients can book it.</Empty></div> : (
@@ -311,7 +373,7 @@ export function DoctorProfile() {
                   <p className="font-medium">{relDay(list[0].startsAt)}<span className="fine block font-normal">{shortDate(list[0].startsAt)}</span></p>
                   <div className="flex flex-wrap gap-2" role="group" aria-label={`Times on ${shortDate(list[0].startsAt)}`}>
                     {list.map((s) => (
-                      <button key={s.id} type="button" className={`chip tabular-nums ${s.booked ? 'chip-booked' : ''}`} aria-pressed={s.booked ? undefined : s.open} disabled={s.booked || busy === s.id}
+                      <button key={s.id} type="button" className={`chip tabular-nums ${s.booked ? 'chip-booked' : ''}`} aria-pressed={s.booked ? undefined : s.open} disabled={s.booked || locked}
                         title={s.booked ? 'Booked: it stays on your schedule' : s.open ? 'Open: tap to remove' : 'Removed: tap to open'}
                         onClick={() => toggle(s)}>
                         {hhmm(s.startsAt)}{s.booked ? <span className="ml-1.5 text-[13px] opacity-80">Booked</span> : <span className="sr-only">{s.open ? ', open' : ', removed'}</span>}
@@ -323,6 +385,55 @@ export function DoctorProfile() {
             </ol>
           )}
           <p className="fine mt-4">New weeks follow your usual pattern. Times you remove stay removed.</p>
+          <form className="card card-tight mt-6 grid gap-4" onSubmit={(e) => {
+            e.preventDefault()
+            const form = new FormData(e.currentTarget)
+            setNote(null)
+            setTimeOffError(null)
+            setBusy('timeoff')
+            api.timeOff(String(form.get('offFrom')), String(form.get('offTo')))
+              .then((closed) => { setNote(`Closed ${closed.closed} open times. Booked visits were left as they were.`); load.reload() })
+              .catch((err) => setTimeOffError(err instanceof ApiError ? err.message : 'Something went wrong.'))
+              .finally(() => setBusy(null))
+          }}>
+            <h2>Time off</h2>
+            <p className="fine">Closes every open time in the range. If a visit is booked in it, we name the visits and close nothing.</p>
+            <div className="flex flex-wrap gap-3">
+              <Field label="From" name="offFrom" type="date" required className="w-48" />
+              <Field label="To" name="offTo" type="date" required className="w-48" />
+            </div>
+            <FormError error={timeOffError} />
+            <button className="btn btn-secondary" type="submit" disabled={locked}>{busy === 'timeoff' ? 'Closing…' : 'Close these days'}</button>
+          </form>
+          <form className="card card-tight mt-4 grid gap-4" onSubmit={(e) => {
+            e.preventDefault()
+            const form = new FormData(e.currentTarget)
+            setNote(null)
+            setRequestError(null)
+            setBusy('request')
+            api.practiceRequest({
+              kind: String(form.get('kind')) === 'leave' ? 'leave' : 'pause',
+              from: String(form.get('pauseFrom') || ''),
+              until: String(form.get('pauseUntil') || ''),
+              message: String(form.get('note') || ''),
+            })
+              .then(() => setNote('Request sent. Booked visits stay until the team deals with each one.'))
+              .catch((err) => setRequestError(err instanceof ApiError ? err.message : 'Something went wrong.'))
+              .finally(() => setBusy(null))
+          }}>
+            <h2>Pause, or leave Carevia</h2>
+            <p className="fine">This tells the Carevia team. It does not hide your profile or cancel a visit.</p>
+            <label className="check"><input type="radio" name="kind" value="pause" defaultChecked /><span>Pause for a while</span></label>
+            <label className="check"><input type="radio" name="kind" value="leave" /><span>Leave Carevia</span></label>
+            <div className="flex flex-wrap gap-3">
+              <Field label="From" name="pauseFrom" type="date" className="w-48" />
+              <Field label="Until" name="pauseUntil" type="date" className="w-48" />
+            </div>
+            <Field as="textarea" label="Message to the Carevia team (optional)" name="note" rows={3} hint="Operational only. Nothing clinical." />
+            <FormError error={requestError} />
+            <button className="btn btn-secondary" type="submit" disabled={locked}>{busy === 'request' ? 'Sending…' : 'Send request'}</button>
+          </form>
+          {note && <Notice className="mt-4" tone="ok">{note}</Notice>}
         </section>
         <aside className="grid content-start gap-3" aria-label="Profile details">
           <div className="card card-tight">
@@ -340,6 +451,34 @@ export function DoctorProfile() {
           <p className="fine">To change these details, contact the Carevia team. Your clinical records stay in iMED.</p>
         </aside>
       </div>
+    </div>
+  )
+}
+
+export function DoctorHistory() {
+  const gate = useLoad(() => api.onboarding(), [])
+  const load = useLoad(() => api.history(), [])
+  if (gate.data?.required && !gate.data.complete) return <Navigate to="/doctor/welcome" replace />
+  if (load.error?.code === 'NO_DOCTOR_PROFILE') return <Unlinked />
+  if (load.error) return <div className="page-narrow"><ErrorState error={load.error} onRetry={load.reload} /></div>
+  if (!load.data) return <div className="page"><Loading label="Loading visit history" /></div>
+  const rows = load.data.appointments
+  return (
+    <div className="page">
+      <Link to="/doctor" className="link">Back to your agenda</Link>
+      <PageTitle lede="What Carevia handled. The clinical record is in iMED. Rows open the visit. No notes and no documents here.">Visit history</PageTitle>
+      {rows.length ? (
+        <ul className="mt-8 grid gap-3">
+          {rows.map((a) => (
+            <li key={a.id}>
+              <Link to={`/doctor/visits/${a.id}`} className="card card-tight flex flex-wrap items-baseline justify-between gap-3">
+                <span>{when(a.startsAt)} · {a.patient?.displayName ?? 'Patient'} · {a.service.name}</span>
+                <span className="fine">{a.status === 'cancelled' ? 'Cancelled' : a.outcome ? OUTCOME[a.outcome] : 'No outcome yet'} · {euro(a.fee)}</span>
+              </Link>
+            </li>
+          ))}
+        </ul>
+      ) : <div className="mt-8"><Empty title="No past visits" art="caught-up">Visits you have already had show up here.</Empty></div>}
     </div>
   )
 }
